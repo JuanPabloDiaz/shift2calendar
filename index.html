@@ -1,192 +1,443 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Costco → Google Calendar</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f0f2f5;
-    min-height: 100vh;
-    padding: 20px;
-  }
-  .card {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    max-width: 500px;
-    margin: 0 auto;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  }
-  h1 {
-    font-size: 1.3rem;
-    color: #1a1a2e;
-    margin-bottom: 4px;
-  }
-  .subtitle {
-    color: #666;
-    font-size: 0.85rem;
-    margin-bottom: 24px;
-  }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Costco → Google Calendar</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f0f2f5;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 500px;
+        margin: 0 auto;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+      .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+      h1 {
+        font-size: 1.3rem;
+        color: #1a1a2e;
+        margin-bottom: 4px;
+      }
+      .subtitle {
+        color: #666;
+        font-size: 0.85rem;
+      }
+      .lang-toggle {
+        display: flex;
+        gap: 4px;
+        background: #f0f2f5;
+        border-radius: 8px;
+        padding: 3px;
+        flex-shrink: 0;
+      }
+      .lang-btn {
+        border: none;
+        background: transparent;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        color: #666;
+        transition: all 0.15s;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #005eb8;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
 
-  .step {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    margin-bottom: 20px;
-  }
-  .step-num {
-    background: #005eb8;
-    color: white;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: 700;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-  .step-content { flex: 1; }
-  .step-title {
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: #1a1a2e;
-    margin-bottom: 4px;
-  }
-  .step-desc {
-    font-size: 0.82rem;
-    color: #666;
-    line-height: 1.4;
-  }
+      .step {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+      .step-num {
+        background: #005eb8;
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .step-content {
+        flex: 1;
+      }
+      .step-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #1a1a2e;
+        margin-bottom: 4px;
+      }
+      .step-desc {
+        font-size: 0.82rem;
+        color: #666;
+        line-height: 1.4;
+      }
 
-  .prompt-box {
-    background: #f8f9ff;
-    border: 1px solid #dde3f0;
-    border-radius: 10px;
-    padding: 12px;
-    font-size: 0.78rem;
-    color: #333;
-    line-height: 1.5;
-    margin-top: 8px;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .copy-btn {
-    background: #005eb8;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 0.82rem;
-    cursor: pointer;
-    margin-top: 8px;
-    width: 100%;
-    font-weight: 600;
-    transition: background 0.2s;
-  }
-  .copy-btn:active { background: #004a94; }
-  .copy-btn.copied { background: #28a745; }
+      .name-input-wrap {
+        margin-top: 8px;
+        position: relative;
+      }
+      .name-input-wrap label {
+        font-size: 0.78rem;
+        color: #888;
+        margin-bottom: 4px;
+        display: block;
+      }
+      .name-input {
+        width: 100%;
+        border: 1.5px solid #dde3f0;
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 0.9rem;
+        outline: none;
+        color: #222;
+        transition: border-color 0.2s;
+      }
+      .name-input:focus {
+        border-color: #005eb8;
+      }
 
-  .divider {
-    border: none;
-    border-top: 1px solid #eee;
-    margin: 24px 0;
-  }
+      .prompt-box {
+        background: #f8f9ff;
+        border: 1px solid #dde3f0;
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 0.78rem;
+        color: #333;
+        line-height: 1.5;
+        margin-top: 8px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 160px;
+        overflow-y: auto;
+      }
+      .copy-btn {
+        background: #005eb8;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        margin-top: 8px;
+        width: 100%;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .copy-btn:active {
+        background: #004a94;
+      }
+      .copy-btn.copied {
+        background: #28a745;
+      }
 
-  textarea {
-    width: 100%;
-    height: 180px;
-    border: 1.5px solid #dde3f0;
-    border-radius: 10px;
-    padding: 12px;
-    font-size: 0.82rem;
-    font-family: 'Courier New', monospace;
-    resize: vertical;
-    outline: none;
-    color: #222;
-    transition: border-color 0.2s;
-    margin-top: 8px;
-  }
-  textarea:focus { border-color: #005eb8; }
+      textarea {
+        width: 100%;
+        height: 160px;
+        border: 1.5px solid #dde3f0;
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 0.82rem;
+        font-family: "Courier New", monospace;
+        resize: vertical;
+        outline: none;
+        color: #222;
+        transition: border-color 0.2s;
+        margin-top: 8px;
+      }
+      textarea:focus {
+        border-color: #005eb8;
+      }
 
-  .generate-btn {
-    background: #005eb8;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 14px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 12px;
-    transition: background 0.2s;
-  }
-  .generate-btn:active { background: #004a94; }
+      .generate-btn {
+        background: #005eb8;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 14px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 12px;
+        transition: background 0.2s;
+      }
+      .generate-btn:active {
+        background: #004a94;
+      }
 
-  .error {
-    background: #fff0f0;
-    border: 1px solid #ffcccc;
-    color: #c0392b;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    margin-top: 12px;
-    display: none;
-  }
-  .success {
-    background: #f0fff4;
-    border: 1px solid #b2dfdb;
-    color: #1b5e20;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    margin-top: 12px;
-    display: none;
-  }
+      .error {
+        background: #fff0f0;
+        border: 1px solid #ffcccc;
+        color: #c0392b;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        margin-top: 12px;
+        display: none;
+      }
+      .success {
+        background: #f0fff4;
+        border: 1px solid #b2dfdb;
+        color: #1b5e20;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        margin-top: 12px;
+        display: none;
+      }
+      .preview {
+        margin-top: 16px;
+        display: none;
+      }
+      .preview-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #333;
+        margin-bottom: 8px;
+      }
+      .shift-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: #f8f9ff;
+        border-radius: 8px;
+        margin-bottom: 6px;
+        font-size: 0.85rem;
+      }
+      .shift-day {
+        font-weight: 600;
+        color: #005eb8;
+      }
+      .shift-time {
+        color: #444;
+      }
+      .shift-hrs {
+        color: #888;
+        font-size: 0.78rem;
+      }
+      .divider {
+        border: none;
+        border-top: 1px solid #eee;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="header-row">
+        <div>
+          <h1>🗓 Costco → Google Calendar</h1>
+          <p class="subtitle" id="txt-subtitle"></p>
+        </div>
+        <div class="lang-toggle">
+          <button class="lang-btn active" id="btn-es" onclick="setLang('es')">
+            ES
+          </button>
+          <button class="lang-btn" id="btn-en" onclick="setLang('en')">
+            EN
+          </button>
+        </div>
+      </div>
 
-  .preview {
-    margin-top: 16px;
-    display: none;
-  }
-  .preview-title {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #333;
-    margin-bottom: 8px;
-  }
-  .shift-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: #f8f9ff;
-    border-radius: 8px;
-    margin-bottom: 6px;
-    font-size: 0.85rem;
-  }
-  .shift-day { font-weight: 600; color: #005eb8; }
-  .shift-time { color: #444; }
-  .shift-hrs { color: #888; font-size: 0.78rem; }
-</style>
-</head>
-<body>
+      <!-- Step 0: Name -->
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title" id="txt-step1-title"></div>
+          <div class="step-desc" id="txt-step1-desc"></div>
+          <div class="name-input-wrap">
+            <label id="txt-name-label"></label>
+            <input
+              type="text"
+              class="name-input"
+              id="employeeName"
+              value="Diaz, Juan"
+              oninput="updatePrompt()"
+            />
+          </div>
+        </div>
+      </div>
 
-<div class="card">
-  <h1>🗓 Costco → Google Calendar</h1>
-  <p class="subtitle">Convierte tu horario en eventos de calendario</p>
+      <!-- Step 1: Copy prompt -->
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title" id="txt-step2-title"></div>
+          <div class="step-desc" id="txt-step2-desc"></div>
+          <div class="prompt-box" id="promptText"></div>
+          <button
+            class="copy-btn"
+            id="copyPromptBtn"
+            onclick="copyPrompt()"
+          ></button>
+        </div>
+      </div>
 
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-content">
-      <div class="step-title">Copia este prompt</div>
-      <div class="step-desc">Ábrelo en Claude y adjunta la foto del horario</div>
-      <div class="prompt-box" id="promptText">Analiza esta imagen de un horario de Costco y extrae SOLO los turnos de "Diaz, Juan".
+      <!-- Step 2: Paste JSON -->
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title" id="txt-step3-title"></div>
+          <div class="step-desc" id="txt-step3-desc"></div>
+          <textarea
+            id="jsonInput"
+            placeholder='{"period": "3/02/26 - 3/08/26", "shifts": [...]}'
+          ></textarea>
+        </div>
+      </div>
+
+      <button
+        class="generate-btn"
+        id="txt-generate-btn"
+        onclick="generate()"
+      ></button>
+
+      <div class="error" id="errorBox"></div>
+      <div class="success" id="successBox"></div>
+
+      <div class="preview" id="preview">
+        <hr class="divider" />
+        <div class="preview-title" id="txt-preview-title"></div>
+        <div id="shiftList"></div>
+      </div>
+    </div>
+
+    <script>
+      // ── i18n ──────────────────────────────────────────────────────────────────────
+      const T = {
+        es: {
+          subtitle: "Convierte tu horario en eventos de calendario",
+          step1Title: "Tu nombre en el schedule",
+          step1Desc: "Escribe tu nombre exactamente como aparece en la imagen",
+          nameLabel: "Nombre (Apellido, Nombre)",
+          step2Title: "Copia el prompt",
+          step2Desc: "Ábrelo en Claude y adjunta la foto del horario",
+          copyBtn: "Copiar prompt",
+          copiedBtn: "¡Copiado!",
+          step3Title: "Pega el JSON aquí",
+          step3Desc: "Copia la respuesta de Claude y pégala abajo",
+          generateBtn: "Generar y descargar .ics",
+          previewTitle: "Turnos detectados:",
+          errEmpty: "Pega el JSON de Claude primero.",
+          errJson: "JSON inválido: ",
+          errJsonHint: ". Asegúrate de copiar el bloque completo.",
+          errNoShifts: "No se encontraron turnos en el JSON.",
+          successMsg: "✅ Descargado: ",
+        },
+        en: {
+          subtitle: "Convert your schedule into calendar events",
+          step1Title: "Your name on the schedule",
+          step1Desc: "Type your name exactly as it appears in the image",
+          nameLabel: "Name (Last, First)",
+          step2Title: "Copy the prompt",
+          step2Desc:
+            "Open Claude, paste this prompt and attach the schedule photo",
+          copyBtn: "Copy prompt",
+          copiedBtn: "Copied!",
+          step3Title: "Paste the JSON here",
+          step3Desc: "Copy Claude's response and paste it below",
+          generateBtn: "Generate & download .ics",
+          previewTitle: "Detected shifts:",
+          errEmpty: "Paste Claude's JSON first.",
+          errJson: "Invalid JSON: ",
+          errJsonHint: ". Make sure you copied the full block.",
+          errNoShifts: "No shifts found in the JSON.",
+          successMsg: "✅ Downloaded: ",
+        },
+      };
+
+      const DAYS_ES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+      const MONTHS_ES = [
+        "Ene",
+        "Feb",
+        "Mar",
+        "Abr",
+        "May",
+        "Jun",
+        "Jul",
+        "Ago",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dic",
+      ];
+      const DAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const MONTHS_EN = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+
+      let lang = "es";
+
+      function setLang(l) {
+        lang = l;
+        document
+          .getElementById("btn-es")
+          .classList.toggle("active", l === "es");
+        document
+          .getElementById("btn-en")
+          .classList.toggle("active", l === "en");
+        applyTranslations();
+        updatePrompt();
+      }
+
+      function applyTranslations() {
+        const t = T[lang];
+        document.getElementById("txt-subtitle").textContent = t.subtitle;
+        document.getElementById("txt-step1-title").textContent = t.step1Title;
+        document.getElementById("txt-step1-desc").textContent = t.step1Desc;
+        document.getElementById("txt-name-label").textContent = t.nameLabel;
+        document.getElementById("txt-step2-title").textContent = t.step2Title;
+        document.getElementById("txt-step2-desc").textContent = t.step2Desc;
+        document.getElementById("copyPromptBtn").textContent = t.copyBtn;
+        document.getElementById("txt-step3-title").textContent = t.step3Title;
+        document.getElementById("txt-step3-desc").textContent = t.step3Desc;
+        document.getElementById("txt-generate-btn").textContent = t.generateBtn;
+        document.getElementById("txt-preview-title").textContent =
+          t.previewTitle;
+      }
+
+      function getPromptText(name) {
+        if (lang === "es") {
+          return `Analiza esta imagen de un horario de Costco y extrae SOLO los turnos de "${name}".
 Devuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:
 
 {
@@ -197,213 +448,234 @@ Devuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni
 }
 
 Donde X es A o P. El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").
-Si un dia tiene dos bloques de horario incluyelos como entradas separadas en shifts.</div>
-      <button class="copy-btn" id="copyPromptBtn" onclick="copyPrompt()">Copiar prompt</button>
-    </div>
-  </div>
+Si un dia tiene dos bloques de horario incluyelos como entradas separadas en shifts.`;
+        } else {
+          return `Analyze this Costco schedule image and extract ONLY the shifts for "${name}".
+Return ONLY a valid JSON in this exact format, with no explanation or extra text:
 
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-content">
-      <div class="step-title">Pega el JSON aquí</div>
-      <div class="step-desc">Copia la respuesta de Claude y pégala abajo</div>
-      <textarea id="jsonInput" placeholder='{"period": "3/02/26 - 3/08/26", "shifts": [...]}'></textarea>
-    </div>
-  </div>
-
-  <button class="generate-btn" onclick="generate()">Generar y descargar .ics</button>
-
-  <div class="error" id="errorBox"></div>
-  <div class="success" id="successBox"></div>
-
-  <div class="preview" id="preview">
-    <hr class="divider" style="margin-top:16px;margin-bottom:12px;">
-    <div class="preview-title">Turnos detectados:</div>
-    <div id="shiftList"></div>
-  </div>
-</div>
-
-<script>
-const DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-
-function fixQuotes(str) {
-  return str
-    .replace(/[\u201c\u201d]/g, '"')
-    .replace(/[\u2018\u2019]/g, '"');
+{
+  "period": "M/DD/YY - M/DD/YY",
+  "shifts": [
+    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}
+  ]
 }
 
-function parseTime(timeStr, refDate) {
-  timeStr = timeStr.trim().toUpperCase();
-  const ampm = timeStr.slice(-1);
-  const timePart = timeStr.slice(0, -1);
-  let [hour, minute] = timePart.includes(':')
-    ? timePart.split(':').map(Number)
-    : [parseInt(timePart), 0];
-  if (ampm === 'P' && hour !== 12) hour += 12;
-  if (ampm === 'A' && hour === 12) hour = 0;
-  const d = new Date(refDate);
-  d.setHours(hour, minute, 0, 0);
-  return d;
-}
+Where X is A or P. The "period" field is the Time Period from the top of the image (e.g. "3/02/26 - 3/08/26").
+If a day has two time blocks include them as separate entries in shifts.`;
+        }
+      }
 
-function toIcsDt(dt) {
-  const pad = n => String(n).padStart(2, '0');
-  return `${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
-}
+      function updatePrompt() {
+        const name =
+          document.getElementById("employeeName").value.trim() || "Diaz, Juan";
+        document.getElementById("promptText").textContent = getPromptText(name);
+      }
 
-function mergeShifts(shifts) {
-  const byDate = {};
-  for (const s of shifts) {
-    if (!byDate[s.date]) byDate[s.date] = [];
-    byDate[s.date].push(s);
-  }
-  const merged = [];
-  for (const day of Object.keys(byDate).sort()) {
-    const dayShifts = byDate[day];
-    const refDate = new Date(day + 'T00:00:00');
-    const starts = dayShifts.map(s => parseTime(s.start, refDate));
-    const ends = dayShifts.map((s, i) => {
-      let e = parseTime(s.end, refDate);
-      if (e <= starts[i]) e = new Date(e.getTime() + 86400000);
-      return e;
-    });
-    const earliestStart = new Date(Math.min(...starts));
-    const latestEnd = new Date(Math.max(...ends));
-    const totalHours = dayShifts.reduce((a, s) => a + parseFloat(s.hours), 0);
-    merged.push({ date: day, startDt: earliestStart, endDt: latestEnd, hours: totalHours.toFixed(2) });
-  }
-  return merged;
-}
+      // ── calendar logic ────────────────────────────────────────────────────────────
+      function fixQuotes(str) {
+        return str
+          .replace(/[\u201c\u201d]/g, '"')
+          .replace(/[\u2018\u2019]/g, '"');
+      }
 
-function buildIcs(shifts, period) {
-  const merged = mergeShifts(shifts);
-  const now = toIcsDt(new Date()).replace('T','') + 'Z';
-  let events = '';
-  for (const s of merged) {
-    const uid = 'costco-' + s.date + '-' + Math.random().toString(36).slice(2);
-    events += [
-      'BEGIN:VEVENT',
-      `UID:${uid}`,
-      `DTSTAMP:${now}`,
-      `DTSTART:${toIcsDt(s.startDt)}`,
-      `DTEND:${toIcsDt(s.endDt)}`,
-      'SUMMARY:Costco',
-      'COLOR:grape',
-      `DESCRIPTION:Turno Costco - ${s.hours} hrs`,
-      'END:VEVENT'
-    ].join('\r\n') + '\r\n';
-  }
-  return [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//CostcoSchedule//ES//',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    events.trim(),
-    'END:VCALENDAR'
-  ].join('\r\n');
-}
+      function parseTime(timeStr, refDate) {
+        timeStr = timeStr.trim().toUpperCase();
+        const ampm = timeStr.slice(-1);
+        const timePart = timeStr.slice(0, -1);
+        let [hour, minute] = timePart.includes(":")
+          ? timePart.split(":").map(Number)
+          : [parseInt(timePart), 0];
+        if (ampm === "P" && hour !== 12) hour += 12;
+        if (ampm === "A" && hour === 12) hour = 0;
+        const d = new Date(refDate);
+        d.setHours(hour, minute, 0, 0);
+        return d;
+      }
 
-function periodToFilename(period) {
-  return 'costco_' + period.trim().replace(/\//g, '-').replace(' - ', '_') + '.ics';
-}
+      function toIcsDt(dt) {
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+      }
 
-function showError(msg) {
-  const el = document.getElementById('errorBox');
-  el.textContent = msg;
-  el.style.display = 'block';
-  document.getElementById('successBox').style.display = 'none';
-  document.getElementById('preview').style.display = 'none';
-}
+      function mergeShifts(shifts) {
+        const byDate = {};
+        for (const s of shifts) {
+          if (!byDate[s.date]) byDate[s.date] = [];
+          byDate[s.date].push(s);
+        }
+        const merged = [];
+        for (const day of Object.keys(byDate).sort()) {
+          const dayShifts = byDate[day];
+          const refDate = new Date(day + "T00:00:00");
+          const starts = dayShifts.map((s) => parseTime(s.start, refDate));
+          const ends = dayShifts.map((s, i) => {
+            let e = parseTime(s.end, refDate);
+            if (e <= starts[i]) e = new Date(e.getTime() + 86400000);
+            return e;
+          });
+          const earliestStart = new Date(Math.min(...starts));
+          const latestEnd = new Date(Math.max(...ends));
+          const totalHours = dayShifts.reduce(
+            (a, s) => a + parseFloat(s.hours),
+            0,
+          );
+          merged.push({
+            date: day,
+            startDt: earliestStart,
+            endDt: latestEnd,
+            hours: totalHours.toFixed(2),
+          });
+        }
+        return merged;
+      }
 
-function showSuccess(msg) {
-  const el = document.getElementById('successBox');
-  el.textContent = msg;
-  el.style.display = 'block';
-  document.getElementById('errorBox').style.display = 'none';
-}
+      function buildIcs(shifts) {
+        const merged = mergeShifts(shifts);
+        const now = toIcsDt(new Date()).replace(/T/, "") + "Z";
+        let events = "";
+        for (const s of merged) {
+          const uid =
+            "costco-" + s.date + "-" + Math.random().toString(36).slice(2);
+          events +=
+            [
+              "BEGIN:VEVENT",
+              `UID:${uid}`,
+              `DTSTAMP:${now}`,
+              `DTSTART:${toIcsDt(s.startDt)}`,
+              `DTEND:${toIcsDt(s.endDt)}`,
+              "SUMMARY:Costco",
+              "COLOR:grape",
+              `DESCRIPTION:Costco shift - ${s.hours} hrs`,
+              "END:VEVENT",
+            ].join("\r\n") + "\r\n";
+        }
+        return [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "PRODID:-//CostcoSchedule//EN//",
+          "CALSCALE:GREGORIAN",
+          "METHOD:PUBLISH",
+          events.trim(),
+          "END:VCALENDAR",
+        ].join("\r\n");
+      }
 
-function generate() {
-  document.getElementById('errorBox').style.display = 'none';
-  document.getElementById('successBox').style.display = 'none';
-  document.getElementById('preview').style.display = 'none';
+      function periodToFilename(period) {
+        return (
+          "costco_" +
+          period.trim().replace(/\//g, "-").replace(" - ", "_") +
+          ".ics"
+        );
+      }
 
-  let raw = document.getElementById('jsonInput').value.trim();
-  if (!raw) { showError('Pega el JSON de Claude primero.'); return; }
+      function showError(msg) {
+        const el = document.getElementById("errorBox");
+        el.textContent = msg;
+        el.style.display = "block";
+        document.getElementById("successBox").style.display = "none";
+        document.getElementById("preview").style.display = "none";
+      }
 
-  raw = fixQuotes(raw);
+      function showSuccess(msg) {
+        const el = document.getElementById("successBox");
+        el.textContent = msg;
+        el.style.display = "block";
+        document.getElementById("errorBox").style.display = "none";
+      }
 
-  // Extraer bloque JSON
-  const match = raw.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-  if (match) raw = match[0];
+      function generate() {
+        const t = T[lang];
+        document.getElementById("errorBox").style.display = "none";
+        document.getElementById("successBox").style.display = "none";
+        document.getElementById("preview").style.display = "none";
 
-  let data;
-  try {
-    data = JSON.parse(raw);
-  } catch(e) {
-    showError('JSON inválido: ' + e.message + '. Asegúrate de copiar el bloque completo.');
-    return;
-  }
+        let raw = document.getElementById("jsonInput").value.trim();
+        if (!raw) {
+          showError(t.errEmpty);
+          return;
+        }
 
-  let shifts, period;
-  if (Array.isArray(data)) {
-    shifts = data; period = 'costco';
-  } else {
-    shifts = data.shifts || [];
-    period = data.period || 'costco';
-  }
+        raw = fixQuotes(raw);
+        const match = raw.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+        if (match) raw = match[0];
 
-  if (!shifts.length) { showError('No se encontraron turnos en el JSON.'); return; }
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch (e) {
+          showError(t.errJson + e.message + t.errJsonHint);
+          return;
+        }
 
-  const icsContent = buildIcs(shifts, period);
-  const filename = periodToFilename(period);
+        let shifts, period;
+        if (Array.isArray(data)) {
+          shifts = data;
+          period = "costco";
+        } else {
+          shifts = data.shifts || [];
+          period = data.period || "costco";
+        }
 
-  // Descargar el archivo
-  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+        if (!shifts.length) {
+          showError(t.errNoShifts);
+          return;
+        }
 
-  showSuccess(`✅ Descargado: ${filename}`);
+        const icsContent = buildIcs(shifts);
+        const filename = periodToFilename(period);
+        const blob = new Blob([icsContent], {
+          type: "text/calendar;charset=utf-8",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
 
-  // Mostrar preview
-  const merged = mergeShifts(shifts);
-  const list = document.getElementById('shiftList');
-  list.innerHTML = '';
-  for (const s of merged) {
-    const d = new Date(s.date + 'T00:00:00');
-    const label = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-    const fmt = dt => {
-      let h = dt.getHours(), m = dt.getMinutes(), ap = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
-      return `${h}:${String(m).padStart(2,'0')} ${ap}`;
-    };
-    list.innerHTML += `
+        showSuccess(t.successMsg + filename);
+
+        const DAYS = lang === "es" ? DAYS_ES : DAYS_EN;
+        const MONTHS = lang === "es" ? MONTHS_ES : MONTHS_EN;
+        const merged = mergeShifts(shifts);
+        const list = document.getElementById("shiftList");
+        list.innerHTML = "";
+        for (const s of merged) {
+          const d = new Date(s.date + "T00:00:00");
+          const label = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+          const fmt = (dt) => {
+            let h = dt.getHours(),
+              m = dt.getMinutes(),
+              ap = h >= 12 ? "PM" : "AM";
+            h = h % 12 || 12;
+            return `${h}:${String(m).padStart(2, "0")} ${ap}`;
+          };
+          list.innerHTML += `
       <div class="shift-item">
         <span class="shift-day">${label}</span>
         <span class="shift-time">${fmt(s.startDt)} – ${fmt(s.endDt)}</span>
         <span class="shift-hrs">${s.hours}h</span>
       </div>`;
-  }
-  document.getElementById('preview').style.display = 'block';
-}
+        }
+        document.getElementById("preview").style.display = "block";
+      }
 
-function copyPrompt() {
-  const text = document.getElementById('promptText').innerText;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById('copyPromptBtn');
-    btn.textContent = '¡Copiado!';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = 'Copiar prompt';
-      btn.classList.remove('copied');
-    }, 2000);
-  });
-}
-</script>
-</body>
+      function copyPrompt() {
+        const text = document.getElementById("promptText").textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = document.getElementById("copyPromptBtn");
+          btn.textContent = T[lang].copiedBtn;
+          btn.classList.add("copied");
+          setTimeout(() => {
+            btn.textContent = T[lang].copyBtn;
+            btn.classList.remove("copied");
+          }, 2000);
+        });
+      }
+
+      // Init
+      applyTranslations();
+      updatePrompt();
+    </script>
+  </body>
 </html>
