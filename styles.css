@@ -377,3 +377,104 @@ textarea:focus {
   color: var(--accent);
   text-decoration: none;
 }
+
+.input-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.input-toggle-btn {
+  border: none;
+  background: var(--bg);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+
+.input-toggle-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+.manual-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.manual-input {
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.manual-input.small {
+  width: 80px;
+}
+
+.manual-input[type="date"] {
+  flex: 1;
+}
+
+.add-shift-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.manual-shifts {
+  margin-bottom: 8px;
+}
+
+.manual-shift-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--shift-bg);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+}
+
+.manual-shift-item button {
+  background: none;
+  border: none;
+  color: var(--error-text);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 4px;
+}
+
+.clear-shifts-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  width: 100%;
+}
+
+#jsonInput,
+#manualInput {
+  margin-top: 8px;
+}
