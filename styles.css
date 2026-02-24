@@ -20,24 +20,24 @@
 }
 
 [data-theme="dark"] {
-  --bg: #1a1a2e;
-  --card-bg: #2d2d44;
+  --bg: #121212;
+  --card-bg: #1e1e1e;
   --text: #e8e8e8;
-  --text-secondary: #b0b0b0;
-  --text-muted: #888;
-  --border: #3d3d5c;
-  --border-light: #3d3d5c;
-  --accent: #4da3ff;
-  --accent-hover: #6bb3ff;
-  --prompt-bg: #2a2a40;
-  --shift-bg: #2a2a40;
-  --success-bg: #1a3d1a;
-  --success-border: #2d5a2d;
-  --success-text: #90ee90;
-  --error-bg: #3d1a1a;
-  --error-border: #5a2d2d;
-  --error-text: #ff6b6b;
-  --shadow: rgba(0, 0, 0, 0.3);
+  --text-secondary: #a0a0a0;
+  --text-muted: #707070;
+  --border: #2a2a2a;
+  --border-light: #2a2a2a;
+  --accent: #1db954;
+  --accent-hover: #1ed760;
+  --prompt-bg: #161916;
+  --shift-bg: #161916;
+  --success-bg: #0d2818;
+  --success-border: #1db954;
+  --success-text: #1db954;
+  --error-bg: #2a1616;
+  --error-border: #e91429;
+  --error-text: #e91429;
+  --shadow: rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -142,6 +142,10 @@ h1 .icon {
   box-shadow: 0 1px 4px var(--shadow);
 }
 
+.lang-btn:hover:not(.active) {
+  background: var(--border);
+}
+
 .step {
   display: flex;
   gap: 12px;
@@ -205,6 +209,10 @@ h1 .icon {
   transition: border-color 0.2s;
 }
 
+.name-input:hover {
+  border-color: var(--accent);
+}
+
 .name-input:focus {
   border-color: var(--accent);
 }
@@ -255,6 +263,10 @@ h1 .icon {
   transition: background 0.2s;
 }
 
+.copy-btn:hover {
+  background: var(--accent-hover);
+}
+
 .copy-btn:active {
   background: var(--accent-hover);
 }
@@ -279,6 +291,10 @@ textarea {
   margin-top: 8px;
 }
 
+textarea:hover {
+  border-color: var(--accent);
+}
+
 textarea:focus {
   border-color: var(--accent);
 }
@@ -294,7 +310,11 @@ textarea:focus {
   cursor: pointer;
   width: 100%;
   margin-top: 12px;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.generate-btn:hover {
+  background: var(--accent-hover);
 }
 
 .generate-btn:active {
@@ -344,6 +364,11 @@ textarea:focus {
   border-radius: 8px;
   margin-bottom: 6px;
   font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.shift-item:hover {
+  background: var(--border);
 }
 
 .shift-day {
@@ -396,6 +421,10 @@ textarea:focus {
   transition: all 0.15s;
 }
 
+.input-toggle-btn:hover:not(.active) {
+  background: var(--border);
+}
+
 .input-toggle-btn.active {
   background: var(--accent);
   color: white;
@@ -415,6 +444,11 @@ textarea:focus {
   font-size: 0.8rem;
   background: var(--card-bg);
   color: var(--text);
+  transition: border-color 0.2s;
+}
+
+.manual-input:hover {
+  border-color: var(--accent);
 }
 
 .manual-input.small {
@@ -437,6 +471,11 @@ textarea:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.2s;
+}
+
+.add-shift-btn:hover {
+  background: var(--accent-hover);
 }
 
 .manual-shifts {
@@ -452,6 +491,11 @@ textarea:focus {
   border-radius: 6px;
   margin-bottom: 4px;
   font-size: 0.8rem;
+  transition: background 0.2s;
+}
+
+.manual-shift-item:hover {
+  background: var(--border);
 }
 
 .manual-shift-item button {
@@ -472,6 +516,12 @@ textarea:focus {
   font-size: 0.75rem;
   cursor: pointer;
   width: 100%;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.clear-shifts-btn:hover {
+  background: var(--error-bg);
+  border-color: var(--error-text);
 }
 
 #jsonInput,
