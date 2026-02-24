@@ -12,6 +12,16 @@ import json, uuid, webbrowser, re, time, sys, os
 from datetime import datetime, date, timedelta
 from collections import defaultdict
 
+def fix_quotes(text):
+    """Reemplaza comillas curvas (del navegador) por comillas rectas."""
+    replacements = {
+        '\u201c': '"', '\u201d': '"',
+        '\u2018': '"', '\u2019': '"',
+    }
+    for curva, recta in replacements.items():
+        text = text.replace(curva, recta)
+    return text
+
 def parse_time(time_str, ref_date):
     time_str = time_str.strip().upper()
     am_pm = time_str[-1]
@@ -111,7 +121,7 @@ def main():
     print("\nCostco Schedule -> Google Calendar (.ics)")
     print("=" * 50)
     print(PROMPT_FOR_CLAUDE)
-    print("Pega el JSON aqui abajo y escribe FIN (o fin) cuando termines:\n")
+    print("Pega el JSON aqui abajo y escribe fin cuando termines:\n")
 
     lines = []
     while True:
@@ -129,12 +139,14 @@ def main():
         print("\nERROR: No pegaste nada.")
         sys.exit(1)
 
+    # Limpiar comillas curvas del navegador
+    raw = fix_quotes(raw)
+
     # Extraer bloque JSON aunque haya texto extra alrededor
     match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', raw)
     if match:
         raw = match.group(0)
 
-    # Intentar parsear
     try:
         data = json.loads(raw)
     except json.JSONDecodeError as e:
@@ -142,7 +154,6 @@ def main():
         print("Asegurate de copiar el bloque completo desde { hasta }")
         sys.exit(1)
 
-    # Extraer shifts y period
     if isinstance(data, list):
         shifts = data
         period = "costco"
@@ -165,8 +176,9 @@ def main():
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(ics_content)
 
+    merged = merge_shifts(shifts)
     print(f"\nArchivo creado: {output_path}")
-    print(f"{len(shifts)} turno(s) procesados -> {len(merge_shifts(shifts))} dia(s) en el calendario\n")
+    print(f"{len(merged)} dia(s) en el calendario\n")
     print("Abriendo Google Calendar y resaltando el archivo en Finder...")
     webbrowser.open('https://calendar.google.com/calendar/r/settings/export')
     time.sleep(0.5)
