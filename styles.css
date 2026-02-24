@@ -478,3 +478,134 @@ textarea:focus {
 #manualInput {
   margin-top: 8px;
 }
+
+@media (max-width: 480px) {
+  body {
+    padding: 12px;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .header-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 1.1rem;
+    justify-content: center;
+  }
+
+  .subtitle {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .header-row > div:last-child {
+    display: flex;
+    gap: 6px;
+  }
+
+  .theme-toggle,
+  .lang-toggle {
+    margin: 0;
+  }
+
+  .step {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .step-num {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+
+  .step-title {
+    font-size: 0.9rem;
+  }
+
+  .step-desc {
+    font-size: 0.78rem;
+  }
+
+  .name-input,
+  textarea,
+  .prompt-box {
+    font-size: 0.85rem;
+  }
+
+  .prompt-box {
+    max-height: 120px;
+    font-size: 0.72rem;
+  }
+
+  .input-toggle {
+    width: 100%;
+  }
+
+  .input-toggle-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .manual-row {
+    flex-wrap: wrap;
+  }
+
+  .manual-row .manual-input[type="date"] {
+    width: 100%;
+    flex: none;
+  }
+
+  .manual-row .manual-input.small {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .manual-row span {
+    display: none;
+  }
+
+  .shift-item {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .shift-day {
+    width: 100%;
+  }
+
+  .shift-time {
+    font-size: 0.8rem;
+  }
+
+  .shift-hrs {
+    font-size: 0.7rem;
+  }
+
+  .manual-shift-item {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .manual-shift-item span:first-child {
+    width: 100%;
+    font-weight: 600;
+  }
+
+  .generate-btn {
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+
+  .footer {
+    font-size: 0.7rem;
+  }
+}
