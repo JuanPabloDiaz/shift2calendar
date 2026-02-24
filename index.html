@@ -1,10 +1,81 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Costco → Google Calendar</title>
+    <meta
+      name="description"
+      content="Convierte tu horario de Costco en eventos de calendario. Exporta tus turnos a Google Calendar easily."
+    />
+    <meta
+      name="keywords"
+      content="Costco, schedule, calendar, horario, Google Calendar, turnos, ICS"
+    />
+    <meta name="author" content="Juan Diaz" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="Costco → Google Calendar" />
+    <meta
+      property="og:description"
+      content="Convierte tu horario de Costco en eventos de calendario"
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Costco → Google Calendar" />
+    <meta
+      name="twitter:description"
+      content="Convierte tu horario de Costco en eventos de calendario"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>"
+      type="image/svg+xml"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>"
+    />
     <style>
+      :root {
+        --bg: #f0f2f5;
+        --card-bg: #ffffff;
+        --text: #1a1a2e;
+        --text-secondary: #666;
+        --text-muted: #888;
+        --border: #dde3f0;
+        --border-light: #eee;
+        --accent: #005eb8;
+        --accent-hover: #004a94;
+        --prompt-bg: #f8f9ff;
+        --shift-bg: #f8f9ff;
+        --success-bg: #f0fff4;
+        --success-border: #b2dfdb;
+        --success-text: #1b5e20;
+        --error-bg: #fff0f0;
+        --error-border: #ffcccc;
+        --error-text: #c0392b;
+        --shadow: rgba(0, 0, 0, 0.08);
+      }
+      [data-theme="dark"] {
+        --bg: #1a1a2e;
+        --card-bg: #2d2d44;
+        --text: #e8e8e8;
+        --text-secondary: #b0b0b0;
+        --text-muted: #888;
+        --border: #3d3d5c;
+        --border-light: #3d3d5c;
+        --accent: #4da3ff;
+        --accent-hover: #6bb3ff;
+        --prompt-bg: #2a2a40;
+        --shift-bg: #2a2a40;
+        --success-bg: #1a3d1a;
+        --success-border: #2d5a2d;
+        --success-text: #90ee90;
+        --error-bg: #3d1a1a;
+        --error-border: #5a2d2d;
+        --error-text: #ff6b6b;
+        --shadow: rgba(0, 0, 0, 0.3);
+      }
       * {
         box-sizing: border-box;
         margin: 0;
@@ -12,17 +83,22 @@
       }
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: #f0f2f5;
+        background: var(--bg);
         min-height: 100vh;
         padding: 20px;
+        color: var(--text);
+        transition:
+          background 0.3s,
+          color 0.3s;
       }
       .card {
-        background: white;
+        background: var(--card-bg);
         border-radius: 16px;
         padding: 24px;
         max-width: 500px;
         margin: 0 auto;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 12px var(--shadow);
+        transition: background 0.3s;
       }
       .header-row {
         display: flex;
@@ -32,17 +108,29 @@
       }
       h1 {
         font-size: 1.3rem;
-        color: #1a1a2e;
+        color: var(--text);
         margin-bottom: 4px;
       }
       .subtitle {
-        color: #666;
+        color: var(--text-secondary);
         font-size: 0.85rem;
+      }
+      .theme-toggle {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 4px 8px;
+        border-radius: 8px;
+        transition: background 0.2s;
+      }
+      .theme-toggle:hover {
+        background: var(--border);
       }
       .lang-toggle {
         display: flex;
         gap: 4px;
-        background: #f0f2f5;
+        background: var(--bg);
         border-radius: 8px;
         padding: 3px;
         flex-shrink: 0;
@@ -59,9 +147,9 @@
         transition: all 0.15s;
       }
       .lang-btn.active {
-        background: white;
-        color: #005eb8;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        background: var(--card-bg);
+        color: var(--accent);
+        box-shadow: 0 1px 4px var(--shadow);
       }
 
       .step {
@@ -90,12 +178,12 @@
       .step-title {
         font-weight: 600;
         font-size: 0.95rem;
-        color: #1a1a2e;
+        color: var(--text);
         margin-bottom: 4px;
       }
       .step-desc {
         font-size: 0.82rem;
-        color: #666;
+        color: var(--text-secondary);
         line-height: 1.4;
       }
 
@@ -105,31 +193,32 @@
       }
       .name-input-wrap label {
         font-size: 0.78rem;
-        color: #888;
+        color: var(--text-muted);
         margin-bottom: 4px;
         display: block;
       }
       .name-input {
         width: 100%;
-        border: 1.5px solid #dde3f0;
+        border: 1.5px solid var(--border);
         border-radius: 8px;
         padding: 9px 12px;
         font-size: 0.9rem;
         outline: none;
-        color: #222;
+        color: var(--text);
+        background: var(--card-bg);
         transition: border-color 0.2s;
       }
       .name-input:focus {
-        border-color: #005eb8;
+        border-color: var(--accent);
       }
 
       .prompt-box {
-        background: #f8f9ff;
-        border: 1px solid #dde3f0;
+        background: var(--prompt-bg);
+        border: 1px solid var(--border);
         border-radius: 10px;
         padding: 12px;
         font-size: 0.78rem;
-        color: #333;
+        color: var(--text);
         line-height: 1.5;
         margin-top: 8px;
         white-space: pre-wrap;
@@ -138,7 +227,7 @@
         overflow-y: auto;
       }
       .copy-btn {
-        background: #005eb8;
+        background: var(--accent);
         color: white;
         border: none;
         border-radius: 8px;
@@ -151,7 +240,7 @@
         transition: background 0.2s;
       }
       .copy-btn:active {
-        background: #004a94;
+        background: var(--accent-hover);
       }
       .copy-btn.copied {
         background: #28a745;
@@ -160,23 +249,24 @@
       textarea {
         width: 100%;
         height: 160px;
-        border: 1.5px solid #dde3f0;
+        border: 1.5px solid var(--border);
         border-radius: 10px;
         padding: 12px;
         font-size: 0.82rem;
         font-family: "Courier New", monospace;
         resize: vertical;
         outline: none;
-        color: #222;
+        color: var(--text);
+        background: var(--card-bg);
         transition: border-color 0.2s;
         margin-top: 8px;
       }
       textarea:focus {
-        border-color: #005eb8;
+        border-color: var(--accent);
       }
 
       .generate-btn {
-        background: #005eb8;
+        background: var(--accent);
         color: white;
         border: none;
         border-radius: 12px;
@@ -189,13 +279,13 @@
         transition: background 0.2s;
       }
       .generate-btn:active {
-        background: #004a94;
+        background: var(--accent-hover);
       }
 
       .error {
-        background: #fff0f0;
-        border: 1px solid #ffcccc;
-        color: #c0392b;
+        background: var(--error-bg);
+        border: 1px solid var(--error-border);
+        color: var(--error-text);
         border-radius: 8px;
         padding: 10px 14px;
         font-size: 0.85rem;
@@ -203,9 +293,9 @@
         display: none;
       }
       .success {
-        background: #f0fff4;
-        border: 1px solid #b2dfdb;
-        color: #1b5e20;
+        background: var(--success-bg);
+        border: 1px solid var(--success-border);
+        color: var(--success-text);
         border-radius: 8px;
         padding: 10px 14px;
         font-size: 0.85rem;
@@ -219,7 +309,7 @@
       .preview-title {
         font-weight: 600;
         font-size: 0.9rem;
-        color: #333;
+        color: var(--text);
         margin-bottom: 8px;
       }
       .shift-item {
@@ -227,26 +317,36 @@
         justify-content: space-between;
         align-items: center;
         padding: 8px 12px;
-        background: #f8f9ff;
+        background: var(--shift-bg);
         border-radius: 8px;
         margin-bottom: 6px;
         font-size: 0.85rem;
       }
       .shift-day {
         font-weight: 600;
-        color: #005eb8;
+        color: var(--accent);
       }
       .shift-time {
-        color: #444;
+        color: var(--text-secondary);
       }
       .shift-hrs {
-        color: #888;
+        color: var(--text-muted);
         font-size: 0.78rem;
       }
       .divider {
         border: none;
-        border-top: 1px solid #eee;
+        border-top: 1px solid var(--border-light);
         margin: 20px 0;
+      }
+      .footer {
+        text-align: center;
+        margin-top: 20px;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+      }
+      .footer a {
+        color: var(--accent);
+        text-decoration: none;
       }
     </style>
   </head>
@@ -257,13 +357,23 @@
           <h1>🗓 Costco → Google Calendar</h1>
           <p class="subtitle" id="txt-subtitle"></p>
         </div>
-        <div class="lang-toggle">
-          <button class="lang-btn active" id="btn-es" onclick="setLang('es')">
-            ES
+        <div style="display: flex; gap: 8px; align-items: flex-start">
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            onclick="toggleTheme()"
+            title="Toggle theme"
+          >
+            🌙
           </button>
-          <button class="lang-btn" id="btn-en" onclick="setLang('en')">
-            EN
-          </button>
+          <div class="lang-toggle">
+            <button class="lang-btn active" id="btn-es" onclick="setLang('es')">
+              ES
+            </button>
+            <button class="lang-btn" id="btn-en" onclick="setLang('en')">
+              EN
+            </button>
+          </div>
         </div>
       </div>
 
@@ -329,6 +439,10 @@
         <div id="shiftList"></div>
       </div>
     </div>
+
+    <footer class="footer">
+      <p>Developed by <strong>Juan Diaz</strong></p>
+    </footer>
 
     <script>
       // ── i18n ──────────────────────────────────────────────────────────────────────
@@ -406,6 +520,21 @@
       ];
 
       let lang = "es";
+      let theme = localStorage.getItem("theme") || "light";
+
+      function toggleTheme() {
+        theme = theme === "light" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        document.getElementById("themeToggle").textContent =
+          theme === "light" ? "🌙" : "☀️";
+      }
+
+      function applyTheme() {
+        document.documentElement.setAttribute("data-theme", theme);
+        document.getElementById("themeToggle").textContent =
+          theme === "light" ? "🌙" : "☀️";
+      }
 
       function setLang(l) {
         lang = l;
@@ -674,6 +803,7 @@ If a day has two time blocks include them as separate entries in shifts.`;
       }
 
       // Init
+      applyTheme();
       applyTranslations();
       updatePrompt();
     </script>
