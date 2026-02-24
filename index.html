@@ -36,6 +36,20 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="styles.css" />
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-KVRXZGZP52"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-KVRXZGZP52");
+    </script>
   </head>
   <body>
     <div class="card">
@@ -216,14 +230,14 @@
           step1Desc: "Escribe tu nombre exactamente como aparece en la imagen",
           nameLabel: "Nombre (Apellido, Nombre)",
           step2Title: "Copia el prompt",
-          step2Desc: "Ábrelo en Claude y adjunta la foto del horario",
+          step2Desc: "Ábrelo en ChatGPT o Claude y adjunta la foto del horario",
           copyBtn: "Copiar prompt",
           copiedBtn: "¡Copiado!",
           step3Title: "Pega el JSON aquí",
-          step3Desc: "Copia la respuesta de Claude y pégala abajo",
+          step3Desc: "Copia la respuesta de AI y pégala abajo",
           generateBtn: "Generar y descargar .ics",
           previewTitle: "Turnos detectados:",
-          errEmpty: "Pega el JSON de Claude primero.",
+          errEmpty: "Pega el JSON de AI primero.",
           errJson: "JSON inválido: ",
           errJsonHint: ". Asegúrate de copiar el bloque completo.",
           errNoShifts: "No se encontraron turnos en el JSON.",
@@ -237,14 +251,14 @@
           nameLabel: "Name (Last, First)",
           step2Title: "Copy the prompt",
           step2Desc:
-            "Open Claude, paste this prompt and attach the schedule photo",
+            "Open ChatGPT or Claude, paste this prompt and attach the schedule photo",
           copyBtn: "Copy prompt",
           copiedBtn: "Copied!",
           step3Title: "Paste the JSON here",
-          step3Desc: "Copy Claude's response and paste it below",
+          step3Desc: "Copy AI's response and paste it below",
           generateBtn: "Generate & download .ics",
           previewTitle: "Detected shifts:",
-          errEmpty: "Paste Claude's JSON first.",
+          errEmpty: "Paste AI's JSON first.",
           errJson: "Invalid JSON: ",
           errJsonHint: ". Make sure you copied the full block.",
           errNoShifts: "No shifts found in the JSON.",
@@ -429,7 +443,9 @@ Devuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni
 }
 
 Donde X es A o P. El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").
-Si un dia tiene dos bloques de horario incluyelos como entradas separadas en shifts.`;
+Si un dia tiene dos bloques de horario incluyelos como entradas separadas en shifts.
+
+Abre en: https://chatgpt.com o https://claude.ai`;
         } else {
           return `Analyze this Costco schedule image and extract ONLY the shifts for "${name}".
 Return ONLY a valid JSON in this exact format, with no explanation or extra text:
@@ -442,7 +458,9 @@ Return ONLY a valid JSON in this exact format, with no explanation or extra text
 }
 
 Where X is A or P. The "period" field is the Time Period from the top of the image (e.g. "3/02/26 - 3/08/26").
-If a day has two time blocks include them as separate entries in shifts.`;
+If a day has two time blocks include them as separate entries in shifts.
+
+Open at: https://chatgpt.com or https://claude.ai`;
         }
       }
 
