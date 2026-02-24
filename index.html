@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Costco → Google Calendar</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 500px;
+    margin: 0 auto;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  h1 {
+    font-size: 1.3rem;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    color: #666;
+    font-size: 0.85rem;
+    margin-bottom: 24px;
+  }
+
+  .step {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .step-num {
+    background: #005eb8;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content { flex: 1; }
+  .step-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+  }
+  .step-desc {
+    font-size: 0.82rem;
+    color: #666;
+    line-height: 1.4;
+  }
+
+  .prompt-box {
+    background: #f8f9ff;
+    border: 1px solid #dde3f0;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 0.78rem;
+    color: #333;
+    line-height: 1.5;
+    margin-top: 8px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .copy-btn {
+    background: #005eb8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    margin-top: 8px;
+    width: 100%;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .copy-btn:active { background: #004a94; }
+  .copy-btn.copied { background: #28a745; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 24px 0;
+  }
+
+  textarea {
+    width: 100%;
+    height: 180px;
+    border: 1.5px solid #dde3f0;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 0.82rem;
+    font-family: 'Courier New', monospace;
+    resize: vertical;
+    outline: none;
+    color: #222;
+    transition: border-color 0.2s;
+    margin-top: 8px;
+  }
+  textarea:focus { border-color: #005eb8; }
+
+  .generate-btn {
+    background: #005eb8;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 12px;
+    transition: background 0.2s;
+  }
+  .generate-btn:active { background: #004a94; }
+
+  .error {
+    background: #fff0f0;
+    border: 1px solid #ffcccc;
+    color: #c0392b;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-top: 12px;
+    display: none;
+  }
+  .success {
+    background: #f0fff4;
+    border: 1px solid #b2dfdb;
+    color: #1b5e20;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .preview {
+    margin-top: 16px;
+    display: none;
+  }
+  .preview-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  .shift-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f9ff;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+  }
+  .shift-day { font-weight: 600; color: #005eb8; }
+  .shift-time { color: #444; }
+  .shift-hrs { color: #888; font-size: 0.78rem; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🗓 Costco → Google Calendar</h1>
+  <p class="subtitle">Convierte tu horario en eventos de calendario</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Copia este prompt</div>
+      <div class="step-desc">Ábrelo en Claude y adjunta la foto del horario</div>
+      <div class="prompt-box" id="promptText">Analiza esta imagen de un horario de Costco y extrae SOLO los turnos de "Diaz, Juan".
+Devuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:
+
+{
+  "period": "M/DD/YY - M/DD/YY",
+  "shifts": [
+    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}
+  ]
+}
+
+Donde X es A o P. El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").
+Si un dia tiene dos bloques de horario incluyelos como entradas separadas en shifts.</div>
+      <button class="copy-btn" id="copyPromptBtn" onclick="copyPrompt()">Copiar prompt</button>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Pega el JSON aquí</div>
+      <div class="step-desc">Copia la respuesta de Claude y pégala abajo</div>
+      <textarea id="jsonInput" placeholder='{"period": "3/02/26 - 3/08/26", "shifts": [...]}'></textarea>
+    </div>
+  </div>
+
+  <button class="generate-btn" onclick="generate()">Generar y descargar .ics</button>
+
+  <div class="error" id="errorBox"></div>
+  <div class="success" id="successBox"></div>
+
+  <div class="preview" id="preview">
+    <hr class="divider" style="margin-top:16px;margin-bottom:12px;">
+    <div class="preview-title">Turnos detectados:</div>
+    <div id="shiftList"></div>
+  </div>
+</div>
+
+<script>
+const DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function fixQuotes(str) {
+  return str
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/[\u2018\u2019]/g, '"');
+}
+
+function parseTime(timeStr, refDate) {
+  timeStr = timeStr.trim().toUpperCase();
+  const ampm = timeStr.slice(-1);
+  const timePart = timeStr.slice(0, -1);
+  let [hour, minute] = timePart.includes(':')
+    ? timePart.split(':').map(Number)
+    : [parseInt(timePart), 0];
+  if (ampm === 'P' && hour !== 12) hour += 12;
+  if (ampm === 'A' && hour === 12) hour = 0;
+  const d = new Date(refDate);
+  d.setHours(hour, minute, 0, 0);
+  return d;
+}
+
+function toIcsDt(dt) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+}
+
+function mergeShifts(shifts) {
+  const byDate = {};
+  for (const s of shifts) {
+    if (!byDate[s.date]) byDate[s.date] = [];
+    byDate[s.date].push(s);
+  }
+  const merged = [];
+  for (const day of Object.keys(byDate).sort()) {
+    const dayShifts = byDate[day];
+    const refDate = new Date(day + 'T00:00:00');
+    const starts = dayShifts.map(s => parseTime(s.start, refDate));
+    const ends = dayShifts.map((s, i) => {
+      let e = parseTime(s.end, refDate);
+      if (e <= starts[i]) e = new Date(e.getTime() + 86400000);
+      return e;
+    });
+    const earliestStart = new Date(Math.min(...starts));
+    const latestEnd = new Date(Math.max(...ends));
+    const totalHours = dayShifts.reduce((a, s) => a + parseFloat(s.hours), 0);
+    merged.push({ date: day, startDt: earliestStart, endDt: latestEnd, hours: totalHours.toFixed(2) });
+  }
+  return merged;
+}
+
+function buildIcs(shifts, period) {
+  const merged = mergeShifts(shifts);
+  const now = toIcsDt(new Date()).replace('T','') + 'Z';
+  let events = '';
+  for (const s of merged) {
+    const uid = 'costco-' + s.date + '-' + Math.random().toString(36).slice(2);
+    events += [
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTAMP:${now}`,
+      `DTSTART:${toIcsDt(s.startDt)}`,
+      `DTEND:${toIcsDt(s.endDt)}`,
+      'SUMMARY:Costco',
+      'COLOR:grape',
+      `DESCRIPTION:Turno Costco - ${s.hours} hrs`,
+      'END:VEVENT'
+    ].join('\r\n') + '\r\n';
+  }
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//CostcoSchedule//ES//',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    events.trim(),
+    'END:VCALENDAR'
+  ].join('\r\n');
+}
+
+function periodToFilename(period) {
+  return 'costco_' + period.trim().replace(/\//g, '-').replace(' - ', '_') + '.ics';
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('successBox').style.display = 'none';
+  document.getElementById('preview').style.display = 'none';
+}
+
+function showSuccess(msg) {
+  const el = document.getElementById('successBox');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('errorBox').style.display = 'none';
+}
+
+function generate() {
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('successBox').style.display = 'none';
+  document.getElementById('preview').style.display = 'none';
+
+  let raw = document.getElementById('jsonInput').value.trim();
+  if (!raw) { showError('Pega el JSON de Claude primero.'); return; }
+
+  raw = fixQuotes(raw);
+
+  // Extraer bloque JSON
+  const match = raw.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+  if (match) raw = match[0];
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch(e) {
+    showError('JSON inválido: ' + e.message + '. Asegúrate de copiar el bloque completo.');
+    return;
+  }
+
+  let shifts, period;
+  if (Array.isArray(data)) {
+    shifts = data; period = 'costco';
+  } else {
+    shifts = data.shifts || [];
+    period = data.period || 'costco';
+  }
+
+  if (!shifts.length) { showError('No se encontraron turnos en el JSON.'); return; }
+
+  const icsContent = buildIcs(shifts, period);
+  const filename = periodToFilename(period);
+
+  // Descargar el archivo
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  showSuccess(`✅ Descargado: ${filename}`);
+
+  // Mostrar preview
+  const merged = mergeShifts(shifts);
+  const list = document.getElementById('shiftList');
+  list.innerHTML = '';
+  for (const s of merged) {
+    const d = new Date(s.date + 'T00:00:00');
+    const label = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+    const fmt = dt => {
+      let h = dt.getHours(), m = dt.getMinutes(), ap = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${String(m).padStart(2,'0')} ${ap}`;
+    };
+    list.innerHTML += `
+      <div class="shift-item">
+        <span class="shift-day">${label}</span>
+        <span class="shift-time">${fmt(s.startDt)} – ${fmt(s.endDt)}</span>
+        <span class="shift-hrs">${s.hours}h</span>
+      </div>`;
+  }
+  document.getElementById('preview').style.display = 'block';
+}
+
+function copyPrompt() {
+  const text = document.getElementById('promptText').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyPromptBtn');
+    btn.textContent = '¡Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copiar prompt';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
