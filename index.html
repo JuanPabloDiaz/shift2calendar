@@ -128,16 +128,62 @@
         </div>
       </div>
 
-      <!-- Step 2: Paste JSON -->
+      <!-- Step 2: Paste JSON or Manual Input -->
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-content">
           <div class="step-title" id="txt-step3-title"></div>
           <div class="step-desc" id="txt-step3-desc"></div>
+
+          <div class="input-toggle">
+            <button
+              class="input-toggle-btn active"
+              id="btn-json"
+              onclick="setInputMode('json')"
+            >
+              JSON
+            </button>
+            <button
+              class="input-toggle-btn"
+              id="btn-manual"
+              onclick="setInputMode('manual')"
+            >
+              Manual
+            </button>
+          </div>
+
           <textarea
             id="jsonInput"
             placeholder='{"period": "3/02/26 - 3/08/26", "shifts": [...]}'
           ></textarea>
+
+          <div id="manualInput" style="display: none">
+            <div class="manual-row">
+              <input type="date" id="manualDate" class="manual-input" />
+              <input
+                type="time"
+                id="manualStart"
+                class="manual-input small"
+                placeholder="Inicio"
+              />
+              <span>-</span>
+              <input
+                type="time"
+                id="manualEnd"
+                class="manual-input small"
+                placeholder="Fin"
+              />
+              <button class="add-shift-btn" onclick="addShift()">+</button>
+            </div>
+            <div class="manual-shifts" id="manualShiftsList"></div>
+            <button
+              class="clear-shifts-btn"
+              onclick="clearManualShifts()"
+              id="txt-clear-btn"
+            >
+              Limpiar turnos
+            </button>
+          </div>
         </div>
       </div>
 
@@ -166,7 +212,7 @@
       const T = {
         es: {
           subtitle: "Convierte tu horario en eventos de calendario",
-          step1Title: "Tu nombre en el schedule",
+          step1Title: "Tu nombre en el horario",
           step1Desc: "Escribe tu nombre exactamente como aparece en la imagen",
           nameLabel: "Nombre (Apellido, Nombre)",
           step2Title: "Copia el prompt",
@@ -182,6 +228,7 @@
           errJsonHint: ". Asegúrate de copiar el bloque completo.",
           errNoShifts: "No se encontraron turnos en el JSON.",
           successMsg: "✅ Descargado: ",
+          clearBtn: "Limpiar turnos",
         },
         en: {
           subtitle: "Convert your schedule into calendar events",
@@ -202,6 +249,7 @@
           errJsonHint: ". Make sure you copied the full block.",
           errNoShifts: "No shifts found in the JSON.",
           successMsg: "✅ Downloaded: ",
+          clearBtn: "Clear shifts",
         },
       };
 
@@ -238,6 +286,87 @@
 
       let lang = "es";
       let theme = localStorage.getItem("theme") || "light";
+      let inputMode = "json";
+      let manualShifts = [];
+
+      function setInputMode(mode) {
+        inputMode = mode;
+        document
+          .getElementById("btn-json")
+          .classList.toggle("active", mode === "json");
+        document
+          .getElementById("btn-manual")
+          .classList.toggle("active", mode === "manual");
+        document.getElementById("jsonInput").style.display =
+          mode === "json" ? "block" : "none";
+        document.getElementById("manualInput").style.display =
+          mode === "manual" ? "block" : "none";
+      }
+
+      function addShift() {
+        const date = document.getElementById("manualDate").value;
+        const start = document.getElementById("manualStart").value;
+        const end = document.getElementById("manualEnd").value;
+
+        if (!date || !start || !end) return;
+
+        const startDt = new Date(`2000-01-01T${start}`);
+        const endDt = new Date(`2000-01-01T${end}`);
+        let hours = (endDt - startDt) / (1000 * 60 * 60);
+        if (hours <= 0) hours += 24;
+
+        const shift = {
+          date: date,
+          start: formatTime12h(start),
+          end: formatTime12h(end),
+          hours: hours.toFixed(2),
+        };
+
+        manualShifts.push(shift);
+        renderManualShifts();
+
+        document.getElementById("manualDate").value = "";
+        document.getElementById("manualStart").value = "";
+        document.getElementById("manualEnd").value = "";
+      }
+
+      function formatTime12h(time24) {
+        const [h, m] = time24.split(":");
+        const hour = parseInt(h);
+        const ampm = hour >= 12 ? "P" : "A";
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${m}${ampm}`;
+      }
+
+      function removeShift(index) {
+        manualShifts.splice(index, 1);
+        renderManualShifts();
+      }
+
+      function renderManualShifts() {
+        const list = document.getElementById("manualShiftsList");
+        const DAYS = lang === "es" ? DAYS_ES : DAYS_EN;
+        const MONTHS = lang === "es" ? MONTHS_ES : MONTHS_EN;
+
+        list.innerHTML = manualShifts
+          .map((s, i) => {
+            const d = new Date(s.date + "T00:00:00");
+            const label = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+            return `
+            <div class="manual-shift-item">
+              <span>${label}</span>
+              <span>${s.start} - ${s.end}</span>
+              <button onclick="removeShift(${i})">×</button>
+            </div>
+          `;
+          })
+          .join("");
+      }
+
+      function clearManualShifts() {
+        manualShifts = [];
+        renderManualShifts();
+      }
 
       function toggleTheme() {
         theme = theme === "light" ? "dark" : "light";
@@ -283,6 +412,8 @@
         document.getElementById("txt-generate-btn").textContent = t.generateBtn;
         document.getElementById("txt-preview-title").textContent =
           t.previewTitle;
+        document.getElementById("txt-clear-btn").textContent = t.clearBtn;
+        renderManualShifts();
       }
 
       function getPromptText(name) {
@@ -439,36 +570,46 @@ If a day has two time blocks include them as separate entries in shifts.`;
         document.getElementById("successBox").style.display = "none";
         document.getElementById("preview").style.display = "none";
 
-        let raw = document.getElementById("jsonInput").value.trim();
-        if (!raw) {
-          showError(t.errEmpty);
-          return;
-        }
-
-        raw = fixQuotes(raw);
-        const match = raw.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-        if (match) raw = match[0];
-
-        let data;
-        try {
-          data = JSON.parse(raw);
-        } catch (e) {
-          showError(t.errJson + e.message + t.errJsonHint);
-          return;
-        }
-
         let shifts, period;
-        if (Array.isArray(data)) {
-          shifts = data;
+
+        if (inputMode === "manual") {
+          if (manualShifts.length === 0) {
+            showError(t.errNoShifts);
+            return;
+          }
+          shifts = manualShifts;
           period = "costco";
         } else {
-          shifts = data.shifts || [];
-          period = data.period || "costco";
-        }
+          let raw = document.getElementById("jsonInput").value.trim();
+          if (!raw) {
+            showError(t.errEmpty);
+            return;
+          }
 
-        if (!shifts.length) {
-          showError(t.errNoShifts);
-          return;
+          raw = fixQuotes(raw);
+          const match = raw.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+          if (match) raw = match[0];
+
+          let data;
+          try {
+            data = JSON.parse(raw);
+          } catch (e) {
+            showError(t.errJson + e.message + t.errJsonHint);
+            return;
+          }
+
+          if (Array.isArray(data)) {
+            shifts = data;
+            period = "costco";
+          } else {
+            shifts = data.shifts || [];
+            period = data.period || "costco";
+          }
+
+          if (!shifts.length) {
+            showError(t.errNoShifts);
+            return;
+          }
         }
 
         const icsContent = buildIcs(shifts);
