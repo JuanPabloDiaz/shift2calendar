@@ -12,43 +12,48 @@ Convierte tu horario de Costco en eventos de calendario (.ics) para importar a G
 
 ## Cómo usar
 
-### Opción 1: Entrada manual (más fácil)
+### Opción 1: Página web - Entrada manual
 
-1. Abre la página
-2. En el paso 3, haz clic en "Manual"
+1. Abre `index.html` en tu navegador
+2. En el paso 3, haz clic en **"Manual"**
 3. Selecciona la fecha, hora de inicio y hora de fin
-4. Haz clic en "+" para agregar el turno
+4. Haz clic en **"+"** para agregar el turno
 5. Repite para cada día
-6. Haz clic en "Generar y descargar .ics"
+6. Haz clic en **"Generar y descargar .ics"**
 7. Importa el archivo a Google Calendar
 
-### Opción 2: Con Claude AI
+### Opción 2: Página web - Con AI
 
-1. Abre la página
-2. Ingresa tu nombre exactamente como aparece en el horario
-3. Copia el prompt (botón "Copy prompt")
+1. Abre `index.html` en tu navegador
+2. En el paso 3, asegúrate de estar en **"JSON"**
+3. Copia el prompt (botón **"Copy prompt"**)
 4. Abre [Claude](https://claude.ai) y pega el prompt
 5. Adjunta la foto de tu horario de Costco
 6. Claude te devolverá un JSON
-7. Copia el JSON y pégalo en el campo de texto (asegúrate de estar en la pestaña "JSON")
-8. Haz clic en "Generar y descargar .ics"
+7. Copia el JSON y pégalo en el campo de texto
+8. Haz clic en **"Generar y descargar .ics"**
 9. Importa el archivo a Google Calendar
 
-### Opción 3: JSON personalizado
+### Opción 3: Script de Python (sin navegador)
 
-También puedes pegar tu propio JSON:
+1. Ejecuta el script: `python script_schedule_costco.py`
+2. El script te mostrará un prompt para usar en Claude.ai
+3. Sube tu foto del schedule a Claude.ai y pídele el JSON
+4. Pega el JSON cuando el script te lo pida
+5. Escribe `fin` y presiona Enter
+6. Se genera un archivo `.ics` en la misma carpeta
+7. Se abre Google Calendar para importarlo
+
+## Formato del JSON
 
 ```json
 {
   "period": "3/02/26 - 3/08/26",
   "shifts": [
-    {"date": "2026-03-02", "start": "9:00A", "end": "5:00P", "hours": "8.00"},
-    {"date": "2026-03-03", "start": "9:00A", "end": "5:00P", "hours": "8.00"}
+    {"date": "2026-03-02", "start": "9:00A", "end": "5:00P", "hours": "8.00"}
   ]
 }
 ```
-
-## Formato del JSON
 
 | Campo | Descripción |
 |-------|-------------|
@@ -63,13 +68,14 @@ También puedes pegar tu propio JSON:
 
 1. Descarga el archivo .ics
 2. Ve a [Google Calendar](https://calendar.google.com)
-3. Importa el archivo en Configuración > Importar y exportar
+3. Configuración > Importar y exportar > Importar
 
 ## Tecnologías
 
 - HTML5
 - CSS3 (CSS Variables para theming)
 - JavaScript vanilla
+- Python 3 (script CLI)
 - Sin dependencias externas
 
 ## Desarrollador
