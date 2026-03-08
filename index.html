@@ -493,6 +493,9 @@
         "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets";
       const OWNER_NAME = "Diaz, Juan";
       const REMINDER_FIXED = 30; // always-on reminder in minutes
+      const LUNCH_THRESHOLD_HOURS = 5; // only generate lunch reminder above this
+      const LUNCH_NOTICE_BEFORE_MINUTES = 30; // warn this many minutes before hour 5
+      const LUNCH_EVENT_DURATION_MINUTES = 5;
 
       // ── PAY RATES (update here if your wage changes) ──────────────────────
       const HOURLY_RATE = 20; // regular hourly rate (USD)
@@ -538,6 +541,8 @@
           descHours: "Horas hoy",
           descWeekTotal: "Total semana",
           descWeekDays: "días esta semana",
+          descLunchTitle: "Recordatorio de lunch",
+          descLunchNote: "Toma el lunch antes de cumplir 5 horas",
           juanDivider: "Solo para Juan Diaz",
           googleSignin: "Conectar Google",
           signout: "Cerrar sesión",
@@ -594,6 +599,8 @@
           descHours: "Hours today",
           descWeekTotal: "Week total",
           descWeekDays: "days this week",
+          descLunchTitle: "Lunch reminder",
+          descLunchNote: "Take lunch before reaching 5 hours",
           juanDivider: "Juan Diaz only",
           googleSignin: "Connect Google",
           signout: "Sign out",
@@ -877,6 +884,51 @@
               t.googleErr + (err.error?.message || res.status),
             );
             return false;
+          }
+
+          const lunchReminderAt = getLunchReminderDate(s.startDt, s.hours);
+          if (lunchReminderAt) {
+            const lunchEnd = new Date(
+              lunchReminderAt.getTime() + LUNCH_EVENT_DURATION_MINUTES * 60000,
+            );
+            const lunchEvent = {
+              summary: t.descLunchTitle,
+              location,
+              description: `${t.descLunchNote}\n📆 ${period}`,
+              start: {
+                dateTime: lunchReminderAt.toISOString(),
+                timeZone: "America/New_York",
+              },
+              end: {
+                dateTime: lunchEnd.toISOString(),
+                timeZone: "America/New_York",
+              },
+              colorId: "11",
+              reminders: {
+                useDefault: false,
+                overrides: [{ method: "popup", minutes: 0 }],
+              },
+            };
+
+            const lunchRes = await fetch(
+              "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: "Bearer " + accessToken,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(lunchEvent),
+              },
+            );
+            if (!lunchRes.ok) {
+              const err = await lunchRes.json();
+              showGoogleStatus(
+                "error",
+                t.googleErr + (err.error?.message || lunchRes.status),
+              );
+              return false;
+            }
           }
         }
         showGoogleStatus(
@@ -1837,6 +1889,32 @@
           }
           lines.push("END:VEVENT");
           events += lines.join("\r\n") + "\r\n";
+
+          const lunchReminderAt = getLunchReminderDate(s.startDt, s.hours);
+          if (lunchReminderAt) {
+            const lunchEnd = new Date(
+              lunchReminderAt.getTime() + LUNCH_EVENT_DURATION_MINUTES * 60000,
+            );
+            const lunchUid =
+              "costco-lunch-" + s.date + "-" + Math.random().toString(36).slice(2);
+            const lunchLines = [
+              "BEGIN:VEVENT",
+              `UID:${lunchUid}`,
+              `DTSTAMP:${now}`,
+              `DTSTART:${toIcsDt(lunchReminderAt)}`,
+              `DTEND:${toIcsDt(lunchEnd)}`,
+              `SUMMARY:${t.descLunchTitle}`,
+              `DESCRIPTION:${t.descLunchNote}`,
+              "BEGIN:VALARM",
+              "ACTION:DISPLAY",
+              `DESCRIPTION:${t.descLunchTitle}`,
+              "TRIGGER:PT0M",
+              "END:VALARM",
+              "END:VEVENT",
+            ];
+            if (location) lunchLines.splice(7, 0, `LOCATION:${location}`);
+            events += lunchLines.join("\r\n") + "\r\n";
+          }
         }
         return [
           "BEGIN:VCALENDAR",
@@ -2050,6 +2128,11 @@
               hours: ds.reduce((a, s) => a + parseFloat(s.hours), 0).toFixed(2),
             };
           });
+      }
+      function getLunchReminderDate(startDt, hoursWorked) {
+        if (parseFloat(hoursWorked) <= LUNCH_THRESHOLD_HOURS) return null;
+        const minsAfterStart = 5 * 60 - LUNCH_NOTICE_BEFORE_MINUTES;
+        return new Date(startDt.getTime() + minsAfterStart * 60000);
       }
       function periodToFilename(p) {
         return (
