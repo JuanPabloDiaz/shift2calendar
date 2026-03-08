@@ -497,6 +497,8 @@
       // ── PAY RATES (update here if your wage changes) ──────────────────────
       const HOURLY_RATE = 20; // regular hourly rate (USD)
       const SUNDAY_RATE = HOURLY_RATE * 1.5; // time and a half
+      const PAY_PERIOD_ANCHOR_START = "2026-02-16"; // paystub period start
+      const PAY_PERIOD_LENGTH_DAYS = 14; // biweekly
 
       // ── TRANSLATIONS ──────────────────────────────────────────────────────
       const T = {
@@ -950,6 +952,14 @@
         return res.values ? res.values.length : 0;
       }
 
+      async function getSheetValues(sheetName) {
+        const res = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A1:H`,
+          { headers: { Authorization: "Bearer " + accessToken } },
+        ).then((r) => r.json());
+        return res.values || [];
+      }
+
       async function clearTab(sheetName) {
         await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A1:Z200:clear`,
@@ -987,6 +997,10 @@
         showGoogleStatus("loading", t.googleLoading);
         const merged = mergeShifts(shifts);
         const pay = calcPay(merged);
+        const weekStart = merged[0]?.date;
+        const weekEnd = merged[merged.length - 1]?.date;
+        const biweekly = getBiweeklyWindow(weekStart);
+        const closesPayPeriod = weekEnd === biweekly.end;
 
         // Get/create single tab
         const tabId = await getOrCreateTab(SHEET_TAB_TITLE);
@@ -996,6 +1010,7 @@
         }
 
         const usedRows = await getUsedRowCount(SHEET_TAB_TITLE);
+        const existingValues = await getSheetValues(SHEET_TAB_TITLE);
         const isFirstBlock = usedRows === 0;
 
         // Build values: optional header + shift rows + summary row
@@ -1028,12 +1043,45 @@
             "Total hours",
             pay.totalHrs,
             pay.totalPay,
-            "",
-            "",
+            "Pay period",
+            `${biweekly.start} - ${biweekly.end}`,
           ],
         ];
 
-        const allValues = [...(isFirstBlock ? header : []), ...shiftRows, ...summaryRows];
+        let biweeklyRows = [];
+        if (closesPayPeriod) {
+          const existingBiweekly = sumExistingBiweekly(existingValues, biweekly);
+          const currentBiweeklyHrs = merged
+            .filter((s) => s.date >= biweekly.start && s.date <= biweekly.end)
+            .reduce((a, s) => a + parseFloat(s.hours), 0);
+          const currentBiweeklyPay = merged
+            .filter((s) => s.date >= biweekly.start && s.date <= biweekly.end)
+            .reduce((a, s) => {
+              const d = new Date(s.date + "T00:00:00");
+              const isSun = d.getDay() === 0;
+              return a + parseFloat(s.hours) * (isSun ? pay.sunRate : pay.rate);
+            }, 0);
+
+          biweeklyRows = [
+            [
+              `BIWEEKLY TOTAL ${biweekly.start} - ${biweekly.end}`,
+              "",
+              "",
+              "Total hours",
+              existingBiweekly.hours + currentBiweeklyHrs,
+              existingBiweekly.pay + currentBiweeklyPay,
+              "Pay date",
+              biweekly.payDate,
+            ],
+          ];
+        }
+
+        const allValues = [
+          ...(isFirstBlock ? header : []),
+          ...shiftRows,
+          ...summaryRows,
+          ...biweeklyRows,
+        ];
 
         // Write values
         const startRow = usedRows + 1;
@@ -1066,6 +1114,7 @@
         const firstShift = base + (isFirstBlock ? 1 : 0);
         const lastShift = firstShift + nShifts - 1; // inclusive index
         const summaryRow = lastShift + 1;
+        const biweeklyRow = closesPayPeriod ? summaryRow + 1 : null;
 
         // Colors
         const BASE_BG = { red: 0.93, green: 0.93, blue: 0.93 };
@@ -1230,7 +1279,7 @@
         // Summary row
         requests.push({
           repeatCell: {
-            range: row(summaryRow, 0, 6),
+            range: row(summaryRow, 0, 8),
             cell: {
               userEnteredFormat: {
                 backgroundColor: SUMM_BG,
@@ -1295,6 +1344,63 @@
           },
         });
 
+        // Biweekly summary row (only on pay-period close week)
+        if (biweeklyRow !== null) {
+          requests.push({
+            repeatCell: {
+              range: row(biweeklyRow, 0, 8),
+              cell: {
+                userEnteredFormat: {
+                  backgroundColor: { red: 0.86, green: 0.9, blue: 0.96 },
+                  textFormat: { bold: true, fontSize: 12 },
+                  verticalAlignment: "MIDDLE",
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          });
+
+          requests.push({
+            repeatCell: {
+              range: cell(biweeklyRow, 0),
+              cell: {
+                userEnteredFormat: {
+                  horizontalAlignment: "LEFT",
+                  textFormat: { bold: true, fontSize: 16 },
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          });
+
+          requests.push({
+            repeatCell: {
+              range: cell(biweeklyRow, 4),
+              cell: {
+                userEnteredFormat: {
+                  horizontalAlignment: "CENTER",
+                  textFormat: { bold: true, fontSize: 15 },
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          });
+
+          requests.push({
+            repeatCell: {
+              range: cell(biweeklyRow, 5),
+              cell: {
+                userEnteredFormat: {
+                  numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" },
+                  horizontalAlignment: "RIGHT",
+                  textFormat: { bold: true, fontSize: 16 },
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          });
+        }
+
         // Column widths
         const colWidths = [140, 190, 150, 150, 95, 180, 180, 140];
         colWidths.forEach((px, i) => {
@@ -1351,12 +1457,26 @@
             fields: "pixelSize",
           },
         });
+        if (biweeklyRow !== null) {
+          requests.push({
+            updateDimensionProperties: {
+              range: {
+                sheetId: tabId,
+                dimension: "ROWS",
+                startIndex: biweeklyRow,
+                endIndex: biweeklyRow + 1,
+              },
+              properties: { pixelSize: 38 },
+              fields: "pixelSize",
+            },
+          });
+        }
 
         // Borders for current block
         const tableRange = {
           sheetId: tabId,
           startRowIndex: isFirstBlock ? headerRow : firstShift,
-          endRowIndex: summaryRow + 1,
+          endRowIndex: (biweeklyRow ?? summaryRow) + 1,
           startColumnIndex: 0,
           endColumnIndex: 6,
         };
@@ -1378,7 +1498,7 @@
             range: {
               sheetId: tabId,
               startRowIndex: isFirstBlock ? headerRow : firstShift,
-              endRowIndex: summaryRow + 1,
+              endRowIndex: (biweeklyRow ?? summaryRow) + 1,
               startColumnIndex: 5,
               endColumnIndex: 6,
             },
@@ -1414,6 +1534,56 @@
 
         showGoogleStatus("success", t.googleSheetsOk);
         return true;
+      }
+
+      function getBiweeklyWindow(dateStr) {
+        const base = new Date(PAY_PERIOD_ANCHOR_START + "T12:00:00");
+        const d = new Date(dateStr + "T12:00:00");
+        const msDay = 86400000;
+        const diffDays = Math.floor((d - base) / msDay);
+        const bucket = Math.floor(diffDays / PAY_PERIOD_LENGTH_DAYS);
+        const start = new Date(
+          base.getTime() + bucket * PAY_PERIOD_LENGTH_DAYS * msDay,
+        );
+        const end = new Date(
+          start.getTime() + (PAY_PERIOD_LENGTH_DAYS - 1) * msDay,
+        );
+        const payDate = new Date(end.getTime() + 5 * msDay); // Costco example: Friday after period close
+        return {
+          start: toIsoDate(start),
+          end: toIsoDate(end),
+          payDate: toUsDate(payDate),
+        };
+      }
+
+      function sumExistingBiweekly(values, biweekly) {
+        let hours = 0;
+        let pay = 0;
+        values.forEach((r) => {
+          const date = (r[0] || "").trim();
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+          if (date < biweekly.start || date > biweekly.end) return;
+          const hrs = parseFloat((r[4] || "").toString().replace(/,/g, ""));
+          const payVal = parseFloat(
+            (r[5] || "")
+              .toString()
+              .replace(/\$/g, "")
+              .replace(/,/g, ""),
+          );
+          if (!Number.isNaN(hrs)) hours += hrs;
+          if (!Number.isNaN(payVal)) pay += payVal;
+        });
+        return { hours, pay };
+      }
+
+      function toIsoDate(dt) {
+        const p = (n) => String(n).padStart(2, "0");
+        return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`;
+      }
+
+      function toUsDate(dt) {
+        const p = (n) => String(n).padStart(2, "0");
+        return `${p(dt.getMonth() + 1)}/${p(dt.getDate())}/${dt.getFullYear()}`;
       }
 
       function confirmDuplicate() {
