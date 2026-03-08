@@ -4,30 +4,71 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Costco → Google Calendar | Juan Diaz</title>
-    <meta name="description" content="Convert your Costco schedule to Google Calendar events." />
+    <meta
+      name="description"
+      content="Convert your Costco schedule to Google Calendar events."
+    />
     <meta name="author" content="Juan Diaz" />
     <meta name="robots" content="index, follow" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E" type="image/svg+xml" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E"
+      type="image/svg+xml"
+    />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-KVRXZGZP52"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-KVRXZGZP52");</script>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-KVRXZGZP52"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-KVRXZGZP52");
+    </script>
   </head>
   <body>
     <div class="card">
       <div class="header-row">
         <div>
           <h1>
-            <svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <svg
+              class="icon"
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
             Costco &rarr; Google Calendar
           </h1>
           <p class="subtitle" id="txt-subtitle"></p>
         </div>
-        <div style="display:flex;gap:8px;align-items:flex-start">
-          <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme"></button>
+        <div style="display: flex; gap: 8px; align-items: flex-start">
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            onclick="toggleTheme()"
+            title="Toggle theme"
+          ></button>
           <div class="lang-toggle">
-            <button class="lang-btn" id="btn-es" onclick="setLang('es')">ES</button>
-            <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+            <button class="lang-btn" id="btn-es" onclick="setLang('es')">
+              ES
+            </button>
+            <button class="lang-btn active" id="btn-en" onclick="setLang('en')">
+              EN
+            </button>
           </div>
         </div>
       </div>
@@ -37,14 +78,49 @@
         <div class="step-num">1</div>
         <div class="step-content">
           <div class="step-title" id="txt-step1-title"></div>
-          <div class="step-desc"  id="txt-step1-desc"></div>
+          <div class="step-desc" id="txt-step1-desc"></div>
           <div class="image-mode-toggle">
-            <button class="image-mode-btn active" id="imgmode-btn-printed" onclick="setImageMode('printed')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <button
+              class="image-mode-btn active"
+              id="imgmode-btn-printed"
+              onclick="setImageMode('printed')"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path
+                  d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
               <span id="txt-imgmode-printed"></span>
             </button>
-            <button class="image-mode-btn" id="imgmode-btn-kronos" onclick="setImageMode('kronos')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <button
+              class="image-mode-btn"
+              id="imgmode-btn-kronos"
+              onclick="setImageMode('kronos')"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="5" y="2" width="14" height="20" rx="2" />
+                <line x1="12" y1="18" x2="12.01" y2="18" />
+              </svg>
               <span id="txt-imgmode-kronos"></span>
             </button>
           </div>
@@ -56,10 +132,16 @@
         <div class="step-num">2</div>
         <div class="step-content">
           <div class="step-title" id="txt-step2-title"></div>
-          <div class="step-desc"  id="txt-step2-desc"></div>
+          <div class="step-desc" id="txt-step2-desc"></div>
           <div class="name-input-wrap">
             <label id="txt-name-label"></label>
-            <input type="text" class="name-input" id="employeeName" value="Diaz, Juan" oninput="onNameInput()" />
+            <input
+              type="text"
+              class="name-input"
+              id="employeeName"
+              value="Diaz, Juan"
+              oninput="onNameInput()"
+            />
           </div>
         </div>
       </div>
@@ -69,9 +151,13 @@
         <div class="step-num" id="stepnum-prompt">3</div>
         <div class="step-content">
           <div class="step-title" id="txt-step3-title"></div>
-          <div class="step-desc"  id="txt-step3-desc"></div>
+          <div class="step-desc" id="txt-step3-desc"></div>
           <div class="prompt-box" id="promptText"></div>
-          <button class="copy-btn" id="copyPromptBtn" onclick="copyPrompt()"></button>
+          <button
+            class="copy-btn"
+            id="copyPromptBtn"
+            onclick="copyPrompt()"
+          ></button>
         </div>
       </div>
 
@@ -80,22 +166,41 @@
         <div class="step-num" id="stepnum-json">4</div>
         <div class="step-content">
           <div class="step-title" id="txt-step4-title"></div>
-          <div class="step-desc"  id="txt-step4-desc"></div>
+          <div class="step-desc" id="txt-step4-desc"></div>
           <div class="input-toggle">
-            <button class="input-toggle-btn active" id="btn-json"   onclick="setInputMode('json')">JSON</button>
-            <button class="input-toggle-btn"         id="btn-manual" onclick="setInputMode('manual')">Manual</button>
+            <button
+              class="input-toggle-btn active"
+              id="btn-json"
+              onclick="setInputMode('json')"
+            >
+              JSON
+            </button>
+            <button
+              class="input-toggle-btn"
+              id="btn-manual"
+              onclick="setInputMode('manual')"
+            >
+              Manual
+            </button>
           </div>
-          <textarea id="jsonInput" placeholder='{"period": "3/02/26 - 3/08/26", "shifts": [...]}'></textarea>
-          <div id="manualInput" style="display:none">
+          <textarea
+            id="jsonInput"
+            placeholder='{"period": "3/02/26 - 3/08/26", "shifts": [...]}'
+          ></textarea>
+          <div id="manualInput" style="display: none">
             <div class="manual-row">
-              <input type="date" id="manualDate"  class="manual-input" />
+              <input type="date" id="manualDate" class="manual-input" />
               <input type="time" id="manualStart" class="manual-input small" />
               <span>-</span>
-              <input type="time" id="manualEnd"   class="manual-input small" />
+              <input type="time" id="manualEnd" class="manual-input small" />
               <button class="add-shift-btn" onclick="addShift()">+</button>
             </div>
             <div class="manual-shifts" id="manualShiftsList"></div>
-            <button class="clear-shifts-btn" onclick="clearManualShifts()" id="txt-clear-btn"></button>
+            <button
+              class="clear-shifts-btn"
+              onclick="clearManualShifts()"
+              id="txt-clear-btn"
+            ></button>
           </div>
         </div>
       </div>
@@ -105,20 +210,41 @@
         <div class="step-num" id="stepnum-options">5</div>
         <div class="step-content">
           <div class="step-title" id="txt-step5-title"></div>
-          <div class="step-desc"  id="txt-step5-desc"></div>
+          <div class="step-desc" id="txt-step5-desc"></div>
 
           <!-- Location -->
           <div class="option-row">
             <div class="option-label-wrap">
-              <svg class="opt-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <svg
+                class="opt-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
               <label class="option-label" id="txt-opt-location-label"></label>
             </div>
             <div class="option-control">
               <select class="reminder-select" id="locationSelect">
-                <option value="500 Tyvola Rd, Charlotte, NC 28217" selected>CLT</option>
-                <option value="2125 Matthews Township Pkwy, Matthews, NC 28105">Matthews</option>
-                <option value="8800 Charlotte Highway, Indian Land, SC 29707">Indian Land</option>
-                <option value="392 Talbert Rd, Mooresville, NC 28117">Mooresville</option>
+                <option value="500 Tyvola Rd, Charlotte, NC 28217" selected>
+                  CLT
+                </option>
+                <option value="2125 Matthews Township Pkwy, Matthews, NC 28105">
+                  Matthews
+                </option>
+                <option value="8800 Charlotte Highway, Indian Land, SC 29707">
+                  Indian Land
+                </option>
+                <option value="392 Talbert Rd, Mooresville, NC 28117">
+                  Mooresville
+                </option>
               </select>
             </div>
           </div>
@@ -126,7 +252,20 @@
           <!-- Reminder 1: fixed 30 min -->
           <div class="option-row">
             <div class="option-label-wrap">
-              <svg class="opt-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <svg
+                class="opt-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
               <label class="option-label" id="txt-opt-reminder1-label"></label>
             </div>
             <div class="option-control">
@@ -137,7 +276,21 @@
           <!-- Reminder 2: editable -->
           <div class="option-row">
             <div class="option-label-wrap">
-              <svg class="opt-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+              <svg
+                class="opt-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                <line x1="12" y1="2" x2="12" y2="4" />
+              </svg>
               <label class="option-label" id="txt-opt-reminder2-label"></label>
             </div>
             <div class="option-control">
@@ -155,7 +308,21 @@
           <!-- Weekly summary toggle -->
           <div class="option-row">
             <div class="option-label-wrap">
-              <svg class="opt-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              <svg
+                class="opt-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
               <label class="option-label" id="txt-opt-weekly-label"></label>
             </div>
             <div class="option-control">
@@ -165,52 +332,136 @@
               </label>
             </div>
           </div>
-
         </div>
       </div>
 
       <!-- Generate (everyone) -->
-      <button class="generate-btn" id="txt-generate-btn" onclick="generate()"></button>
+      <button
+        class="generate-btn"
+        id="txt-generate-btn"
+        onclick="generate()"
+      ></button>
 
       <!-- Juan Diaz only -->
-      <div id="juanSection" style="display:none">
+      <div id="juanSection" style="display: none">
         <div class="juan-divider"><span id="txt-juan-divider"></span></div>
 
         <div id="googleAuthRow">
           <div id="googleSignedOut">
             <button class="google-btn" onclick="signInWithGoogle()">
-              <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
               <span id="txt-google-signin"></span>
             </button>
           </div>
-          <div id="googleSignedIn" style="display:none">
+          <div id="googleSignedIn" style="display: none">
             <div class="signed-in-row">
               <div class="signed-in-info">
                 <span class="signed-in-dot"></span>
                 <span id="signedInEmail" class="signed-in-email"></span>
               </div>
-              <button class="sign-out-btn" onclick="signOut()" id="txt-signout-btn"></button>
+              <button
+                class="sign-out-btn"
+                onclick="signOut()"
+                id="txt-signout-btn"
+              ></button>
             </div>
             <div class="google-action-btns">
-              <button class="google-action-btn calendar-btn" id="txt-send-calendar" onclick="sendToGoogleCalendar()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <button
+                class="google-action-btn calendar-btn"
+                id="txt-send-calendar"
+                onclick="sendToGoogleCalendar()"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
                 <span></span>
               </button>
-              <button class="google-action-btn sheets-btn" id="txt-send-sheets" onclick="sendToSheets()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+              <button
+                class="google-action-btn sheets-btn"
+                id="txt-send-sheets"
+                onclick="sendToSheets()"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="3" y1="9" x2="21" y2="9" />
+                  <line x1="3" y1="15" x2="21" y2="15" />
+                  <line x1="9" y1="3" x2="9" y2="21" />
+                </svg>
                 <span></span>
               </button>
-              <button class="google-action-btn both-btn" id="txt-send-both" onclick="sendToBoth()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <button
+                class="google-action-btn both-btn"
+                id="txt-send-both"
+                onclick="sendToBoth()"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
                 <span></span>
               </button>
             </div>
           </div>
         </div>
-        <div class="google-status" id="googleStatus" style="display:none"></div>
+        <div
+          class="google-status"
+          id="googleStatus"
+          style="display: none"
+        ></div>
       </div>
 
-      <div class="error"   id="errorBox"></div>
+      <div class="error" id="errorBox"></div>
       <div class="success" id="successBox"></div>
 
       <div class="preview" id="preview">
@@ -223,109 +474,183 @@
       </div>
     </div>
 
-<footer class="footer">
-<p>Developed by <a href="https://jpdiaz.dev" target="_blank" rel="noopener noreferrer"><strong>Juan Diaz</strong></a></p>
-<p class="footer-legal">Not affiliated with any employer.</p>
-</footer>
+    <footer class="footer">
+      <p>
+        Developed by
+        <a href="https://jpdiaz.dev" target="_blank" rel="noopener noreferrer"
+          ><strong>Juan Diaz</strong></a
+        >
+      </p>
+      <p class="footer-legal">Not affiliated with any employer.</p>
+    </footer>
 
     <script>
       // ── CONFIG ────────────────────────────────────────────────────────────
-      const GOOGLE_CLIENT_ID = "19286324149-5oje1gclta6vpgs88rogvcp33h1pno0r.apps.googleusercontent.com";
-      const SHEET_ID         = "1nozoAVbXK3qoahczhQnOonOE4EQj3OA5vjmUf-5itKY";
-      const SCOPES           = "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets";
-      const OWNER_NAME       = "Diaz, Juan";
-      const REMINDER_FIXED   = 30; // always-on reminder in minutes
+      const GOOGLE_CLIENT_ID =
+        "19286324149-5oje1gclta6vpgs88rogvcp33h1pno0r.apps.googleusercontent.com";
+      const SHEET_ID = "1nozoAVbXK3qoahczhQnOonOE4EQj3OA5vjmUf-5itKY";
+      const SCOPES =
+        "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets";
+      const OWNER_NAME = "Diaz, Juan";
+      const REMINDER_FIXED = 30; // always-on reminder in minutes
 
       // ── PAY RATES (update here if your wage changes) ──────────────────────
-      const HOURLY_RATE      = 20;    // regular hourly rate (USD)
-      const SUNDAY_RATE      = HOURLY_RATE * 1.5; // time and a half
+      const HOURLY_RATE = 20; // regular hourly rate (USD)
+      const SUNDAY_RATE = HOURLY_RATE * 1.5; // time and a half
 
       // ── TRANSLATIONS ──────────────────────────────────────────────────────
       const T = {
         es: {
-          subtitle:"Convierte tu horario en eventos de calendario",
-          step1Title:"Tipo de imagen", step1Desc:"¿Qué tipo de imagen vas a usar?",
-          imgModePrinted:"Horario impreso", imgModeKronos:"App Kronos",
-          step2Title:"Tu nombre en el horario", step2Desc:"Escribe tu nombre exactamente como aparece en la imagen",
-          nameLabel:"Nombre (Apellido, Nombre)",
-          step3Title:"Copia el prompt", step3Desc:"Ábrelo en ChatGPT o Claude y adjunta la foto del horario",
-          copyBtn:"Copiar prompt", copiedBtn:"¡Copiado!",
-          step4Title:"Pega el JSON aquí", step4Desc:"Copia la respuesta de AI y pégala abajo",
-          step5Title:"Personaliza los eventos", step5Desc:"Información adicional para cada evento",
-          optLocationLabel:"Ubicación",
-          optReminder1Label:"Recordatorio fijo",
-          optReminder2Label:"Recordatorio adicional",
-          optReminderNone:"Sin recordatorio",
-          optWeeklyLabel:"Total de horas en descripción",
+          subtitle: "Convierte tu horario en eventos de calendario",
+          step1Title: "Tipo de imagen",
+          step1Desc: "¿Qué tipo de imagen vas a usar?",
+          imgModePrinted: "Horario impreso",
+          imgModeKronos: "App Kronos",
+          step2Title: "Tu nombre en el horario",
+          step2Desc: "Escribe tu nombre exactamente como aparece en la imagen",
+          nameLabel: "Nombre (Apellido, Nombre)",
+          step3Title: "Copia el prompt",
+          step3Desc: "Ábrelo en ChatGPT o Claude y adjunta la foto del horario",
+          copyBtn: "Copiar prompt",
+          copiedBtn: "¡Copiado!",
+          step4Title: "Pega el JSON aquí",
+          step4Desc: "Copia la respuesta de AI y pégala abajo",
+          step5Title: "Personaliza los eventos",
+          step5Desc: "Información adicional para cada evento",
+          optLocationLabel: "Ubicación",
+          optReminder1Label: "Recordatorio fijo",
+          optReminder2Label: "Recordatorio adicional",
+          optReminderNone: "Sin recordatorio",
+          optWeeklyLabel: "Total de horas en descripción",
 
-          generateBtn:"Generar y descargar .ics",
-          previewTitle:"Turnos detectados:", weeklyLabel:"Total semana:",
-          errEmpty:"Pega el JSON de AI primero.", errJson:"JSON inválido: ", errJsonHint:". Asegúrate de copiar el bloque completo.",
-          errNoShifts:"No se encontraron turnos en el JSON.", successMsg:"Descargado: ", clearBtn:"Limpiar turnos",
-          descShift:"Turno Costco", descHours:"Horas hoy", descWeekTotal:"Total semana", descWeekDays:"días esta semana",
-          juanDivider:"Solo para Juan Diaz",
-          googleSignin:"Conectar Google", signout:"Cerrar sesión",
-          sendCalendar:"Calendar", sendSheets:"Sheets", sendBoth:"Ambos",
-          googleLoading:"Procesando...",
-          googleCalOk:"Eventos creados en Google Calendar",
-          googleSheetsOk:"Datos guardados en Google Sheets",
-          googleBothOk:"Calendar y Sheets actualizados",
-          googleErr:"Error: ",
-          sheetsDupTitle:"Semana existente",
-          sheetsDupMsg:"Esta semana ya existe en el Sheet. ¿Sobreescribir?",
-          sheetsDupYes:"Sobreescribir", sheetsDupNo:"Cancelar",
-          calSkipped:" — duplicados omitidos.", cancelled:"Cancelado.",
-          autoConnecting:"Conectando...",
+          generateBtn: "Generar y descargar .ics",
+          previewTitle: "Turnos detectados:",
+          weeklyLabel: "Total semana:",
+          errEmpty: "Pega el JSON de AI primero.",
+          errJson: "JSON inválido: ",
+          errJsonHint: ". Asegúrate de copiar el bloque completo.",
+          errNoShifts: "No se encontraron turnos en el JSON.",
+          successMsg: "Descargado: ",
+          clearBtn: "Limpiar turnos",
+          descShift: "Turno Costco",
+          descHours: "Horas hoy",
+          descWeekTotal: "Total semana",
+          descWeekDays: "días esta semana",
+          juanDivider: "Solo para Juan Diaz",
+          googleSignin: "Conectar Google",
+          signout: "Cerrar sesión",
+          sendCalendar: "Calendar",
+          sendSheets: "Sheets",
+          sendBoth: "Ambos",
+          googleLoading: "Procesando...",
+          googleCalOk: "Eventos creados en Google Calendar",
+          googleSheetsOk: "Datos guardados en Google Sheets",
+          googleBothOk: "Calendar y Sheets actualizados",
+          googleErr: "Error: ",
+          sheetsDupTitle: "Semana existente",
+          sheetsDupMsg: "Esta semana ya existe en el Sheet. ¿Sobreescribir?",
+          sheetsDupYes: "Sobreescribir",
+          sheetsDupNo: "Cancelar",
+          calSkipped: " — duplicados omitidos.",
+          cancelled: "Cancelado.",
+          autoConnecting: "Conectando...",
         },
         en: {
-          subtitle:"Convert your schedule into calendar events",
-          step1Title:"Image type", step1Desc:"What type of image are you using?",
-          imgModePrinted:"Printed schedule", imgModeKronos:"Kronos app",
-          step2Title:"Your name on the schedule", step2Desc:"Type your name exactly as it appears in the image",
-          nameLabel:"Name (Last, First)",
-          step3Title:"Copy the prompt", step3Desc:"Open ChatGPT or Claude, paste this prompt and attach the photo",
-          copyBtn:"Copy prompt", copiedBtn:"Copied!",
-          step4Title:"Paste the JSON here", step4Desc:"Copy AI's response and paste it below",
-          step5Title:"Customize events", step5Desc:"Additional info for each calendar event",
-          optLocationLabel:"Location",
-          optReminder1Label:"Fixed reminder",
-          optReminder2Label:"Additional reminder",
-          optReminderNone:"No reminder",
-          optWeeklyLabel:"Weekly hours total in description",
+          subtitle: "Convert your schedule into calendar events",
+          step1Title: "Image type",
+          step1Desc: "What type of image are you using?",
+          imgModePrinted: "Printed schedule",
+          imgModeKronos: "Kronos app",
+          step2Title: "Your name on the schedule",
+          step2Desc: "Type your name exactly as it appears in the image",
+          nameLabel: "Name (Last, First)",
+          step3Title: "Copy the prompt",
+          step3Desc:
+            "Open ChatGPT or Claude, paste this prompt and attach the photo",
+          copyBtn: "Copy prompt",
+          copiedBtn: "Copied!",
+          step4Title: "Paste the JSON here",
+          step4Desc: "Copy AI's response and paste it below",
+          step5Title: "Customize events",
+          step5Desc: "Additional info for each calendar event",
+          optLocationLabel: "Location",
+          optReminder1Label: "Fixed reminder",
+          optReminder2Label: "Additional reminder",
+          optReminderNone: "No reminder",
+          optWeeklyLabel: "Weekly hours total in description",
 
-          generateBtn:"Generate & download .ics",
-          previewTitle:"Detected shifts:", weeklyLabel:"Week total:",
-          errEmpty:"Paste AI's JSON first.", errJson:"Invalid JSON: ", errJsonHint:". Make sure you copied the full block.",
-          errNoShifts:"No shifts found in the JSON.", successMsg:"Downloaded: ", clearBtn:"Clear shifts",
-          descShift:"Costco Shift", descHours:"Hours today", descWeekTotal:"Week total", descWeekDays:"days this week",
-          juanDivider:"Juan Diaz only",
-          googleSignin:"Connect Google", signout:"Sign out",
-          sendCalendar:"Calendar", sendSheets:"Sheets", sendBoth:"Both",
-          googleLoading:"Processing...",
-          googleCalOk:"Events created in Google Calendar",
-          googleSheetsOk:"Data saved to Google Sheets",
-          googleBothOk:"Calendar and Sheets updated",
-          googleErr:"Error: ",
-          sheetsDupTitle:"Week already exists",
-          sheetsDupMsg:"This week already exists in the Sheet. Overwrite?",
-          sheetsDupYes:"Overwrite", sheetsDupNo:"Cancel",
-          calSkipped:" — duplicates skipped.", cancelled:"Cancelled.",
-          autoConnecting:"Connecting...",
+          generateBtn: "Generate & download .ics",
+          previewTitle: "Detected shifts:",
+          weeklyLabel: "Week total:",
+          errEmpty: "Paste AI's JSON first.",
+          errJson: "Invalid JSON: ",
+          errJsonHint: ". Make sure you copied the full block.",
+          errNoShifts: "No shifts found in the JSON.",
+          successMsg: "Downloaded: ",
+          clearBtn: "Clear shifts",
+          descShift: "Costco Shift",
+          descHours: "Hours today",
+          descWeekTotal: "Week total",
+          descWeekDays: "days this week",
+          juanDivider: "Juan Diaz only",
+          googleSignin: "Connect Google",
+          signout: "Sign out",
+          sendCalendar: "Calendar",
+          sendSheets: "Sheets",
+          sendBoth: "Both",
+          googleLoading: "Processing...",
+          googleCalOk: "Events created in Google Calendar",
+          googleSheetsOk: "Data saved to Google Sheets",
+          googleBothOk: "Calendar and Sheets updated",
+          googleErr: "Error: ",
+          sheetsDupTitle: "Week already exists",
+          sheetsDupMsg: "This week already exists in the Sheet. Overwrite?",
+          sheetsDupYes: "Overwrite",
+          sheetsDupNo: "Cancel",
+          calSkipped: " — duplicates skipped.",
+          cancelled: "Cancelled.",
+          autoConnecting: "Connecting...",
         },
       };
 
-      const DAYS_ES   = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
-      const MONTHS_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-      const DAYS_EN   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      const MONTHS_EN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const DAYS_ES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+      const MONTHS_ES = [
+        "Ene",
+        "Feb",
+        "Mar",
+        "Abr",
+        "May",
+        "Jun",
+        "Jul",
+        "Ago",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dic",
+      ];
+      const DAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const MONTHS_EN = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
 
-      let lang         = "en";
-      let theme        = localStorage.getItem("theme") || "light";
-      let inputMode    = "json";
-      let imageMode    = "printed";
+      let lang = "en";
+      let theme = localStorage.getItem("theme") || "light";
+      let inputMode = "json";
+      let imageMode = "printed";
       let manualShifts = [];
-      let accessToken  = null;
-      let tokenClient  = null;
+      let accessToken = null;
+      let tokenClient = null;
 
       // ── SILENT SIGN-IN / AUTO RECONNECT ──────────────────────────────────
       // We wait for the GSI library to load, then attempt silent sign-in
@@ -361,13 +686,19 @@
             }
             accessToken = response.access_token;
             localStorage.setItem("gsi_connected", "1");
-            const info = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-              headers: { Authorization: "Bearer " + accessToken }
-            }).then(r => r.json()).catch(() => ({}));
-            document.getElementById("signedInEmail").textContent = info.email || "Connected";
+            const info = await fetch(
+              "https://www.googleapis.com/oauth2/v3/userinfo",
+              {
+                headers: { Authorization: "Bearer " + accessToken },
+              },
+            )
+              .then((r) => r.json())
+              .catch(() => ({}));
+            document.getElementById("signedInEmail").textContent =
+              info.email || "Connected";
             document.getElementById("googleSignedOut").style.display = "none";
-            document.getElementById("googleSignedIn").style.display  = "block";
-            document.getElementById("googleStatus").style.display    = "none";
+            document.getElementById("googleSignedIn").style.display = "block";
+            document.getElementById("googleStatus").style.display = "none";
           },
         });
       }
@@ -378,19 +709,29 @@
       }
 
       function signOut() {
-        if (accessToken) { google.accounts.oauth2.revoke(accessToken, () => {}); accessToken = null; }
+        if (accessToken) {
+          google.accounts.oauth2.revoke(accessToken, () => {});
+          accessToken = null;
+        }
         localStorage.removeItem("gsi_connected");
         document.getElementById("googleSignedOut").style.display = "block";
-        document.getElementById("googleSignedIn").style.display  = "none";
-        document.getElementById("googleStatus").style.display    = "none";
+        document.getElementById("googleSignedIn").style.display = "none";
+        document.getElementById("googleStatus").style.display = "none";
       }
 
       function isJuan() {
-        return document.getElementById("employeeName").value.trim() === OWNER_NAME;
+        return (
+          document.getElementById("employeeName").value.trim() === OWNER_NAME
+        );
       }
-      function onNameInput() { updatePrompt(); checkJuanSection(); }
+      function onNameInput() {
+        updatePrompt();
+        checkJuanSection();
+      }
       function checkJuanSection() {
-        document.getElementById("juanSection").style.display = isJuan() ? "block" : "none";
+        document.getElementById("juanSection").style.display = isJuan()
+          ? "block"
+          : "none";
       }
 
       // ── RESET / CLEAR ─────────────────────────────────────────────────────
@@ -405,27 +746,49 @@
         const t = T[lang];
         let shifts, period;
         if (inputMode === "manual") {
-          if (!manualShifts.length) { showError(t.errNoShifts); return null; }
-          shifts = manualShifts; period = "costco";
+          if (!manualShifts.length) {
+            showError(t.errNoShifts);
+            return null;
+          }
+          shifts = manualShifts;
+          period = "costco";
         } else {
           let raw = document.getElementById("jsonInput").value.trim();
-          if (!raw) { showError(t.errEmpty); return null; }
+          if (!raw) {
+            showError(t.errEmpty);
+            return null;
+          }
           raw = fixQuotes(raw);
           const match = raw.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
           if (match) raw = match[0];
           let data;
-          try { data = JSON.parse(raw); }
-          catch (e) { showError(t.errJson + e.message + t.errJsonHint); return null; }
-          if (Array.isArray(data)) { shifts = data; period = "costco"; }
-          else { shifts = data.shifts || []; period = data.period || "costco"; }
-          if (!shifts.length) { showError(t.errNoShifts); return null; }
+          try {
+            data = JSON.parse(raw);
+          } catch (e) {
+            showError(t.errJson + e.message + t.errJsonHint);
+            return null;
+          }
+          if (Array.isArray(data)) {
+            shifts = data;
+            period = "costco";
+          } else {
+            shifts = data.shifts || [];
+            period = data.period || "costco";
+          }
+          if (!shifts.length) {
+            showError(t.errNoShifts);
+            return null;
+          }
         }
         return { shifts, period };
       }
 
       // ── REMINDER HELPERS ──────────────────────────────────────────────────
       function getReminderOverrides() {
-        const overrides = [{ method: "popup", minutes: REMINDER_FIXED }, { method: "email", minutes: REMINDER_FIXED }];
+        const overrides = [
+          { method: "popup", minutes: REMINDER_FIXED },
+          { method: "email", minutes: REMINDER_FIXED },
+        ];
         const extra = parseInt(document.getElementById("reminderSelect").value);
         if (extra > 0) {
           overrides.push({ method: "popup", minutes: extra });
@@ -436,360 +799,637 @@
 
       // ── GOOGLE CALENDAR ───────────────────────────────────────────────────
       async function sendToGoogleCalendar() {
-        const parsed = parseAndValidate(); if (!parsed) return;
+        const parsed = parseAndValidate();
+        if (!parsed) return;
         const ok = await _doCalendar(parsed.shifts, parsed.period);
-        if (ok !== false) { renderPreview(parsed.shifts); resetAfterAction(); }
+        if (ok !== false) {
+          renderPreview(parsed.shifts);
+          resetAfterAction();
+        }
       }
 
       async function _doCalendar(shifts, period) {
         const t = T[lang];
         showGoogleStatus("loading", t.googleLoading);
-        const merged         = mergeShifts(shifts);
-        const totalWeekHours = merged.reduce((a, s) => a + parseFloat(s.hours), 0);
-        const totalWeekDays  = merged.length;
-        const location       = document.getElementById("locationSelect").value;
-        const includeWeekly  = document.getElementById("weeklyToggle").checked;
-        const locEl          = document.getElementById("locationSelect");
-        const locLabel       = locEl.options[locEl.selectedIndex].text;
+        const merged = mergeShifts(shifts);
+        const totalWeekHours = merged.reduce(
+          (a, s) => a + parseFloat(s.hours),
+          0,
+        );
+        const totalWeekDays = merged.length;
+        const location = document.getElementById("locationSelect").value;
+        const includeWeekly = document.getElementById("weeklyToggle").checked;
+        const locEl = document.getElementById("locationSelect");
+        const locLabel = locEl.options[locEl.selectedIndex].text;
         const reminderOverrides = getReminderOverrides();
 
         let skipped = 0;
         for (const s of merged) {
           const dayStart = s.date + "T00:00:00-05:00";
-          const dayEnd   = s.date + "T23:59:59-05:00";
+          const dayEnd = s.date + "T23:59:59-05:00";
           const chk = await fetch(
             `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(dayStart)}&timeMax=${encodeURIComponent(dayEnd)}&q=Costco`,
-            { headers: { Authorization: "Bearer " + accessToken } }
-          ).then(r => r.json());
-          if (chk.items && chk.items.some(e => e.summary === "Costco")) { skipped++; continue; }
+            { headers: { Authorization: "Bearer " + accessToken } },
+          ).then((r) => r.json());
+          if (chk.items && chk.items.some((e) => e.summary === "Costco")) {
+            skipped++;
+            continue;
+          }
 
           let description = `${t.descShift}\n⏱ ${t.descHours}: ${s.hours} hrs`;
-          if (includeWeekly) description += `\n📅 ${t.descWeekTotal}: ${totalWeekHours.toFixed(2)} hrs (${totalWeekDays} ${t.descWeekDays})`;
+          if (includeWeekly)
+            description += `\n📅 ${t.descWeekTotal}: ${totalWeekHours.toFixed(2)} hrs (${totalWeekDays} ${t.descWeekDays})`;
           description += `\n📍 ${locLabel}\n📆 ${period}`;
 
           const event = {
-            summary: "Costco", location, description,
-            start: { dateTime: s.startDt.toISOString(), timeZone: "America/New_York" },
-            end:   { dateTime: s.endDt.toISOString(),   timeZone: "America/New_York" },
+            summary: "Costco",
+            location,
+            description,
+            start: {
+              dateTime: s.startDt.toISOString(),
+              timeZone: "America/New_York",
+            },
+            end: {
+              dateTime: s.endDt.toISOString(),
+              timeZone: "America/New_York",
+            },
             colorId: "3",
             reminders: { useDefault: false, overrides: reminderOverrides },
           };
 
-          const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
-            method: "POST",
-            headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
-            body: JSON.stringify(event),
-          });
+          const res = await fetch(
+            "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+            {
+              method: "POST",
+              headers: {
+                Authorization: "Bearer " + accessToken,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(event),
+            },
+          );
           if (!res.ok) {
             const err = await res.json();
-            showGoogleStatus("error", t.googleErr + (err.error?.message || res.status));
+            showGoogleStatus(
+              "error",
+              t.googleErr + (err.error?.message || res.status),
+            );
             return false;
           }
         }
-        showGoogleStatus("success", t.googleCalOk + (skipped > 0 ? t.calSkipped : ""));
+        showGoogleStatus(
+          "success",
+          t.googleCalOk + (skipped > 0 ? t.calSkipped : ""),
+        );
         return true;
       }
 
       // ── GOOGLE SHEETS ─────────────────────────────────────────────────────
       async function sendToSheets() {
-        const parsed = parseAndValidate(); if (!parsed) return;
+        const parsed = parseAndValidate();
+        if (!parsed) return;
         const ok = await _doSheets(parsed.shifts, parsed.period);
-        if (ok !== false) { renderPreview(parsed.shifts); resetAfterAction(); }
+        if (ok !== false) {
+          renderPreview(parsed.shifts);
+          resetAfterAction();
+        }
       }
 
       // ── PAY CALCULATOR ────────────────────────────────────────────────────
       function calcPay(merged) {
-        let regHrs = 0, sunHrs = 0;
-        merged.forEach(s => {
+        let regHrs = 0,
+          sunHrs = 0;
+        merged.forEach((s) => {
           const h = parseFloat(s.hours);
           if (new Date(s.date + "T00:00:00").getDay() === 0) sunHrs += h;
           else regHrs += h;
         });
-        return { rate: HOURLY_RATE, sunRate: SUNDAY_RATE, regHrs, sunHrs,
-          totalHrs : regHrs + sunHrs,
-          regPay   : regHrs * HOURLY_RATE,
-          sunPay   : sunHrs * SUNDAY_RATE,
-          totalPay : regHrs * HOURLY_RATE + sunHrs * SUNDAY_RATE };
+        return {
+          rate: HOURLY_RATE,
+          sunRate: SUNDAY_RATE,
+          regHrs,
+          sunHrs,
+          totalHrs: regHrs + sunHrs,
+          regPay: regHrs * HOURLY_RATE,
+          sunPay: sunHrs * SUNDAY_RATE,
+          totalPay: regHrs * HOURLY_RATE + sunHrs * SUNDAY_RATE,
+        };
       }
 
-      // ── SHEETS: single-sheet, all weeks stacked ───────────────────────────
-      const SHEET_NAME = "Schedule";
+      // ── SHEETS: create/find tab ────────────────────────────────────────────
+      const SHEET_TAB_TITLE = "Schedule";
 
-      async function getMainSheetId() {
-        const meta = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`,
-          { headers:{ Authorization:"Bearer "+accessToken } }).then(r=>r.json());
-        let sheet = meta.sheets.find(s => s.properties.title === SHEET_NAME);
-        if (!sheet) {
-          const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
-            method:"POST",
-            headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
-            body: JSON.stringify({ requests:[{ addSheet:{ properties:{ title: SHEET_NAME } } }] })
-          }).then(r=>r.json());
-          return res.replies?.[0]?.addSheet?.properties?.sheetId ?? null;
-        }
-        return sheet.properties.sheetId;
-      }
-
-      async function getAllSheetValues() {
+      async function getOrCreateTab(title) {
+        const meta = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`,
+          { headers: { Authorization: "Bearer " + accessToken } },
+        ).then((r) => r.json());
+        const existing = meta.sheets.find((s) => s.properties.title === title);
+        if (existing) return existing.properties.sheetId;
         const res = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A1:H2000`,
-          { headers:{ Authorization:"Bearer "+accessToken } }).then(r=>r.json());
-        return res.values || [];
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + accessToken,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              requests: [{ addSheet: { properties: { title } } }],
+            }),
+          },
+        ).then((r) => r.json());
+        return res.replies?.[0]?.addSheet?.properties?.sheetId ?? null;
       }
 
-      async function findPeriodRows(period, allRows) {
-        // Returns {start, end} 0-based row indices of existing period block, or null
-        for (let i = 0; i < allRows.length; i++) {
-          if (allRows[i][0] === "PERIOD:" && allRows[i][1] === period) {
-            // Find end: next PERIOD: row or end of data
-            let end = allRows.length;
-            for (let j = i + 1; j < allRows.length; j++) {
-              if (allRows[j][0] === "PERIOD:") { end = j; break; }
-            }
-            return { start: i, end };
-          }
-        }
-        return null;
+      async function getUsedRowCount(sheetName) {
+        const res = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A1:H`,
+          { headers: { Authorization: "Bearer " + accessToken } },
+        ).then((r) => r.json());
+        return res.values ? res.values.length : 0;
       }
 
+      async function clearTab(sheetName) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A1:Z200:clear`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + accessToken,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
+
+      async function checkTabHasData(sheetName) {
+        const res = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A2`,
+          { headers: { Authorization: "Bearer " + accessToken } },
+        ).then((r) => r.json());
+        return !!(res.values && res.values.length);
+      }
+
+      // ── SHEETS: write data + formatting ───────────────────────────────────
       async function _doSheets(shifts, period) {
-        const t      = T[lang];
-        const DAYS   = lang === "es" ? DAYS_ES : DAYS_EN;
+        const t = T[lang];
+        const DAYS = lang === "es" ? DAYS_ES : DAYS_EN;
         const MONTHS = lang === "es" ? MONTHS_ES : MONTHS_EN;
-        const fmtT   = dt => { let h=dt.getHours(),m=dt.getMinutes(),ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(m).padStart(2,"0")} ${ap}`; };
-
-        showGoogleStatus("loading", t.googleLoading);
-        const merged  = mergeShifts(shifts);
-        const pay     = calcPay(merged);
-        const sheetId = await getMainSheetId();
-        if (sheetId === null) { showGoogleStatus("error", t.googleErr + "Sheet error"); return false; }
-
-        const allRows   = await getAllSheetValues();
-        const existing  = await findPeriodRows(period, allRows);
-        const requests  = [];
-
-        // ── Detect month/year from first shift ─────────────────────────────
-        const firstDate  = new Date(merged[0].date + "T00:00:00");
-        const monthLabel = firstDate.toLocaleString("en-US", { month: "long", year: "numeric" }); // e.g. "March 2026"
-        const monthKey   = `${firstDate.getFullYear()}-${String(firstDate.getMonth()+1).padStart(2,"0")}`;
-
-        // ── Build row data ─────────────────────────────────────────────────
-        // Marker row (hidden helper, we use col A as key)
-        const markerRow  = [["PERIOD:", period, "", "", "", ""]];
-
-        // Month/year divider (only if this month doesn't already exist right before)
-        const needsMonthDivider = () => {
-          if (!allRows.length) return true;
-          // Check if last divider matches current month
-          for (let i = allRows.length - 1; i >= 0; i--) {
-            if (allRows[i][0] === "MONTH:" && allRows[i][1] === monthKey) return false;
-            if (allRows[i][0] === "PERIOD:") break; // hit another period, need divider
-          }
-          return true;
+        const fmtT = (dt) => {
+          let h = dt.getHours(),
+            m = dt.getMinutes(),
+            ap = h >= 12 ? "PM" : "AM";
+          h = h % 12 || 12;
+          return `${h}:${String(m).padStart(2, "0")} ${ap}`;
         };
 
-        const monthDividerRow = [["MONTH:", monthKey, monthLabel, "", "", ""]];
+        showGoogleStatus("loading", t.googleLoading);
+        const merged = mergeShifts(shifts);
+        const pay = calcPay(merged);
 
-        // Header row
-        const headerRow = [["Date", "Day", "Start", "End", "Hours", "Pay"]];
-
-        // Shift rows
-        const shiftRows = merged.map(s => {
-          const d      = new Date(s.date + "T00:00:00");
-          const isSun  = d.getDay() === 0;
-          const hrs    = parseFloat(s.hours);
-          const dPay   = hrs * (isSun ? pay.sunRate : pay.rate);
-          const dayLabel = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}${isSun ? " ★" : ""}`;
-          return [s.date, dayLabel, fmtT(s.startDt), fmtT(s.endDt), hrs, dPay];
-        });
-
-        // Summary rows
-        const summaryRows = [
-          ["", "", "", "Regular hrs", pay.regHrs, pay.regPay],
-          ["", "", "", "Sunday hrs ★", pay.sunHrs, pay.sunPay],
-          ["SUMMARY:", period, "", "Total hrs", pay.totalHrs, pay.totalPay],
-          ["", "", "", "", "", ""],  // spacer
-        ];
-
-        const blockRows = [...markerRow, ...monthDividerRow, ...headerRow, ...shiftRows, ...summaryRows];
-
-        if (existing) {
-          // Overwrite: confirm then delete old rows, insert new at same position
-          const confirmed = await confirmDuplicate();
-          if (!confirmed) { showGoogleStatus("info", t.cancelled); return false; }
-          showGoogleStatus("loading", t.googleLoading);
-
-          // Delete existing rows (reversed)
-          const deleteCount = existing.end - existing.start;
-          requests.push({ deleteDimension: { range: {
-            sheetId, dimension: "ROWS",
-            startIndex: existing.start,
-            endIndex:   existing.end
-          }}});
-
-          // Insert blank rows at same position, then write
-          requests.push({ insertDimension: { range: {
-            sheetId, dimension: "ROWS",
-            startIndex: existing.start,
-            endIndex:   existing.start + blockRows.length
-          }, inheritFromBefore: false }});
-
-          // Execute delete+insert first
-          await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
-            method:"POST", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
-            body: JSON.stringify({ requests })
-          });
-
-          // Write values at that position
-          const startRow = existing.start + 1; // 1-based
-          await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A${startRow}?valueInputOption=USER_ENTERED`,
-            { method:"PUT", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
-              body: JSON.stringify({ values: blockRows }) }
-          );
-          await applySheetFormatting(sheetId, existing.start, merged, pay, false);
-
-        } else {
-          // Append: check if month divider needed
-          const addDivider = needsMonthDivider();
-          const rowsToWrite = addDivider ? blockRows : [...markerRow, ...headerRow, ...shiftRows, ...summaryRows];
-
-          const nextRow = allRows.length + 1; // 1-based
-          await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A${nextRow}?valueInputOption=USER_ENTERED`,
-            { method:"PUT", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
-              body: JSON.stringify({ values: rowsToWrite }) }
-          );
-          await applySheetFormatting(sheetId, allRows.length, merged, pay, addDivider);
+        // Get/create single tab
+        const tabId = await getOrCreateTab(SHEET_TAB_TITLE);
+        if (tabId === null) {
+          showGoogleStatus("error", t.googleErr + "Tab error");
+          return false;
         }
 
-        // Ensure column widths (idempotent)
-        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
-          method:"POST", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
-          body: JSON.stringify({ requests: [
-            { updateDimensionProperties: { range:{ sheetId, dimension:"COLUMNS", startIndex:0, endIndex:1 }, properties:{ pixelSize:100 }, fields:"pixelSize" }},
-            { updateDimensionProperties: { range:{ sheetId, dimension:"COLUMNS", startIndex:1, endIndex:2 }, properties:{ pixelSize:130 }, fields:"pixelSize" }},
-            { updateDimensionProperties: { range:{ sheetId, dimension:"COLUMNS", startIndex:2, endIndex:4 }, properties:{ pixelSize:90  }, fields:"pixelSize" }},
-            { updateDimensionProperties: { range:{ sheetId, dimension:"COLUMNS", startIndex:4, endIndex:5 }, properties:{ pixelSize:65  }, fields:"pixelSize" }},
-            { updateDimensionProperties: { range:{ sheetId, dimension:"COLUMNS", startIndex:5, endIndex:6 }, properties:{ pixelSize:95  }, fields:"pixelSize" }},
-          ]})
+        const usedRows = await getUsedRowCount(SHEET_TAB_TITLE);
+        const isFirstBlock = usedRows === 0;
+
+        // Build values: optional header + shift rows + summary row
+        const header = [["Date", "Day", "Start", "End", "Hours", "Pay", "", ""]];
+
+        const shiftRows = merged.map((s) => {
+          const d = new Date(s.date + "T00:00:00");
+          const isSun = d.getDay() === 0;
+          const hrs = parseFloat(s.hours);
+          const dayRate = isSun ? pay.sunRate : pay.rate;
+          const dayPay = hrs * dayRate;
+          const dayLabel = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+          return [
+            s.date,
+            dayLabel,
+            fmtT(s.startDt),
+            fmtT(s.endDt),
+            hrs,
+            dayPay,
+            isSun ? "Sunday hrs ★" : "",
+            isSun ? `$${pay.sunRate.toFixed(2)}/hr` : "",
+          ];
         });
+
+        const summaryRows = [
+          [
+            `WEEK SUMMARY ${period}`,
+            "",
+            "",
+            "Total hours",
+            pay.totalHrs,
+            pay.totalPay,
+            "",
+            "",
+          ],
+        ];
+
+        const allValues = [...(isFirstBlock ? header : []), ...shiftRows, ...summaryRows];
+
+        // Write values
+        const startRow = usedRows + 1;
+        const endRow = usedRows + allValues.length;
+        const enc = encodeURIComponent(SHEET_TAB_TITLE);
+        const writeRes = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${enc}!A${startRow}:H${endRow}?valueInputOption=USER_ENTERED`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: "Bearer " + accessToken,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ values: allValues }),
+          },
+        );
+        if (!writeRes.ok) {
+          const err = await writeRes.json();
+          showGoogleStatus(
+            "error",
+            t.googleErr + (err.error?.message || writeRes.status),
+          );
+          return false;
+        }
+
+        // ── FORMATTING via batchUpdate ─────────────────────────────────────
+        const nShifts = shiftRows.length;
+        const base = usedRows; // row index 0-based
+        const headerRow = base;
+        const firstShift = base + (isFirstBlock ? 1 : 0);
+        const lastShift = firstShift + nShifts - 1; // inclusive index
+        const summaryRow = lastShift + 1;
+
+        // Colors
+        const BASE_BG = { red: 0.93, green: 0.93, blue: 0.93 };
+        const HOURS_BG = { red: 0.83, green: 0.86, blue: 0.9 };
+        const HEADER_BG = { red: 0.18, green: 0.33, blue: 0.59 }; // navy blue
+        const HEADER_FG = { red: 1.0, green: 1.0, blue: 1.0 };
+        const SUN_BG = { red: 0.95, green: 0.9, blue: 0.75 };
+        const SUMM_BG = { red: 0.9, green: 0.9, blue: 0.9 };
+        const GREEN = { red: 0.13, green: 0.55, blue: 0.13 };
+        const BLUE_GRID = { red: 0.18, green: 0.33, blue: 0.59 };
+        const GRID = { red: 0.78, green: 0.78, blue: 0.78 };
+
+        const cell = (r, c) => ({
+          sheetId: tabId,
+          startRowIndex: r,
+          endRowIndex: r + 1,
+          startColumnIndex: c,
+          endColumnIndex: c + 1,
+        });
+        const row = (r, c1 = 0, c2 = 6) => ({
+          sheetId: tabId,
+          startRowIndex: r,
+          endRowIndex: r + 1,
+          startColumnIndex: c1,
+          endColumnIndex: c2,
+        });
+
+        const requests = [];
+
+        // Header row style
+        if (isFirstBlock) {
+          requests.push({
+            repeatCell: {
+              range: row(headerRow),
+              cell: {
+                userEnteredFormat: {
+                  backgroundColor: HEADER_BG,
+                  textFormat: {
+                    foregroundColor: HEADER_FG,
+                    bold: true,
+                    fontSize: 14,
+                  },
+                  horizontalAlignment: "CENTER",
+                  verticalAlignment: "MIDDLE",
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          });
+        }
+
+        // Shift rows
+        merged.forEach((s, i) => {
+          const r = firstShift + i;
+          const isSun = new Date(s.date + "T00:00:00").getDay() === 0;
+          const bg = isSun ? SUN_BG : BASE_BG;
+
+          requests.push({
+            repeatCell: {
+              range: row(r, 0, 5),
+              cell: {
+                userEnteredFormat: {
+                  backgroundColor: bg,
+                  textFormat: { fontSize: 12 },
+                  verticalAlignment: "MIDDLE",
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          });
+
+          // Hours column has dedicated blue tint
+          requests.push({
+            repeatCell: {
+              range: cell(r, 4),
+              cell: {
+                userEnteredFormat: { backgroundColor: HOURS_BG },
+              },
+              fields: "userEnteredFormat.backgroundColor",
+            },
+          });
+
+          // Date + Day
+          requests.push({
+            repeatCell: {
+              range: cell(r, 0),
+              cell: {
+                userEnteredFormat: {
+                  horizontalAlignment: "LEFT",
+                  textFormat: { fontSize: 12 },
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          });
+          requests.push({
+            repeatCell: {
+              range: cell(r, 1),
+              cell: {
+                userEnteredFormat: {
+                  horizontalAlignment: "CENTER",
+                  textFormat: { fontSize: 12 },
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          });
+
+          // Time columns centered
+          [2, 3].forEach((c) => {
+            requests.push({
+              repeatCell: {
+                range: cell(r, c),
+                cell: {
+                  userEnteredFormat: { horizontalAlignment: "CENTER" },
+                },
+                fields: "userEnteredFormat.horizontalAlignment",
+              },
+            });
+          });
+
+          // Pay column green + currency
+          requests.push({
+            repeatCell: {
+              range: cell(r, 5),
+              cell: {
+                userEnteredFormat: {
+                  textFormat: { foregroundColor: GREEN, bold: true, fontSize: 12 },
+                  numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" },
+                  horizontalAlignment: "RIGHT",
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          });
+
+          // Sunday note columns G/H
+          if (isSun) {
+            [6, 7].forEach((c) => {
+              requests.push({
+                repeatCell: {
+                  range: cell(r, c),
+                  cell: {
+                    userEnteredFormat: {
+                      backgroundColor: BASE_BG,
+                      textFormat: { fontSize: 12 },
+                      horizontalAlignment: "LEFT",
+                    },
+                  },
+                  fields: "userEnteredFormat",
+                },
+              });
+            });
+          }
+        });
+
+        // Summary row
+        requests.push({
+          repeatCell: {
+            range: row(summaryRow, 0, 6),
+            cell: {
+              userEnteredFormat: {
+                backgroundColor: SUMM_BG,
+                textFormat: { fontSize: 12, bold: true },
+                verticalAlignment: "MIDDLE",
+              },
+            },
+            fields: "userEnteredFormat",
+          },
+        });
+
+        requests.push({
+          repeatCell: {
+            range: cell(summaryRow, 0),
+            cell: {
+              userEnteredFormat: {
+                textFormat: { bold: true, fontSize: 18 },
+                horizontalAlignment: "LEFT",
+              },
+            },
+            fields: "userEnteredFormat",
+          },
+        });
+
+        requests.push({
+          repeatCell: {
+            range: cell(summaryRow, 3),
+            cell: {
+              userEnteredFormat: { horizontalAlignment: "CENTER", textFormat: { fontSize: 12 } },
+            },
+            fields: "userEnteredFormat",
+          },
+        });
+
+        requests.push({
+          repeatCell: {
+            range: cell(summaryRow, 4),
+            cell: {
+              userEnteredFormat: {
+                horizontalAlignment: "CENTER",
+                textFormat: { bold: true, fontSize: 16 },
+              },
+            },
+            fields: "userEnteredFormat",
+          },
+        });
+
+        requests.push({
+          repeatCell: {
+            range: cell(summaryRow, 5),
+            cell: {
+              userEnteredFormat: {
+                numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" },
+                textFormat: {
+                  bold: true,
+                  fontSize: 18,
+                },
+                horizontalAlignment: "RIGHT",
+              },
+            },
+            fields: "userEnteredFormat",
+          },
+        });
+
+        // Column widths
+        const colWidths = [150, 200, 160, 160, 140, 190, 190, 160];
+        colWidths.forEach((px, i) => {
+          requests.push({
+            updateDimensionProperties: {
+              range: {
+                sheetId: tabId,
+                dimension: "COLUMNS",
+                startIndex: i,
+                endIndex: i + 1,
+              },
+              properties: { pixelSize: px },
+              fields: "pixelSize",
+            },
+          });
+        });
+
+        // Row heights
+        if (isFirstBlock) {
+          requests.push({
+            updateDimensionProperties: {
+              range: {
+                sheetId: tabId,
+                dimension: "ROWS",
+                startIndex: headerRow,
+                endIndex: headerRow + 1,
+              },
+              properties: { pixelSize: 44 },
+              fields: "pixelSize",
+            },
+          });
+        }
+        requests.push({
+          updateDimensionProperties: {
+            range: {
+              sheetId: tabId,
+              dimension: "ROWS",
+              startIndex: firstShift,
+              endIndex: lastShift + 1,
+            },
+            properties: { pixelSize: 40 },
+            fields: "pixelSize",
+          },
+        });
+        requests.push({
+          updateDimensionProperties: {
+            range: {
+              sheetId: tabId,
+              dimension: "ROWS",
+              startIndex: summaryRow,
+              endIndex: summaryRow + 1,
+            },
+            properties: { pixelSize: 42 },
+            fields: "pixelSize",
+          },
+        });
+
+        // Borders for current block
+        const tableRange = {
+          sheetId: tabId,
+          startRowIndex: isFirstBlock ? headerRow : firstShift,
+          endRowIndex: summaryRow + 1,
+          startColumnIndex: 0,
+          endColumnIndex: 6,
+        };
+        requests.push({
+          updateBorders: {
+            range: tableRange,
+            top: { style: "SOLID", color: GRID },
+            bottom: { style: "SOLID", color: GRID },
+            left: { style: "SOLID", color: GRID },
+            right: { style: "SOLID", color: BLUE_GRID },
+            innerHorizontal: { style: "SOLID", color: GRID },
+            innerVertical: { style: "SOLID", color: GRID },
+          },
+        });
+
+        // Strong blue divider at right side of Pay column (F)
+        requests.push({
+          updateBorders: {
+            range: {
+              sheetId: tabId,
+              startRowIndex: isFirstBlock ? headerRow : firstShift,
+              endRowIndex: summaryRow + 1,
+              startColumnIndex: 5,
+              endColumnIndex: 6,
+            },
+            right: { style: "SOLID_MEDIUM", color: BLUE_GRID },
+          },
+        });
+
+        // Freeze header row
+        if (isFirstBlock) {
+          requests.push({
+            updateSheetProperties: {
+              properties: {
+                sheetId: tabId,
+                gridProperties: { frozenRowCount: 1 },
+              },
+              fields: "gridProperties.frozenRowCount",
+            },
+          });
+        }
+
+        // Execute formatting
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + accessToken,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ requests }),
+          },
+        );
 
         showGoogleStatus("success", t.googleSheetsOk);
         return true;
       }
 
-      async function applySheetFormatting(sheetId, baseIdx, merged, pay, hasMonthDivider) {
-        // baseIdx = 0-based row index where block starts (markerRow)
-        const HEADER_BG = { red:0.18, green:0.33, blue:0.59 };
-        const HEADER_FG = { red:1.0,  green:1.0,  blue:1.0  };
-        const STRIPE_A  = { red:0.95, green:0.97, blue:1.0  };
-        const STRIPE_B  = { red:1.0,  green:1.0,  blue:1.0  };
-        const SUN_BG    = { red:1.0,  green:0.96, blue:0.82 };
-        const SUMM_BG   = { red:0.94, green:0.94, blue:0.96 };
-        const TOTAL_BG  = { red:0.18, green:0.33, blue:0.59 };
-        const TOTAL_FG  = { red:1.0,  green:1.0,  blue:1.0  };
-        const GREEN_FG  = { red:0.09, green:0.49, blue:0.09 };
-        const MONTH_BG  = { red:0.96, green:0.96, blue:0.96 };
-        const MONTH_FG  = { red:0.40, green:0.40, blue:0.45 };
-
-        const row  = (r, c1=0, c2=6) => ({ sheetId, startRowIndex:r, endRowIndex:r+1, startColumnIndex:c1, endColumnIndex:c2 });
-        const cell = (r, c)          => ({ sheetId, startRowIndex:r, endRowIndex:r+1, startColumnIndex:c,  endColumnIndex:c+1 });
-        const fmt  = (range, fmt, fields="userEnteredFormat") => ({ repeatCell:{ range, cell:{ userEnteredFormat: fmt }, fields }});
-        const currency = { numberFormat:{ type:"CURRENCY", pattern:"$#,##0.00" } };
-
-        let r = baseIdx; // marker row — hide by making tiny
-        const reqs = [];
-
-        // Marker row: height 1px (effectively hidden)
-        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
-          properties:{ pixelSize:1 }, fields:"pixelSize" }});
-        r++;
-
-        if (hasMonthDivider) {
-          // Month divider row
-          reqs.push(fmt(row(r), { backgroundColor: MONTH_BG,
-            textFormat:{ foregroundColor: MONTH_FG, bold:true, fontSize:10, italic:true },
-            horizontalAlignment:"LEFT", verticalAlignment:"MIDDLE" }));
-          reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
-            properties:{ pixelSize:22 }, fields:"pixelSize" }});
-          // merge A:F for month label display (col C has the label)
-          reqs.push({ mergeCells:{ range:{ sheetId, startRowIndex:r, endRowIndex:r+1, startColumnIndex:0, endColumnIndex:6 }, mergeType:"MERGE_ALL" }});
-          r++;
-        }
-
-        // Header row
-        reqs.push(fmt(row(r), { backgroundColor: HEADER_BG,
-          textFormat:{ foregroundColor: HEADER_FG, bold:true, fontSize:11 },
-          horizontalAlignment:"CENTER", verticalAlignment:"MIDDLE" }));
-        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
-          properties:{ pixelSize:30 }, fields:"pixelSize" }});
-        r++;
-
-        // Shift rows
-        merged.forEach((s, i) => {
-          const isSun = new Date(s.date + "T00:00:00").getDay() === 0;
-          const bg    = isSun ? SUN_BG : (i%2===0 ? STRIPE_A : STRIPE_B);
-          reqs.push(fmt(row(r), { backgroundColor:bg, textFormat:{ fontSize:10 }, verticalAlignment:"MIDDLE" }));
-          reqs.push(fmt(cell(r,1), { textFormat:{ bold:true } }, "userEnteredFormat.textFormat.bold"));
-          reqs.push(fmt(cell(r,4), { horizontalAlignment:"CENTER" }, "userEnteredFormat.horizontalAlignment"));
-          reqs.push(fmt(cell(r,5), { ...currency, textFormat:{ foregroundColor:GREEN_FG, bold:true } }));
-          reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
-            properties:{ pixelSize:24 }, fields:"pixelSize" }});
-          r++;
-        });
-
-        // Summary rows (reg, sun, total)
-        // reg hrs row
-        reqs.push(fmt(row(r), { backgroundColor:SUMM_BG, textFormat:{ fontSize:10 } }));
-        reqs.push(fmt(cell(r,4), { horizontalAlignment:"CENTER", textFormat:{ bold:true } }, "userEnteredFormat"));
-        reqs.push(fmt(cell(r,5), { ...currency, textFormat:{ foregroundColor:GREEN_FG } }));
-        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
-          properties:{ pixelSize:22 }, fields:"pixelSize" }});
-        r++;
-
-        // sun hrs row
-        reqs.push(fmt(row(r), { backgroundColor:SUMM_BG, textFormat:{ fontSize:10 } }));
-        reqs.push(fmt(cell(r,4), { horizontalAlignment:"CENTER", textFormat:{ bold:true } }, "userEnteredFormat"));
-        reqs.push(fmt(cell(r,5), { ...currency, textFormat:{ foregroundColor:GREEN_FG } }));
-        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
-          properties:{ pixelSize:22 }, fields:"pixelSize" }});
-        r++;
-
-        // TOTAL row
-        reqs.push(fmt(row(r), { backgroundColor:TOTAL_BG,
-          textFormat:{ foregroundColor:TOTAL_FG, bold:true, fontSize:11 },
-          horizontalAlignment:"CENTER", verticalAlignment:"MIDDLE" }));
-        reqs.push(fmt(cell(r,5), { ...currency, textFormat:{ foregroundColor:TOTAL_FG, bold:true, fontSize:11 } }));
-        reqs.push({ mergeCells:{ range:{ sheetId, startRowIndex:r, endRowIndex:r+1, startColumnIndex:0, endColumnIndex:4 }, mergeType:"MERGE_ALL" }});
-        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
-          properties:{ pixelSize:32 }, fields:"pixelSize" }});
-        r++;
-
-        // Spacer row — tiny
-        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
-          properties:{ pixelSize:8 }, fields:"pixelSize" }});
-
-        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
-          method:"POST", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
-          body: JSON.stringify({ requests: reqs })
-        });
-      }
-
-            function confirmDuplicate() {
-        const t = T[lang], el = document.getElementById("googleStatus");
-        return new Promise(resolve => {
-          el.style.display = "block"; el.className = "google-status warning";
+      function confirmDuplicate() {
+        const t = T[lang],
+          el = document.getElementById("googleStatus");
+        return new Promise((resolve) => {
+          el.style.display = "block";
+          el.className = "google-status warning";
           el.innerHTML = `<div style="margin-bottom:6px;font-weight:600">${t.sheetsDupTitle}</div><div style="font-size:.85rem;margin-bottom:10px">${t.sheetsDupMsg}</div><div style="display:flex;gap:8px"><button class="dup-yes-btn" id="dupYes">${t.sheetsDupYes}</button><button class="dup-no-btn" id="dupNo">${t.sheetsDupNo}</button></div>`;
           document.getElementById("dupYes").onclick = () => resolve(true);
-          document.getElementById("dupNo").onclick  = () => resolve(false);
+          document.getElementById("dupNo").onclick = () => resolve(false);
         });
       }
 
       async function sendToBoth() {
-        const parsed = parseAndValidate(); if (!parsed) return;
-        const calOk = await _doCalendar(parsed.shifts, parsed.period); if (calOk===false) return;
-        const shtOk = await _doSheets(parsed.shifts, parsed.period);   if (shtOk===false) return;
+        const parsed = parseAndValidate();
+        if (!parsed) return;
+        const calOk = await _doCalendar(parsed.shifts, parsed.period);
+        if (calOk === false) return;
+        const shtOk = await _doSheets(parsed.shifts, parsed.period);
+        if (shtOk === false) return;
         showGoogleStatus("success", T[lang].googleBothOk);
         renderPreview(parsed.shifts);
         resetAfterAction();
@@ -797,21 +1437,28 @@
 
       function showGoogleStatus(type, msg) {
         const el = document.getElementById("googleStatus");
-        el.style.display = "block"; el.className = "google-status "+type; el.textContent = msg;
+        el.style.display = "block";
+        el.className = "google-status " + type;
+        el.textContent = msg;
       }
 
       // ── ICS (everyone) ────────────────────────────────────────────────────
       function generate() {
         const t = T[lang];
-        document.getElementById("errorBox").style.display   = "none";
+        document.getElementById("errorBox").style.display = "none";
         document.getElementById("successBox").style.display = "none";
-        document.getElementById("preview").style.display    = "none";
-        const parsed = parseAndValidate(); if (!parsed) return;
+        document.getElementById("preview").style.display = "none";
+        const parsed = parseAndValidate();
+        if (!parsed) return;
 
-        const blob = new Blob([buildIcs(parsed.shifts)], { type:"text/calendar;charset=utf-8" });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement("a");
-        a.href=url; a.download=periodToFilename(parsed.period); a.click();
+        const blob = new Blob([buildIcs(parsed.shifts)], {
+          type: "text/calendar;charset=utf-8",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = periodToFilename(parsed.period);
+        a.click();
         URL.revokeObjectURL(url);
         showSuccess(t.successMsg + periodToFilename(parsed.period));
         renderPreview(parsed.shifts);
@@ -819,170 +1466,337 @@
       }
 
       function renderPreview(shifts) {
-        const t      = T[lang];
-        const DAYS   = lang==="es"?DAYS_ES:DAYS_EN;
-        const MONTHS = lang==="es"?MONTHS_ES:MONTHS_EN;
+        const t = T[lang];
+        const DAYS = lang === "es" ? DAYS_ES : DAYS_EN;
+        const MONTHS = lang === "es" ? MONTHS_ES : MONTHS_EN;
         const merged = mergeShifts(shifts);
-        const total  = merged.reduce((a,s)=>a+parseFloat(s.hours),0);
-        document.getElementById("weeklySummary").textContent = `${t.weeklyLabel} ${total.toFixed(2)} hrs`;
-        const fmt  = dt => { let h=dt.getHours(),m=dt.getMinutes(),ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(m).padStart(2,"0")} ${ap}`; };
-        document.getElementById("shiftList").innerHTML = merged.map(s => {
-          const d = new Date(s.date+"T00:00:00");
-          return `<div class="shift-item"><span class="shift-day">${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</span><span class="shift-time">${fmt(s.startDt)} &ndash; ${fmt(s.endDt)}</span><span class="shift-hrs">${s.hours}h</span></div>`;
-        }).join("");
+        const total = merged.reduce((a, s) => a + parseFloat(s.hours), 0);
+        document.getElementById("weeklySummary").textContent =
+          `${t.weeklyLabel} ${total.toFixed(2)} hrs`;
+        const fmt = (dt) => {
+          let h = dt.getHours(),
+            m = dt.getMinutes(),
+            ap = h >= 12 ? "PM" : "AM";
+          h = h % 12 || 12;
+          return `${h}:${String(m).padStart(2, "0")} ${ap}`;
+        };
+        document.getElementById("shiftList").innerHTML = merged
+          .map((s) => {
+            const d = new Date(s.date + "T00:00:00");
+            return `<div class="shift-item"><span class="shift-day">${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</span><span class="shift-time">${fmt(s.startDt)} &ndash; ${fmt(s.endDt)}</span><span class="shift-hrs">${s.hours}h</span></div>`;
+          })
+          .join("");
         document.getElementById("preview").style.display = "block";
       }
 
       function buildIcs(shifts) {
-        const t              = T[lang];
-        const merged         = mergeShifts(shifts);
-        const now            = toIcsDt(new Date()).replace(/T/,"")+"Z";
-        const totalWeekHours = merged.reduce((a,s)=>a+parseFloat(s.hours),0);
-        const totalWeekDays  = merged.length;
-        const location       = document.getElementById("locationSelect").value;
-        const extraMins      = parseInt(document.getElementById("reminderSelect").value);
-        const includeWeekly  = document.getElementById("weeklyToggle").checked;
+        const t = T[lang];
+        const merged = mergeShifts(shifts);
+        const now = toIcsDt(new Date()).replace(/T/, "") + "Z";
+        const totalWeekHours = merged.reduce(
+          (a, s) => a + parseFloat(s.hours),
+          0,
+        );
+        const totalWeekDays = merged.length;
+        const location = document.getElementById("locationSelect").value;
+        const extraMins = parseInt(
+          document.getElementById("reminderSelect").value,
+        );
+        const includeWeekly = document.getElementById("weeklyToggle").checked;
 
         let events = "";
         for (const s of merged) {
-          const uid  = "costco-"+s.date+"-"+Math.random().toString(36).slice(2);
-          let desc   = `${t.descShift}\\n⏱ ${t.descHours}: ${s.hours} hrs`;
-          if (includeWeekly) desc += `\\n📅 ${t.descWeekTotal}: ${totalWeekHours.toFixed(2)} hrs (${totalWeekDays} ${t.descWeekDays})`;
-          const lines = ["BEGIN:VEVENT",`UID:${uid}`,`DTSTAMP:${now}`,`DTSTART:${toIcsDt(s.startDt)}`,`DTEND:${toIcsDt(s.endDt)}`,"SUMMARY:Costco","COLOR:grape","X-APPLE-CALENDAR-COLOR:#8B008B",`DESCRIPTION:${desc}`];
+          const uid =
+            "costco-" + s.date + "-" + Math.random().toString(36).slice(2);
+          let desc = `${t.descShift}\\n⏱ ${t.descHours}: ${s.hours} hrs`;
+          if (includeWeekly)
+            desc += `\\n📅 ${t.descWeekTotal}: ${totalWeekHours.toFixed(2)} hrs (${totalWeekDays} ${t.descWeekDays})`;
+          const lines = [
+            "BEGIN:VEVENT",
+            `UID:${uid}`,
+            `DTSTAMP:${now}`,
+            `DTSTART:${toIcsDt(s.startDt)}`,
+            `DTEND:${toIcsDt(s.endDt)}`,
+            "SUMMARY:Costco",
+            "COLOR:grape",
+            "X-APPLE-CALENDAR-COLOR:#8B008B",
+            `DESCRIPTION:${desc}`,
+          ];
           if (location) lines.push(`LOCATION:${location}`);
           // Fixed 30-min reminder
-          lines.push("BEGIN:VALARM","ACTION:DISPLAY",`DESCRIPTION:${t.descShift}`,"TRIGGER:-PT30M","END:VALARM");
+          lines.push(
+            "BEGIN:VALARM",
+            "ACTION:DISPLAY",
+            `DESCRIPTION:${t.descShift}`,
+            "TRIGGER:-PT30M",
+            "END:VALARM",
+          );
           // Extra reminder if set
           if (extraMins > 0) {
-            const th = extraMins/60;
-            const tr = Number.isInteger(th)?`-PT${th}H`:`-PT${extraMins}M`;
-            lines.push("BEGIN:VALARM","ACTION:DISPLAY",`DESCRIPTION:${t.descShift}`,`TRIGGER:${tr}`,"END:VALARM");
+            const th = extraMins / 60;
+            const tr = Number.isInteger(th) ? `-PT${th}H` : `-PT${extraMins}M`;
+            lines.push(
+              "BEGIN:VALARM",
+              "ACTION:DISPLAY",
+              `DESCRIPTION:${t.descShift}`,
+              `TRIGGER:${tr}`,
+              "END:VALARM",
+            );
           }
           lines.push("END:VEVENT");
-          events += lines.join("\r\n")+"\r\n";
+          events += lines.join("\r\n") + "\r\n";
         }
-        return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//CostcoSchedule//EN//","CALSCALE:GREGORIAN","METHOD:PUBLISH",events.trim(),"END:VCALENDAR"].join("\r\n");
+        return [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "PRODID:-//CostcoSchedule//EN//",
+          "CALSCALE:GREGORIAN",
+          "METHOD:PUBLISH",
+          events.trim(),
+          "END:VCALENDAR",
+        ].join("\r\n");
       }
 
       // ── HELPERS ───────────────────────────────────────────────────────────
       function setImageMode(mode) {
         imageMode = mode;
-        document.getElementById("imgmode-btn-printed").classList.toggle("active", mode==="printed");
-        document.getElementById("imgmode-btn-kronos").classList.toggle("active",  mode==="kronos");
-        document.getElementById("nameStep").style.display          = mode==="printed"?"flex":"none";
-        document.getElementById("stepnum-prompt").textContent      = mode==="printed"?"3":"2";
-        document.getElementById("stepnum-json").textContent        = mode==="printed"?"4":"3";
-        document.getElementById("stepnum-options").textContent     = mode==="printed"?"5":"4";
+        document
+          .getElementById("imgmode-btn-printed")
+          .classList.toggle("active", mode === "printed");
+        document
+          .getElementById("imgmode-btn-kronos")
+          .classList.toggle("active", mode === "kronos");
+        document.getElementById("nameStep").style.display =
+          mode === "printed" ? "flex" : "none";
+        document.getElementById("stepnum-prompt").textContent =
+          mode === "printed" ? "3" : "2";
+        document.getElementById("stepnum-json").textContent =
+          mode === "printed" ? "4" : "3";
+        document.getElementById("stepnum-options").textContent =
+          mode === "printed" ? "5" : "4";
         updatePrompt();
       }
       function setInputMode(mode) {
         inputMode = mode;
-        document.getElementById("btn-json").classList.toggle("active",   mode==="json");
-        document.getElementById("btn-manual").classList.toggle("active", mode==="manual");
-        document.getElementById("jsonInput").style.display   = mode==="json"   ?"block":"none";
-        document.getElementById("manualInput").style.display = mode==="manual" ?"block":"none";
+        document
+          .getElementById("btn-json")
+          .classList.toggle("active", mode === "json");
+        document
+          .getElementById("btn-manual")
+          .classList.toggle("active", mode === "manual");
+        document.getElementById("jsonInput").style.display =
+          mode === "json" ? "block" : "none";
+        document.getElementById("manualInput").style.display =
+          mode === "manual" ? "block" : "none";
       }
       function addShift() {
-        const date=document.getElementById("manualDate").value, start=document.getElementById("manualStart").value, end=document.getElementById("manualEnd").value;
-        if (!date||!start||!end) return;
-        let hours=(new Date("2000-01-01T"+end)-new Date("2000-01-01T"+start))/3600000;
-        if (hours<=0) hours+=24;
-        manualShifts.push({ date, start:fmt12(start), end:fmt12(end), hours:hours.toFixed(2) });
+        const date = document.getElementById("manualDate").value,
+          start = document.getElementById("manualStart").value,
+          end = document.getElementById("manualEnd").value;
+        if (!date || !start || !end) return;
+        let hours =
+          (new Date("2000-01-01T" + end) - new Date("2000-01-01T" + start)) /
+          3600000;
+        if (hours <= 0) hours += 24;
+        manualShifts.push({
+          date,
+          start: fmt12(start),
+          end: fmt12(end),
+          hours: hours.toFixed(2),
+        });
         renderManualShifts();
-        document.getElementById("manualDate").value=document.getElementById("manualStart").value=document.getElementById("manualEnd").value="";
+        document.getElementById("manualDate").value =
+          document.getElementById("manualStart").value =
+          document.getElementById("manualEnd").value =
+            "";
       }
-      function fmt12(t24) { const [h,m]=t24.split(":"); const hr=parseInt(h); return `${hr%12||12}:${m}${hr>=12?"P":"A"}`; }
-      function removeShift(i) { manualShifts.splice(i,1); renderManualShifts(); }
-      function clearManualShifts() { manualShifts=[]; renderManualShifts(); }
+      function fmt12(t24) {
+        const [h, m] = t24.split(":");
+        const hr = parseInt(h);
+        return `${hr % 12 || 12}:${m}${hr >= 12 ? "P" : "A"}`;
+      }
+      function removeShift(i) {
+        manualShifts.splice(i, 1);
+        renderManualShifts();
+      }
+      function clearManualShifts() {
+        manualShifts = [];
+        renderManualShifts();
+      }
       function renderManualShifts() {
-        const DAYS=lang==="es"?DAYS_ES:DAYS_EN, MONTHS=lang==="es"?MONTHS_ES:MONTHS_EN;
-        document.getElementById("manualShiftsList").innerHTML = manualShifts.map((s,i)=>{
-          const d=new Date(s.date+"T00:00:00");
-          return `<div class="manual-shift-item"><span>${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</span><span>${s.start} - ${s.end}</span><button onclick="removeShift(${i})">×</button></div>`;
-        }).join("");
+        const DAYS = lang === "es" ? DAYS_ES : DAYS_EN,
+          MONTHS = lang === "es" ? MONTHS_ES : MONTHS_EN;
+        document.getElementById("manualShiftsList").innerHTML = manualShifts
+          .map((s, i) => {
+            const d = new Date(s.date + "T00:00:00");
+            return `<div class="manual-shift-item"><span>${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</span><span>${s.start} - ${s.end}</span><button onclick="removeShift(${i})">×</button></div>`;
+          })
+          .join("");
       }
       function toggleTheme() {
-        theme=theme==="light"?"dark":"light";
-        document.documentElement.setAttribute("data-theme",theme);
-        localStorage.setItem("theme",theme);
+        theme = theme === "light" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
         updateThemeIcon();
       }
       function updateThemeIcon() {
-        document.getElementById("themeToggle").innerHTML = theme==="light"
-          ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
-          : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+        document.getElementById("themeToggle").innerHTML =
+          theme === "light"
+            ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+            : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
       }
       function setLang(l) {
-        lang=l;
-        document.getElementById("btn-es").classList.toggle("active",l==="es");
-        document.getElementById("btn-en").classList.toggle("active",l==="en");
-        applyTranslations(); updatePrompt();
+        lang = l;
+        document
+          .getElementById("btn-es")
+          .classList.toggle("active", l === "es");
+        document
+          .getElementById("btn-en")
+          .classList.toggle("active", l === "en");
+        applyTranslations();
+        updatePrompt();
       }
       function applyTranslations() {
-        const t=T[lang];
-        const s=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-        s("txt-subtitle",t.subtitle); s("txt-step1-title",t.step1Title); s("txt-step1-desc",t.step1Desc);
-        s("txt-imgmode-printed",t.imgModePrinted); s("txt-imgmode-kronos",t.imgModeKronos);
-        s("txt-step2-title",t.step2Title); s("txt-step2-desc",t.step2Desc); s("txt-name-label",t.nameLabel);
-        s("txt-step3-title",t.step3Title); s("txt-step3-desc",t.step3Desc); s("copyPromptBtn",t.copyBtn);
-        s("txt-step4-title",t.step4Title); s("txt-step4-desc",t.step4Desc);
-        s("txt-step5-title",t.step5Title); s("txt-step5-desc",t.step5Desc);
-        s("txt-opt-location-label",t.optLocationLabel);
-        s("txt-opt-reminder1-label",t.optReminder1Label);
-        s("txt-opt-reminder2-label",t.optReminder2Label);
-        s("txt-opt-weekly-label",t.optWeeklyLabel);
-        s("txt-generate-btn",t.generateBtn); s("txt-preview-title",t.previewTitle); s("txt-clear-btn",t.clearBtn);
-        s("txt-juan-divider",t.juanDivider); s("txt-google-signin",t.googleSignin); s("txt-signout-btn",t.signout);
-        const optNone=document.getElementById("opt-none"); if(optNone) optNone.textContent=t.optReminderNone;
-        const calBtn=document.getElementById("txt-send-calendar"); if(calBtn) calBtn.querySelector("span").textContent=t.sendCalendar;
-        const shtBtn=document.getElementById("txt-send-sheets");   if(shtBtn) shtBtn.querySelector("span").textContent=t.sendSheets;
-        const botBtn=document.getElementById("txt-send-both");     if(botBtn) botBtn.querySelector("span").textContent=t.sendBoth;
+        const t = T[lang];
+        const s = (id, v) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = v;
+        };
+        s("txt-subtitle", t.subtitle);
+        s("txt-step1-title", t.step1Title);
+        s("txt-step1-desc", t.step1Desc);
+        s("txt-imgmode-printed", t.imgModePrinted);
+        s("txt-imgmode-kronos", t.imgModeKronos);
+        s("txt-step2-title", t.step2Title);
+        s("txt-step2-desc", t.step2Desc);
+        s("txt-name-label", t.nameLabel);
+        s("txt-step3-title", t.step3Title);
+        s("txt-step3-desc", t.step3Desc);
+        s("copyPromptBtn", t.copyBtn);
+        s("txt-step4-title", t.step4Title);
+        s("txt-step4-desc", t.step4Desc);
+        s("txt-step5-title", t.step5Title);
+        s("txt-step5-desc", t.step5Desc);
+        s("txt-opt-location-label", t.optLocationLabel);
+        s("txt-opt-reminder1-label", t.optReminder1Label);
+        s("txt-opt-reminder2-label", t.optReminder2Label);
+        s("txt-opt-weekly-label", t.optWeeklyLabel);
+        s("txt-generate-btn", t.generateBtn);
+        s("txt-preview-title", t.previewTitle);
+        s("txt-clear-btn", t.clearBtn);
+        s("txt-juan-divider", t.juanDivider);
+        s("txt-google-signin", t.googleSignin);
+        s("txt-signout-btn", t.signout);
+        const optNone = document.getElementById("opt-none");
+        if (optNone) optNone.textContent = t.optReminderNone;
+        const calBtn = document.getElementById("txt-send-calendar");
+        if (calBtn) calBtn.querySelector("span").textContent = t.sendCalendar;
+        const shtBtn = document.getElementById("txt-send-sheets");
+        if (shtBtn) shtBtn.querySelector("span").textContent = t.sendSheets;
+        const botBtn = document.getElementById("txt-send-both");
+        if (botBtn) botBtn.querySelector("span").textContent = t.sendBoth;
         renderManualShifts();
       }
       function getPromptText(name) {
-        if (imageMode==="kronos") {
-          return lang==="es"
-            ?`Analiza esta imagen de la app Kronos de Costco que muestra mi horario de trabajo.\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P (AM/PM). Incluye TODOS los turnos visibles. Ignora duplicados y "System Calculation Only".\n\nAbre en: https://claude.ai`
-            :`Analyze this Costco Kronos app screenshot showing my work schedule.\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P. Include ALL visible shifts. Ignore duplicates and "System Calculation Only".\n\nOpen at: https://claude.ai`;
+        if (imageMode === "kronos") {
+          return lang === "es"
+            ? `Analiza esta imagen de la app Kronos de Costco que muestra mi horario de trabajo.\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P (AM/PM). Incluye TODOS los turnos visibles. Ignora duplicados y "System Calculation Only".\n\nAbre en: https://claude.ai`
+            : `Analyze this Costco Kronos app screenshot showing my work schedule.\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P. Include ALL visible shifts. Ignore duplicates and "System Calculation Only".\n\nOpen at: https://claude.ai`;
         }
-        return lang==="es"
-          ?`Analiza esta imagen de un horario de Costco y extrae SOLO los turnos de "${name}".\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P. El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").\nSi un dia tiene dos bloques incluyelos como entradas separadas.\n\nAbre en: https://chatgpt.com o https://claude.ai`
-          :`Analyze this Costco schedule image and extract ONLY the shifts for "${name}".\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P. The "period" field is the Time Period from the top of the image (e.g. "3/02/26 - 3/08/26").\nIf a day has two time blocks include them as separate entries.\n\nOpen at: https://chatgpt.com or https://claude.ai`;
+        return lang === "es"
+          ? `Analiza esta imagen de un horario de Costco y extrae SOLO los turnos de "${name}".\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P. El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").\nSi un dia tiene dos bloques incluyelos como entradas separadas.\n\nAbre en: https://chatgpt.com o https://claude.ai`
+          : `Analyze this Costco schedule image and extract ONLY the shifts for "${name}".\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P. The "period" field is the Time Period from the top of the image (e.g. "3/02/26 - 3/08/26").\nIf a day has two time blocks include them as separate entries.\n\nOpen at: https://chatgpt.com or https://claude.ai`;
       }
       function updatePrompt() {
-        document.getElementById("promptText").textContent = getPromptText(document.getElementById("employeeName").value.trim()||OWNER_NAME);
+        document.getElementById("promptText").textContent = getPromptText(
+          document.getElementById("employeeName").value.trim() || OWNER_NAME,
+        );
       }
-      function fixQuotes(s) { return s.replace(/[\u201c\u201d]/g,'"').replace(/[\u2018\u2019]/g,'"'); }
-      function parseTime(str,refDate) {
-        str=str.trim().toUpperCase(); const ap=str.slice(-1),tp=str.slice(0,-1);
-        let [h,m]=tp.includes(":")?tp.split(":").map(Number):[parseInt(tp),0];
-        if(ap==="P"&&h!==12) h+=12; if(ap==="A"&&h===12) h=0;
-        const d=new Date(refDate); d.setHours(h,m,0,0); return d;
+      function fixQuotes(s) {
+        return s
+          .replace(/[\u201c\u201d]/g, '"')
+          .replace(/[\u2018\u2019]/g, '"');
       }
-      function toIcsDt(dt) { const p=n=>String(n).padStart(2,"0"); return `${dt.getFullYear()}${p(dt.getMonth()+1)}${p(dt.getDate())}T${p(dt.getHours())}${p(dt.getMinutes())}00`; }
+      function parseTime(str, refDate) {
+        str = str.trim().toUpperCase();
+        const ap = str.slice(-1),
+          tp = str.slice(0, -1);
+        let [h, m] = tp.includes(":")
+          ? tp.split(":").map(Number)
+          : [parseInt(tp), 0];
+        if (ap === "P" && h !== 12) h += 12;
+        if (ap === "A" && h === 12) h = 0;
+        const d = new Date(refDate);
+        d.setHours(h, m, 0, 0);
+        return d;
+      }
+      function toIcsDt(dt) {
+        const p = (n) => String(n).padStart(2, "0");
+        return `${dt.getFullYear()}${p(dt.getMonth() + 1)}${p(dt.getDate())}T${p(dt.getHours())}${p(dt.getMinutes())}00`;
+      }
       function mergeShifts(shifts) {
-        const byDate={};
-        for (const s of shifts) { if(!byDate[s.date]) byDate[s.date]=[]; byDate[s.date].push(s); }
-        return Object.keys(byDate).sort().map(day=>{
-          const ds=byDate[day], ref=new Date(day+"T00:00:00");
-          const sts=ds.map(s=>parseTime(s.start,ref));
-          const ens=ds.map((s,i)=>{ let e=parseTime(s.end,ref); if(e<=sts[i]) e=new Date(e.getTime()+86400000); return e; });
-          return { date:day, startDt:new Date(Math.min(...sts)), endDt:new Date(Math.max(...ens)), hours:ds.reduce((a,s)=>a+parseFloat(s.hours),0).toFixed(2) };
-        });
+        const byDate = {};
+        for (const s of shifts) {
+          if (!byDate[s.date]) byDate[s.date] = [];
+          byDate[s.date].push(s);
+        }
+        return Object.keys(byDate)
+          .sort()
+          .map((day) => {
+            const ds = byDate[day],
+              ref = new Date(day + "T00:00:00");
+            const sts = ds.map((s) => parseTime(s.start, ref));
+            const ens = ds.map((s, i) => {
+              let e = parseTime(s.end, ref);
+              if (e <= sts[i]) e = new Date(e.getTime() + 86400000);
+              return e;
+            });
+            return {
+              date: day,
+              startDt: new Date(Math.min(...sts)),
+              endDt: new Date(Math.max(...ens)),
+              hours: ds.reduce((a, s) => a + parseFloat(s.hours), 0).toFixed(2),
+            };
+          });
       }
-      function periodToFilename(p) { return "costco_"+p.trim().replace(/\//g,"-").replace(" - ","_")+".ics"; }
-      function showError(msg)   { const el=document.getElementById("errorBox");   el.textContent=msg; el.style.display="block"; document.getElementById("successBox").style.display="none"; document.getElementById("preview").style.display="none"; }
-      function showSuccess(msg) { const el=document.getElementById("successBox"); el.textContent=msg; el.style.display="block"; document.getElementById("errorBox").style.display="none"; }
+      function periodToFilename(p) {
+        return (
+          "costco_" + p.trim().replace(/\//g, "-").replace(" - ", "_") + ".ics"
+        );
+      }
+      function showError(msg) {
+        const el = document.getElementById("errorBox");
+        el.textContent = msg;
+        el.style.display = "block";
+        document.getElementById("successBox").style.display = "none";
+        document.getElementById("preview").style.display = "none";
+      }
+      function showSuccess(msg) {
+        const el = document.getElementById("successBox");
+        el.textContent = msg;
+        el.style.display = "block";
+        document.getElementById("errorBox").style.display = "none";
+      }
       function copyPrompt() {
-        navigator.clipboard.writeText(document.getElementById("promptText").textContent).then(()=>{
-          const btn=document.getElementById("copyPromptBtn"); btn.textContent=T[lang].copiedBtn; btn.classList.add("copied");
-          setTimeout(()=>{ btn.textContent=T[lang].copyBtn; btn.classList.remove("copied"); },2000);
-        });
+        navigator.clipboard
+          .writeText(document.getElementById("promptText").textContent)
+          .then(() => {
+            const btn = document.getElementById("copyPromptBtn");
+            btn.textContent = T[lang].copiedBtn;
+            btn.classList.add("copied");
+            setTimeout(() => {
+              btn.textContent = T[lang].copyBtn;
+              btn.classList.remove("copied");
+            }, 2000);
+          });
       }
 
       // ── INIT ──────────────────────────────────────────────────────────────
-      document.documentElement.setAttribute("data-theme",theme);
-      updateThemeIcon(); applyTranslations(); updatePrompt(); checkJuanSection();
+      document.documentElement.setAttribute("data-theme", theme);
+      updateThemeIcon();
+      applyTranslations();
+      updatePrompt();
+      checkJuanSection();
     </script>
   </body>
 </html>
