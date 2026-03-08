@@ -494,6 +494,7 @@
             `DTEND:${toIcsDt(s.endDt)}`,
             "SUMMARY:Costco",
             "COLOR:grape",
+            "X-APPLE-CALENDAR-COLOR:#8B008B",
             `DESCRIPTION:${desc}`,
           ];
 
@@ -502,11 +503,21 @@
           }
 
           if (reminderMinutes > 0) {
+            const triggerHours = reminderMinutes / 60;
+            const triggerStr = Number.isInteger(triggerHours)
+              ? `-PT${triggerHours}H`
+              : `-PT${reminderMinutes}M`;
             eventLines.push(
               "BEGIN:VALARM",
               "ACTION:DISPLAY",
               `DESCRIPTION:${t.descShift}`,
-              `TRIGGER:-PT${reminderMinutes}M`,
+              `TRIGGER:${triggerStr}`,
+              "X-WR-ALARMUID:" + uid + "-alarm",
+              "END:VALARM",
+              "BEGIN:VALARM",
+              "ACTION:EMAIL",
+              `DESCRIPTION:${t.descShift}`,
+              `TRIGGER:${triggerStr}`,
               "END:VALARM"
             );
           }
