@@ -397,6 +397,13 @@ textarea:focus { border-color: var(--accent); }
   margin-bottom: 8px;
 }
 
+.footer-legal {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  opacity: 0.6;
+}
+
 .input-toggle-btn {
   border: none;
   background: var(--bg);
@@ -438,6 +445,11 @@ textarea:focus { border-color: var(--accent); }
   flex-shrink: 0;
 }
 
+.opt-icon {
+  flex-shrink: 0;
+  stroke: var(--text-secondary);
+}
+
 .option-label {
   font-size: 0.85rem;
   color: var(--text);
@@ -453,6 +465,16 @@ textarea:focus { border-color: var(--accent); }
   width: 200px;
   padding: 6px 10px;
   font-size: 0.82rem;
+}
+
+.reminder-fixed-badge {
+  background: var(--accent);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
 }
 
 .reminder-select {
