@@ -808,3 +808,44 @@ input:checked + .toggle-slider:before {
   .google-action-btns { flex-direction: column; }
   .google-action-btn  { padding: 10px; }
 }
+
+/* ── Hourly rate input ─────────────────────────────── */
+.hourly-rate-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rate-prefix {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.rate-suffix {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.rate-input {
+  width: 68px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--card-bg);
+  outline: none;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.rate-input:focus {
+  border-color: var(--accent);
+}
+
+/* hide number spinners */
+.rate-input::-webkit-inner-spin-button,
+.rate-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.rate-input[type=number] { -moz-appearance: textfield; }

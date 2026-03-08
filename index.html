@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Schedule image → Google Calendar | Juan Diaz</title>
-    <meta name="description" content="Convert your work schedule image to Google Calendar events." />
+    <title>Costco → Google Calendar | Juan Diaz</title>
+    <meta name="description" content="Convert your Costco schedule to Google Calendar events." />
     <meta name="author" content="Juan Diaz" />
     <meta name="robots" content="index, follow" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E" type="image/svg+xml" />
@@ -165,6 +165,7 @@
               </label>
             </div>
           </div>
+
         </div>
       </div>
 
@@ -235,6 +236,10 @@
       const OWNER_NAME       = "Diaz, Juan";
       const REMINDER_FIXED   = 30; // always-on reminder in minutes
 
+      // ── PAY RATES (update here if your wage changes) ──────────────────────
+      const HOURLY_RATE      = 20;    // regular hourly rate (USD)
+      const SUNDAY_RATE      = HOURLY_RATE * 1.5; // time and a half
+
       // ── TRANSLATIONS ──────────────────────────────────────────────────────
       const T = {
         es: {
@@ -252,6 +257,7 @@
           optReminder2Label:"Recordatorio adicional",
           optReminderNone:"Sin recordatorio",
           optWeeklyLabel:"Total de horas en descripción",
+
           generateBtn:"Generar y descargar .ics",
           previewTitle:"Turnos detectados:", weeklyLabel:"Total semana:",
           errEmpty:"Pega el JSON de AI primero.", errJson:"JSON inválido: ", errJsonHint:". Asegúrate de copiar el bloque completo.",
@@ -286,6 +292,7 @@
           optReminder2Label:"Additional reminder",
           optReminderNone:"No reminder",
           optWeeklyLabel:"Weekly hours total in description",
+
           generateBtn:"Generate & download .ics",
           previewTitle:"Detected shifts:", weeklyLabel:"Week total:",
           errEmpty:"Paste AI's JSON first.", errJson:"Invalid JSON: ", errJsonHint:". Make sure you copied the full block.",
@@ -490,72 +497,241 @@
         if (ok !== false) { renderPreview(parsed.shifts); resetAfterAction(); }
       }
 
+      // ── PAY CALCULATOR ────────────────────────────────────────────────────
+      function calcPay(merged) {
+        let regHrs = 0, sunHrs = 0;
+        merged.forEach(s => {
+          const h = parseFloat(s.hours);
+          if (new Date(s.date + "T00:00:00").getDay() === 0) sunHrs += h;
+          else regHrs += h;
+        });
+        return { rate: HOURLY_RATE, sunRate: SUNDAY_RATE, regHrs, sunHrs,
+          totalHrs : regHrs + sunHrs,
+          regPay   : regHrs * HOURLY_RATE,
+          sunPay   : sunHrs * SUNDAY_RATE,
+          totalPay : regHrs * HOURLY_RATE + sunHrs * SUNDAY_RATE };
+      }
+
+      // ── SHEETS: create/find tab ────────────────────────────────────────────
+      async function getOrCreateTab(title) {
+        const meta = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`,
+          { headers:{ Authorization:"Bearer "+accessToken } }).then(r=>r.json());
+        const existing = meta.sheets.find(s => s.properties.title === title);
+        if (existing) return existing.properties.sheetId;
+        const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
+          method:"POST",
+          headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
+          body: JSON.stringify({ requests:[{ addSheet:{ properties:{ title } } }] })
+        }).then(r=>r.json());
+        return res.replies?.[0]?.addSheet?.properties?.sheetId ?? null;
+      }
+
+      async function clearTab(sheetName) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A1:Z200:clear`,
+          { method:"POST", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" } }
+        );
+      }
+
+      async function checkTabHasData(sheetName) {
+        const res = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A2`,
+          { headers:{ Authorization:"Bearer "+accessToken } }).then(r=>r.json());
+        return !!(res.values && res.values.length);
+      }
+
+      // ── SHEETS: write data + formatting ───────────────────────────────────
       async function _doSheets(shifts, period) {
-        const t = T[lang];
-        showGoogleStatus("loading", t.googleLoading);
-        const merged         = mergeShifts(shifts);
-        const totalWeekHours = merged.reduce((a, s) => a + parseFloat(s.hours), 0).toFixed(2);
-        const locEl          = document.getElementById("locationSelect");
-        const locLabel       = locEl.options[locEl.selectedIndex].text;
-
-        await ensureSheetHeader();
-        const existingRows = await getSheetRows();
-        const duplicate    = existingRows.some(row => row[6] === period);
-
-        if (duplicate) {
-          const confirmed = await confirmDuplicate();
-          if (!confirmed) { showGoogleStatus("info", t.cancelled); return false; }
-          await deleteRowsForPeriod(period, existingRows);
-        }
-
+        const t      = T[lang];
         const DAYS   = lang === "es" ? DAYS_ES : DAYS_EN;
         const MONTHS = lang === "es" ? MONTHS_ES : MONTHS_EN;
-        const fmt    = dt => { let h=dt.getHours(),m=dt.getMinutes(),ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(m).padStart(2,"0")} ${ap}`; };
+        const fmtT   = dt => { let h=dt.getHours(),m=dt.getMinutes(),ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(m).padStart(2,"0")} ${ap}`; };
 
-        const rows = merged.map(s => {
-          const d = new Date(s.date + "T00:00:00");
-          return [s.date, `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`, fmt(s.startDt), fmt(s.endDt), parseFloat(s.hours), parseFloat(totalWeekHours), period, locLabel];
+        showGoogleStatus("loading", t.googleLoading);
+        const merged = mergeShifts(shifts);
+        const pay    = calcPay(merged);
+
+        // Get/create tab
+        const tabId = await getOrCreateTab(period);
+        if (tabId === null) { showGoogleStatus("error", t.googleErr + "Tab error"); return false; }
+
+        // Check duplicate
+        if (await checkTabHasData(period)) {
+          const confirmed = await confirmDuplicate();
+          if (!confirmed) { showGoogleStatus("info", t.cancelled); return false; }
+          await clearTab(period);
+        }
+
+        // Build values: header row + shift rows + blank + summary block
+        const header = [["Day", "Date", "Start", "End", "Hours", "Pay"]];
+
+        const shiftRows = merged.map(s => {
+          const d       = new Date(s.date + "T00:00:00");
+          const isSun   = d.getDay() === 0;
+          const hrs     = parseFloat(s.hours);
+          const dayRate = isSun ? pay.sunRate : pay.rate;
+          const dayPay  = hrs * dayRate;
+          const dayLabel = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}${isSun ? " ★" : ""}`;
+          return [dayLabel, s.date, fmtT(s.startDt), fmtT(s.endDt), hrs, dayPay];
         });
 
-        const res = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A:H:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
-          { method:"POST", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" }, body:JSON.stringify({ values:rows }) }
+        const blankRow  = [["", "", "", "", "", ""]];
+
+        const summaryRows = [
+          ["WEEK SUMMARY",  "",             "",  "",           "",           ""],
+          ["Total hours",   "",             "",  "",           pay.totalHrs, ""],
+          ["Regular hrs",   `$${pay.rate}/hr`,  "",  "",      pay.regHrs,   pay.regPay],
+          ["Sunday hrs ★",  `$${pay.sunRate.toFixed(2)}/hr`, "", "", pay.sunHrs, pay.sunPay],
+          ["",              "",             "",  "",           "",           ""],
+          ["TOTAL PAY",     "",             "",  "",           "",           pay.totalPay],
+        ];
+
+        const allValues = [...header, ...shiftRows, ...blankRow, ...summaryRows];
+
+        // Write values
+        const enc = encodeURIComponent(period);
+        const writeRes = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${enc}!A1?valueInputOption=USER_ENTERED`,
+          { method:"PUT", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
+            body: JSON.stringify({ values: allValues }) }
         );
-        if (!res.ok) {
-          const err = await res.json();
-          showGoogleStatus("error", t.googleErr + (err.error?.message || res.status));
+        if (!writeRes.ok) {
+          const err = await writeRes.json();
+          showGoogleStatus("error", t.googleErr + (err.error?.message || writeRes.status));
           return false;
         }
+
+        // ── FORMATTING via batchUpdate ─────────────────────────────────────
+        const nShifts     = shiftRows.length;
+        const headerRow   = 0;                      // row index 0-based
+        const firstShift  = 1;
+        const lastShift   = nShifts;               // inclusive index
+        const blankRowIdx = nShifts + 1;
+        const summStart   = nShifts + 2;
+        const totalPayRow = summStart + 5;
+
+        // Zebra stripe colors
+        const STRIPE_A  = { red:0.95, green:0.97, blue:1.0 };   // soft blue-white
+        const STRIPE_B  = { red:1.0,  green:1.0,  blue:1.0 };   // white
+        const HEADER_BG = { red:0.18, green:0.33, blue:0.59 };  // navy blue
+        const HEADER_FG = { red:1.0,  green:1.0,  blue:1.0 };
+        const SUN_BG    = { red:1.0,  green:0.95, blue:0.80 };  // warm yellow for sunday
+        const SUMM_BG   = { red:0.95, green:0.95, blue:0.95 };  // light gray summary
+        const TOTAL_BG  = { red:0.18, green:0.33, blue:0.59 };  // navy total row
+        const TOTAL_FG  = { red:1.0,  green:1.0,  blue:1.0 };
+        const GREEN     = { red:0.13, green:0.55, blue:0.13 };
+
+        const cell = (r,c) => ({ sheetId: tabId, startRowIndex: r, endRowIndex: r+1, startColumnIndex: c, endColumnIndex: c+1 });
+        const row  = (r, c1=0, c2=6) => ({ sheetId: tabId, startRowIndex: r, endRowIndex: r+1, startColumnIndex: c1, endColumnIndex: c2 });
+
+        const requests = [];
+
+        // Header row style
+        requests.push({ repeatCell: { range: row(headerRow), cell: {
+          userEnteredFormat: { backgroundColor: HEADER_BG, textFormat: { foregroundColor: HEADER_FG, bold: true, fontSize: 11 },
+            horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE" }
+        }, fields: "userEnteredFormat" }});
+
+        // Shift rows: zebra + sunday highlight
+        merged.forEach((s, i) => {
+          const r      = firstShift + i;
+          const isSun  = new Date(s.date + "T00:00:00").getDay() === 0;
+          const bg     = isSun ? SUN_BG : (i % 2 === 0 ? STRIPE_A : STRIPE_B);
+          requests.push({ repeatCell: { range: row(r), cell: {
+            userEnteredFormat: { backgroundColor: bg, textFormat: { fontSize: 10 },
+              verticalAlignment: "MIDDLE" }
+          }, fields: "userEnteredFormat" }});
+          // Bold day name
+          requests.push({ repeatCell: { range: cell(r, 0), cell: {
+            userEnteredFormat: { textFormat: { bold: true } }
+          }, fields: "userEnteredFormat.textFormat.bold" }});
+          // Pay column green
+          requests.push({ repeatCell: { range: cell(r, 5), cell: {
+            userEnteredFormat: { textFormat: { foregroundColor: GREEN, bold: true },
+              numberFormat: { type:"CURRENCY", pattern:"$#,##0.00" } }
+          }, fields: "userEnteredFormat" }});
+          // Hours center
+          requests.push({ repeatCell: { range: cell(r, 4), cell: {
+            userEnteredFormat: { horizontalAlignment: "CENTER" }
+          }, fields: "userEnteredFormat.horizontalAlignment" }});
+        });
+
+        // Summary block rows
+        [summStart, summStart+1, summStart+2, summStart+3].forEach(r => {
+          requests.push({ repeatCell: { range: row(r), cell: {
+            userEnteredFormat: { backgroundColor: SUMM_BG, textFormat: { fontSize: 10 } }
+          }, fields: "userEnteredFormat" }});
+        });
+        // WEEK SUMMARY label — bold, larger
+        requests.push({ repeatCell: { range: row(summStart), cell: {
+          userEnteredFormat: { textFormat: { bold: true, fontSize: 11 }, backgroundColor: SUMM_BG }
+        }, fields: "userEnteredFormat" }});
+        // Numbers: hours col center, pay col green currency
+        [summStart+1, summStart+2, summStart+3].forEach(r => {
+          requests.push({ repeatCell: { range: cell(r, 4), cell: {
+            userEnteredFormat: { horizontalAlignment: "CENTER", textFormat: { bold: true } }
+          }, fields: "userEnteredFormat" }});
+          requests.push({ repeatCell: { range: cell(r, 5), cell: {
+            userEnteredFormat: { textFormat: { foregroundColor: GREEN, bold: true },
+              numberFormat: { type:"CURRENCY", pattern:"$#,##0.00" } }
+          }, fields: "userEnteredFormat" }});
+        });
+        // TOTAL PAY row — navy + white + large
+        requests.push({ repeatCell: { range: row(totalPayRow), cell: {
+          userEnteredFormat: { backgroundColor: TOTAL_BG,
+            textFormat: { foregroundColor: TOTAL_FG, bold: true, fontSize: 12 },
+            horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE" }
+        }, fields: "userEnteredFormat" }});
+        requests.push({ repeatCell: { range: cell(totalPayRow, 5), cell: {
+          userEnteredFormat: { numberFormat: { type:"CURRENCY", pattern:"$#,##0.00" },
+            textFormat: { foregroundColor: TOTAL_FG, bold: true, fontSize: 12 } }
+        }, fields: "userEnteredFormat" }});
+
+        // Column widths
+        const colWidths = [160, 100, 90, 90, 70, 90];
+        colWidths.forEach((px, i) => {
+          requests.push({ updateDimensionProperties: {
+            range: { sheetId: tabId, dimension:"COLUMNS", startIndex: i, endIndex: i+1 },
+            properties: { pixelSize: px }, fields: "pixelSize" }});
+        });
+
+        // Row heights
+        requests.push({ updateDimensionProperties: {
+          range: { sheetId: tabId, dimension:"ROWS", startIndex: headerRow, endIndex: headerRow+1 },
+          properties: { pixelSize: 32 }, fields: "pixelSize" }});
+        requests.push({ updateDimensionProperties: {
+          range: { sheetId: tabId, dimension:"ROWS", startIndex: firstShift, endIndex: lastShift+1 },
+          properties: { pixelSize: 26 }, fields: "pixelSize" }});
+        requests.push({ updateDimensionProperties: {
+          range: { sheetId: tabId, dimension:"ROWS", startIndex: totalPayRow, endIndex: totalPayRow+1 },
+          properties: { pixelSize: 36 }, fields: "pixelSize" }});
+
+        // Outer border on entire table
+        const tableRange = { sheetId: tabId, startRowIndex:0, endRowIndex: totalPayRow+1, startColumnIndex:0, endColumnIndex:6 };
+        const borderStyle = { style:"SOLID_MEDIUM", color:{ red:0.18, green:0.33, blue:0.59 } };
+        requests.push({ updateBorders: { range: tableRange,
+          top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle }});
+
+        // Inner horizontal borders between shift rows
+        for (let r = firstShift; r <= lastShift; r++) {
+          requests.push({ updateBorders: { range: row(r),
+            bottom: { style:"SOLID", color:{ red:0.85, green:0.88, blue:0.95 } } }});
+        }
+
+        // Freeze header row
+        requests.push({ updateSheetProperties: { properties: {
+          sheetId: tabId, gridProperties: { frozenRowCount: 1 }
+        }, fields: "gridProperties.frozenRowCount" }});
+
+        // Execute formatting
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
+          method:"POST",
+          headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
+          body: JSON.stringify({ requests })
+        });
+
         showGoogleStatus("success", t.googleSheetsOk);
         return true;
-      }
-
-      async function ensureSheetHeader() {
-        const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1`, { headers:{ Authorization:"Bearer "+accessToken } });
-        const data = await res.json();
-        if (data.values && data.values[0] && data.values[0][0]==="Date") return;
-        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:H1?valueInputOption=USER_ENTERED`, {
-          method:"PUT", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
-          body:JSON.stringify({ values:[["Date","Day","Start","End","Hours","Week Total","Period","Location"]] })
-        });
-      }
-
-      async function getSheetRows() {
-        const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A:H`, { headers:{ Authorization:"Bearer "+accessToken } });
-        const data = await res.json();
-        return data.values || [];
-      }
-
-      async function deleteRowsForPeriod(period, existingRows) {
-        const toDelete = [];
-        existingRows.forEach((row,i) => { if (i>0 && row[6]===period) toDelete.push(i+1); });
-        if (!toDelete.length) return;
-        const meta    = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`, { headers:{ Authorization:"Bearer "+accessToken } }).then(r=>r.json());
-        const sheetId = meta.sheets[0].properties.sheetId;
-        const requests = toDelete.reverse().map(n => ({ deleteDimension:{ range:{ sheetId, dimension:"ROWS", startIndex:n-1, endIndex:n } } }));
-        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
-          method:"POST", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" }, body:JSON.stringify({ requests })
-        });
       }
 
       function confirmDuplicate() {
@@ -728,8 +904,8 @@
             :`Analyze this Costco Kronos app screenshot showing my work schedule.\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P. Include ALL visible shifts. Ignore duplicates and "System Calculation Only".\n\nOpen at: https://claude.ai`;
         }
         return lang==="es"
-          ?`Analiza esta imagen de un horario de Costco y extrae SOLO los turnos de "${name}".\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P. El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").\nSi un dia tiene dos bloques incluyelos como entradas separadas.`
-          :`Analyze this Costco schedule image and extract ONLY the shifts for "${name}".\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P. The "period" field is the Time Period from the top of the image (e.g. "3/02/26 - 3/08/26").\nIf a day has two time blocks include them as separate entries.`;
+          ?`Analiza esta imagen de un horario de Costco y extrae SOLO los turnos de "${name}".\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P. El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").\nSi un dia tiene dos bloques incluyelos como entradas separadas.\n\nAbre en: https://chatgpt.com o https://claude.ai`
+          :`Analyze this Costco schedule image and extract ONLY the shifts for "${name}".\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P. The "period" field is the Time Period from the top of the image (e.g. "3/02/26 - 3/08/26").\nIf a day has two time blocks include them as separate entries.\n\nOpen at: https://chatgpt.com or https://claude.ai`;
       }
       function updatePrompt() {
         document.getElementById("promptText").textContent = getPromptText(document.getElementById("employeeName").value.trim()||OWNER_NAME);
