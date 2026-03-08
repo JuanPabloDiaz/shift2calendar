@@ -512,35 +512,46 @@
           totalPay : regHrs * HOURLY_RATE + sunHrs * SUNDAY_RATE };
       }
 
-      // ── SHEETS: create/find tab ────────────────────────────────────────────
-      async function getOrCreateTab(title) {
+      // ── SHEETS: single-sheet, all weeks stacked ───────────────────────────
+      const SHEET_NAME = "Schedule";
+
+      async function getMainSheetId() {
         const meta = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`,
           { headers:{ Authorization:"Bearer "+accessToken } }).then(r=>r.json());
-        const existing = meta.sheets.find(s => s.properties.title === title);
-        if (existing) return existing.properties.sheetId;
-        const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
-          method:"POST",
-          headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
-          body: JSON.stringify({ requests:[{ addSheet:{ properties:{ title } } }] })
-        }).then(r=>r.json());
-        return res.replies?.[0]?.addSheet?.properties?.sheetId ?? null;
+        let sheet = meta.sheets.find(s => s.properties.title === SHEET_NAME);
+        if (!sheet) {
+          const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
+            method:"POST",
+            headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
+            body: JSON.stringify({ requests:[{ addSheet:{ properties:{ title: SHEET_NAME } } }] })
+          }).then(r=>r.json());
+          return res.replies?.[0]?.addSheet?.properties?.sheetId ?? null;
+        }
+        return sheet.properties.sheetId;
       }
 
-      async function clearTab(sheetName) {
-        await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A1:Z200:clear`,
-          { method:"POST", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" } }
-        );
-      }
-
-      async function checkTabHasData(sheetName) {
+      async function getAllSheetValues() {
         const res = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A2`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A1:H2000`,
           { headers:{ Authorization:"Bearer "+accessToken } }).then(r=>r.json());
-        return !!(res.values && res.values.length);
+        return res.values || [];
       }
 
-      // ── SHEETS: write data + formatting ───────────────────────────────────
+      async function findPeriodRows(period, allRows) {
+        // Returns {start, end} 0-based row indices of existing period block, or null
+        for (let i = 0; i < allRows.length; i++) {
+          if (allRows[i][0] === "PERIOD:" && allRows[i][1] === period) {
+            // Find end: next PERIOD: row or end of data
+            let end = allRows.length;
+            for (let j = i + 1; j < allRows.length; j++) {
+              if (allRows[j][0] === "PERIOD:") { end = j; break; }
+            }
+            return { start: i, end };
+          }
+        }
+        return null;
+      }
+
       async function _doSheets(shifts, period) {
         const t      = T[lang];
         const DAYS   = lang === "es" ? DAYS_ES : DAYS_EN;
@@ -548,193 +559,224 @@
         const fmtT   = dt => { let h=dt.getHours(),m=dt.getMinutes(),ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(m).padStart(2,"0")} ${ap}`; };
 
         showGoogleStatus("loading", t.googleLoading);
-        const merged = mergeShifts(shifts);
-        const pay    = calcPay(merged);
+        const merged  = mergeShifts(shifts);
+        const pay     = calcPay(merged);
+        const sheetId = await getMainSheetId();
+        if (sheetId === null) { showGoogleStatus("error", t.googleErr + "Sheet error"); return false; }
 
-        // Get/create tab
-        const tabId = await getOrCreateTab(period);
-        if (tabId === null) { showGoogleStatus("error", t.googleErr + "Tab error"); return false; }
+        const allRows   = await getAllSheetValues();
+        const existing  = await findPeriodRows(period, allRows);
+        const requests  = [];
 
-        // Check duplicate
-        if (await checkTabHasData(period)) {
-          const confirmed = await confirmDuplicate();
-          if (!confirmed) { showGoogleStatus("info", t.cancelled); return false; }
-          await clearTab(period);
-        }
+        // ── Detect month/year from first shift ─────────────────────────────
+        const firstDate  = new Date(merged[0].date + "T00:00:00");
+        const monthLabel = firstDate.toLocaleString("en-US", { month: "long", year: "numeric" }); // e.g. "March 2026"
+        const monthKey   = `${firstDate.getFullYear()}-${String(firstDate.getMonth()+1).padStart(2,"0")}`;
 
-        // Build values: header row + shift rows + blank + summary block
-        const header = [["Day", "Date", "Start", "End", "Hours", "Pay"]];
+        // ── Build row data ─────────────────────────────────────────────────
+        // Marker row (hidden helper, we use col A as key)
+        const markerRow  = [["PERIOD:", period, "", "", "", ""]];
 
+        // Month/year divider (only if this month doesn't already exist right before)
+        const needsMonthDivider = () => {
+          if (!allRows.length) return true;
+          // Check if last divider matches current month
+          for (let i = allRows.length - 1; i >= 0; i--) {
+            if (allRows[i][0] === "MONTH:" && allRows[i][1] === monthKey) return false;
+            if (allRows[i][0] === "PERIOD:") break; // hit another period, need divider
+          }
+          return true;
+        };
+
+        const monthDividerRow = [["MONTH:", monthKey, monthLabel, "", "", ""]];
+
+        // Header row
+        const headerRow = [["Date", "Day", "Start", "End", "Hours", "Pay"]];
+
+        // Shift rows
         const shiftRows = merged.map(s => {
-          const d       = new Date(s.date + "T00:00:00");
-          const isSun   = d.getDay() === 0;
-          const hrs     = parseFloat(s.hours);
-          const dayRate = isSun ? pay.sunRate : pay.rate;
-          const dayPay  = hrs * dayRate;
+          const d      = new Date(s.date + "T00:00:00");
+          const isSun  = d.getDay() === 0;
+          const hrs    = parseFloat(s.hours);
+          const dPay   = hrs * (isSun ? pay.sunRate : pay.rate);
           const dayLabel = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}${isSun ? " ★" : ""}`;
-          return [dayLabel, s.date, fmtT(s.startDt), fmtT(s.endDt), hrs, dayPay];
+          return [s.date, dayLabel, fmtT(s.startDt), fmtT(s.endDt), hrs, dPay];
         });
 
-        const blankRow  = [["", "", "", "", "", ""]];
-
+        // Summary rows
         const summaryRows = [
-          ["WEEK SUMMARY",  "",             "",  "",           "",           ""],
-          ["Total hours",   "",             "",  "",           pay.totalHrs, ""],
-          ["Regular hrs",   `$${pay.rate}/hr`,  "",  "",      pay.regHrs,   pay.regPay],
-          ["Sunday hrs ★",  `$${pay.sunRate.toFixed(2)}/hr`, "", "", pay.sunHrs, pay.sunPay],
-          ["",              "",             "",  "",           "",           ""],
-          ["TOTAL PAY",     "",             "",  "",           "",           pay.totalPay],
+          ["", "", "", "Regular hrs", pay.regHrs, pay.regPay],
+          ["", "", "", "Sunday hrs ★", pay.sunHrs, pay.sunPay],
+          ["SUMMARY:", period, "", "Total hrs", pay.totalHrs, pay.totalPay],
+          ["", "", "", "", "", ""],  // spacer
         ];
 
-        const allValues = [...header, ...shiftRows, ...blankRow, ...summaryRows];
+        const blockRows = [...markerRow, ...monthDividerRow, ...headerRow, ...shiftRows, ...summaryRows];
 
-        // Write values
-        const enc = encodeURIComponent(period);
-        const writeRes = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${enc}!A1?valueInputOption=USER_ENTERED`,
-          { method:"PUT", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
-            body: JSON.stringify({ values: allValues }) }
-        );
-        if (!writeRes.ok) {
-          const err = await writeRes.json();
-          showGoogleStatus("error", t.googleErr + (err.error?.message || writeRes.status));
-          return false;
+        if (existing) {
+          // Overwrite: confirm then delete old rows, insert new at same position
+          const confirmed = await confirmDuplicate();
+          if (!confirmed) { showGoogleStatus("info", t.cancelled); return false; }
+          showGoogleStatus("loading", t.googleLoading);
+
+          // Delete existing rows (reversed)
+          const deleteCount = existing.end - existing.start;
+          requests.push({ deleteDimension: { range: {
+            sheetId, dimension: "ROWS",
+            startIndex: existing.start,
+            endIndex:   existing.end
+          }}});
+
+          // Insert blank rows at same position, then write
+          requests.push({ insertDimension: { range: {
+            sheetId, dimension: "ROWS",
+            startIndex: existing.start,
+            endIndex:   existing.start + blockRows.length
+          }, inheritFromBefore: false }});
+
+          // Execute delete+insert first
+          await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
+            method:"POST", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
+            body: JSON.stringify({ requests })
+          });
+
+          // Write values at that position
+          const startRow = existing.start + 1; // 1-based
+          await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A${startRow}?valueInputOption=USER_ENTERED`,
+            { method:"PUT", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
+              body: JSON.stringify({ values: blockRows }) }
+          );
+          await applySheetFormatting(sheetId, existing.start, merged, pay, false);
+
+        } else {
+          // Append: check if month divider needed
+          const addDivider = needsMonthDivider();
+          const rowsToWrite = addDivider ? blockRows : [...markerRow, ...headerRow, ...shiftRows, ...summaryRows];
+
+          const nextRow = allRows.length + 1; // 1-based
+          await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A${nextRow}?valueInputOption=USER_ENTERED`,
+            { method:"PUT", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
+              body: JSON.stringify({ values: rowsToWrite }) }
+          );
+          await applySheetFormatting(sheetId, allRows.length, merged, pay, addDivider);
         }
 
-        // ── FORMATTING via batchUpdate ─────────────────────────────────────
-        const nShifts     = shiftRows.length;
-        const headerRow   = 0;                      // row index 0-based
-        const firstShift  = 1;
-        const lastShift   = nShifts;               // inclusive index
-        const blankRowIdx = nShifts + 1;
-        const summStart   = nShifts + 2;
-        const totalPayRow = summStart + 5;
-
-        // Zebra stripe colors
-        const STRIPE_A  = { red:0.95, green:0.97, blue:1.0 };   // soft blue-white
-        const STRIPE_B  = { red:1.0,  green:1.0,  blue:1.0 };   // white
-        const HEADER_BG = { red:0.18, green:0.33, blue:0.59 };  // navy blue
-        const HEADER_FG = { red:1.0,  green:1.0,  blue:1.0 };
-        const SUN_BG    = { red:1.0,  green:0.95, blue:0.80 };  // warm yellow for sunday
-        const SUMM_BG   = { red:0.95, green:0.95, blue:0.95 };  // light gray summary
-        const TOTAL_BG  = { red:0.18, green:0.33, blue:0.59 };  // navy total row
-        const TOTAL_FG  = { red:1.0,  green:1.0,  blue:1.0 };
-        const GREEN     = { red:0.13, green:0.55, blue:0.13 };
-
-        const cell = (r,c) => ({ sheetId: tabId, startRowIndex: r, endRowIndex: r+1, startColumnIndex: c, endColumnIndex: c+1 });
-        const row  = (r, c1=0, c2=6) => ({ sheetId: tabId, startRowIndex: r, endRowIndex: r+1, startColumnIndex: c1, endColumnIndex: c2 });
-
-        const requests = [];
-
-        // Header row style
-        requests.push({ repeatCell: { range: row(headerRow), cell: {
-          userEnteredFormat: { backgroundColor: HEADER_BG, textFormat: { foregroundColor: HEADER_FG, bold: true, fontSize: 11 },
-            horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE" }
-        }, fields: "userEnteredFormat" }});
-
-        // Shift rows: zebra + sunday highlight
-        merged.forEach((s, i) => {
-          const r      = firstShift + i;
-          const isSun  = new Date(s.date + "T00:00:00").getDay() === 0;
-          const bg     = isSun ? SUN_BG : (i % 2 === 0 ? STRIPE_A : STRIPE_B);
-          requests.push({ repeatCell: { range: row(r), cell: {
-            userEnteredFormat: { backgroundColor: bg, textFormat: { fontSize: 10 },
-              verticalAlignment: "MIDDLE" }
-          }, fields: "userEnteredFormat" }});
-          // Bold day name
-          requests.push({ repeatCell: { range: cell(r, 0), cell: {
-            userEnteredFormat: { textFormat: { bold: true } }
-          }, fields: "userEnteredFormat.textFormat.bold" }});
-          // Pay column green
-          requests.push({ repeatCell: { range: cell(r, 5), cell: {
-            userEnteredFormat: { textFormat: { foregroundColor: GREEN, bold: true },
-              numberFormat: { type:"CURRENCY", pattern:"$#,##0.00" } }
-          }, fields: "userEnteredFormat" }});
-          // Hours center
-          requests.push({ repeatCell: { range: cell(r, 4), cell: {
-            userEnteredFormat: { horizontalAlignment: "CENTER" }
-          }, fields: "userEnteredFormat.horizontalAlignment" }});
-        });
-
-        // Summary block rows
-        [summStart, summStart+1, summStart+2, summStart+3].forEach(r => {
-          requests.push({ repeatCell: { range: row(r), cell: {
-            userEnteredFormat: { backgroundColor: SUMM_BG, textFormat: { fontSize: 10 } }
-          }, fields: "userEnteredFormat" }});
-        });
-        // WEEK SUMMARY label — bold, larger
-        requests.push({ repeatCell: { range: row(summStart), cell: {
-          userEnteredFormat: { textFormat: { bold: true, fontSize: 11 }, backgroundColor: SUMM_BG }
-        }, fields: "userEnteredFormat" }});
-        // Numbers: hours col center, pay col green currency
-        [summStart+1, summStart+2, summStart+3].forEach(r => {
-          requests.push({ repeatCell: { range: cell(r, 4), cell: {
-            userEnteredFormat: { horizontalAlignment: "CENTER", textFormat: { bold: true } }
-          }, fields: "userEnteredFormat" }});
-          requests.push({ repeatCell: { range: cell(r, 5), cell: {
-            userEnteredFormat: { textFormat: { foregroundColor: GREEN, bold: true },
-              numberFormat: { type:"CURRENCY", pattern:"$#,##0.00" } }
-          }, fields: "userEnteredFormat" }});
-        });
-        // TOTAL PAY row — navy + white + large
-        requests.push({ repeatCell: { range: row(totalPayRow), cell: {
-          userEnteredFormat: { backgroundColor: TOTAL_BG,
-            textFormat: { foregroundColor: TOTAL_FG, bold: true, fontSize: 12 },
-            horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE" }
-        }, fields: "userEnteredFormat" }});
-        requests.push({ repeatCell: { range: cell(totalPayRow, 5), cell: {
-          userEnteredFormat: { numberFormat: { type:"CURRENCY", pattern:"$#,##0.00" },
-            textFormat: { foregroundColor: TOTAL_FG, bold: true, fontSize: 12 } }
-        }, fields: "userEnteredFormat" }});
-
-        // Column widths
-        const colWidths = [160, 100, 90, 90, 70, 90];
-        colWidths.forEach((px, i) => {
-          requests.push({ updateDimensionProperties: {
-            range: { sheetId: tabId, dimension:"COLUMNS", startIndex: i, endIndex: i+1 },
-            properties: { pixelSize: px }, fields: "pixelSize" }});
-        });
-
-        // Row heights
-        requests.push({ updateDimensionProperties: {
-          range: { sheetId: tabId, dimension:"ROWS", startIndex: headerRow, endIndex: headerRow+1 },
-          properties: { pixelSize: 32 }, fields: "pixelSize" }});
-        requests.push({ updateDimensionProperties: {
-          range: { sheetId: tabId, dimension:"ROWS", startIndex: firstShift, endIndex: lastShift+1 },
-          properties: { pixelSize: 26 }, fields: "pixelSize" }});
-        requests.push({ updateDimensionProperties: {
-          range: { sheetId: tabId, dimension:"ROWS", startIndex: totalPayRow, endIndex: totalPayRow+1 },
-          properties: { pixelSize: 36 }, fields: "pixelSize" }});
-
-        // Outer border on entire table
-        const tableRange = { sheetId: tabId, startRowIndex:0, endRowIndex: totalPayRow+1, startColumnIndex:0, endColumnIndex:6 };
-        const borderStyle = { style:"SOLID_MEDIUM", color:{ red:0.18, green:0.33, blue:0.59 } };
-        requests.push({ updateBorders: { range: tableRange,
-          top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle }});
-
-        // Inner horizontal borders between shift rows
-        for (let r = firstShift; r <= lastShift; r++) {
-          requests.push({ updateBorders: { range: row(r),
-            bottom: { style:"SOLID", color:{ red:0.85, green:0.88, blue:0.95 } } }});
-        }
-
-        // Freeze header row
-        requests.push({ updateSheetProperties: { properties: {
-          sheetId: tabId, gridProperties: { frozenRowCount: 1 }
-        }, fields: "gridProperties.frozenRowCount" }});
-
-        // Execute formatting
+        // Ensure column widths (idempotent)
         await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
-          method:"POST",
-          headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
-          body: JSON.stringify({ requests })
+          method:"POST", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
+          body: JSON.stringify({ requests: [
+            { updateDimensionProperties: { range:{ sheetId, dimension:"COLUMNS", startIndex:0, endIndex:1 }, properties:{ pixelSize:100 }, fields:"pixelSize" }},
+            { updateDimensionProperties: { range:{ sheetId, dimension:"COLUMNS", startIndex:1, endIndex:2 }, properties:{ pixelSize:130 }, fields:"pixelSize" }},
+            { updateDimensionProperties: { range:{ sheetId, dimension:"COLUMNS", startIndex:2, endIndex:4 }, properties:{ pixelSize:90  }, fields:"pixelSize" }},
+            { updateDimensionProperties: { range:{ sheetId, dimension:"COLUMNS", startIndex:4, endIndex:5 }, properties:{ pixelSize:65  }, fields:"pixelSize" }},
+            { updateDimensionProperties: { range:{ sheetId, dimension:"COLUMNS", startIndex:5, endIndex:6 }, properties:{ pixelSize:95  }, fields:"pixelSize" }},
+          ]})
         });
 
         showGoogleStatus("success", t.googleSheetsOk);
         return true;
       }
 
-      function confirmDuplicate() {
+      async function applySheetFormatting(sheetId, baseIdx, merged, pay, hasMonthDivider) {
+        // baseIdx = 0-based row index where block starts (markerRow)
+        const HEADER_BG = { red:0.18, green:0.33, blue:0.59 };
+        const HEADER_FG = { red:1.0,  green:1.0,  blue:1.0  };
+        const STRIPE_A  = { red:0.95, green:0.97, blue:1.0  };
+        const STRIPE_B  = { red:1.0,  green:1.0,  blue:1.0  };
+        const SUN_BG    = { red:1.0,  green:0.96, blue:0.82 };
+        const SUMM_BG   = { red:0.94, green:0.94, blue:0.96 };
+        const TOTAL_BG  = { red:0.18, green:0.33, blue:0.59 };
+        const TOTAL_FG  = { red:1.0,  green:1.0,  blue:1.0  };
+        const GREEN_FG  = { red:0.09, green:0.49, blue:0.09 };
+        const MONTH_BG  = { red:0.96, green:0.96, blue:0.96 };
+        const MONTH_FG  = { red:0.40, green:0.40, blue:0.45 };
+
+        const row  = (r, c1=0, c2=6) => ({ sheetId, startRowIndex:r, endRowIndex:r+1, startColumnIndex:c1, endColumnIndex:c2 });
+        const cell = (r, c)          => ({ sheetId, startRowIndex:r, endRowIndex:r+1, startColumnIndex:c,  endColumnIndex:c+1 });
+        const fmt  = (range, fmt, fields="userEnteredFormat") => ({ repeatCell:{ range, cell:{ userEnteredFormat: fmt }, fields }});
+        const currency = { numberFormat:{ type:"CURRENCY", pattern:"$#,##0.00" } };
+
+        let r = baseIdx; // marker row — hide by making tiny
+        const reqs = [];
+
+        // Marker row: height 1px (effectively hidden)
+        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
+          properties:{ pixelSize:1 }, fields:"pixelSize" }});
+        r++;
+
+        if (hasMonthDivider) {
+          // Month divider row
+          reqs.push(fmt(row(r), { backgroundColor: MONTH_BG,
+            textFormat:{ foregroundColor: MONTH_FG, bold:true, fontSize:10, italic:true },
+            horizontalAlignment:"LEFT", verticalAlignment:"MIDDLE" }));
+          reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
+            properties:{ pixelSize:22 }, fields:"pixelSize" }});
+          // merge A:F for month label display (col C has the label)
+          reqs.push({ mergeCells:{ range:{ sheetId, startRowIndex:r, endRowIndex:r+1, startColumnIndex:0, endColumnIndex:6 }, mergeType:"MERGE_ALL" }});
+          r++;
+        }
+
+        // Header row
+        reqs.push(fmt(row(r), { backgroundColor: HEADER_BG,
+          textFormat:{ foregroundColor: HEADER_FG, bold:true, fontSize:11 },
+          horizontalAlignment:"CENTER", verticalAlignment:"MIDDLE" }));
+        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
+          properties:{ pixelSize:30 }, fields:"pixelSize" }});
+        r++;
+
+        // Shift rows
+        merged.forEach((s, i) => {
+          const isSun = new Date(s.date + "T00:00:00").getDay() === 0;
+          const bg    = isSun ? SUN_BG : (i%2===0 ? STRIPE_A : STRIPE_B);
+          reqs.push(fmt(row(r), { backgroundColor:bg, textFormat:{ fontSize:10 }, verticalAlignment:"MIDDLE" }));
+          reqs.push(fmt(cell(r,1), { textFormat:{ bold:true } }, "userEnteredFormat.textFormat.bold"));
+          reqs.push(fmt(cell(r,4), { horizontalAlignment:"CENTER" }, "userEnteredFormat.horizontalAlignment"));
+          reqs.push(fmt(cell(r,5), { ...currency, textFormat:{ foregroundColor:GREEN_FG, bold:true } }));
+          reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
+            properties:{ pixelSize:24 }, fields:"pixelSize" }});
+          r++;
+        });
+
+        // Summary rows (reg, sun, total)
+        // reg hrs row
+        reqs.push(fmt(row(r), { backgroundColor:SUMM_BG, textFormat:{ fontSize:10 } }));
+        reqs.push(fmt(cell(r,4), { horizontalAlignment:"CENTER", textFormat:{ bold:true } }, "userEnteredFormat"));
+        reqs.push(fmt(cell(r,5), { ...currency, textFormat:{ foregroundColor:GREEN_FG } }));
+        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
+          properties:{ pixelSize:22 }, fields:"pixelSize" }});
+        r++;
+
+        // sun hrs row
+        reqs.push(fmt(row(r), { backgroundColor:SUMM_BG, textFormat:{ fontSize:10 } }));
+        reqs.push(fmt(cell(r,4), { horizontalAlignment:"CENTER", textFormat:{ bold:true } }, "userEnteredFormat"));
+        reqs.push(fmt(cell(r,5), { ...currency, textFormat:{ foregroundColor:GREEN_FG } }));
+        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
+          properties:{ pixelSize:22 }, fields:"pixelSize" }});
+        r++;
+
+        // TOTAL row
+        reqs.push(fmt(row(r), { backgroundColor:TOTAL_BG,
+          textFormat:{ foregroundColor:TOTAL_FG, bold:true, fontSize:11 },
+          horizontalAlignment:"CENTER", verticalAlignment:"MIDDLE" }));
+        reqs.push(fmt(cell(r,5), { ...currency, textFormat:{ foregroundColor:TOTAL_FG, bold:true, fontSize:11 } }));
+        reqs.push({ mergeCells:{ range:{ sheetId, startRowIndex:r, endRowIndex:r+1, startColumnIndex:0, endColumnIndex:4 }, mergeType:"MERGE_ALL" }});
+        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
+          properties:{ pixelSize:32 }, fields:"pixelSize" }});
+        r++;
+
+        // Spacer row — tiny
+        reqs.push({ updateDimensionProperties:{ range:{ sheetId, dimension:"ROWS", startIndex:r, endIndex:r+1 },
+          properties:{ pixelSize:8 }, fields:"pixelSize" }});
+
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`, {
+          method:"POST", headers:{ Authorization:"Bearer "+accessToken, "Content-Type":"application/json" },
+          body: JSON.stringify({ requests: reqs })
+        });
+      }
+
+            function confirmDuplicate() {
         const t = T[lang], el = document.getElementById("googleStatus");
         return new Promise(resolve => {
           el.style.display = "block"; el.className = "google-status warning";
