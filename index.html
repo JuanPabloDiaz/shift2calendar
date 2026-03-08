@@ -1040,7 +1040,7 @@
         const endRow = usedRows + allValues.length;
         const enc = encodeURIComponent(SHEET_TAB_TITLE);
         const writeRes = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${enc}!A${startRow}:H${endRow}?valueInputOption=USER_ENTERED`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${enc}!A${startRow}:H${endRow}?valueInputOption=RAW`,
           {
             method: "PUT",
             headers: {
@@ -1156,6 +1156,7 @@
                 userEnteredFormat: {
                   horizontalAlignment: "LEFT",
                   textFormat: { fontSize: 12 },
+                  numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" },
                 },
               },
               fields: "userEnteredFormat",
@@ -1168,6 +1169,7 @@
                 userEnteredFormat: {
                   horizontalAlignment: "CENTER",
                   textFormat: { fontSize: 12 },
+                  numberFormat: { type: "TEXT", pattern: "@" },
                 },
               },
               fields: "userEnteredFormat",
@@ -1180,9 +1182,12 @@
               repeatCell: {
                 range: cell(r, c),
                 cell: {
-                  userEnteredFormat: { horizontalAlignment: "CENTER" },
+                  userEnteredFormat: {
+                    horizontalAlignment: "CENTER",
+                    numberFormat: { type: "TIME", pattern: "h:mm AM/PM" },
+                  },
                 },
-                fields: "userEnteredFormat.horizontalAlignment",
+                fields: "userEnteredFormat",
               },
             });
           });
@@ -1291,7 +1296,7 @@
         });
 
         // Column widths
-        const colWidths = [150, 200, 160, 160, 140, 190, 190, 160];
+        const colWidths = [140, 190, 150, 150, 95, 180, 180, 140];
         colWidths.forEach((px, i) => {
           requests.push({
             updateDimensionProperties: {
@@ -1317,7 +1322,7 @@
                 startIndex: headerRow,
                 endIndex: headerRow + 1,
               },
-              properties: { pixelSize: 44 },
+              properties: { pixelSize: 34 },
               fields: "pixelSize",
             },
           });
@@ -1330,7 +1335,7 @@
               startIndex: firstShift,
               endIndex: lastShift + 1,
             },
-            properties: { pixelSize: 40 },
+            properties: { pixelSize: 32 },
             fields: "pixelSize",
           },
         });
@@ -1342,7 +1347,7 @@
               startIndex: summaryRow,
               endIndex: summaryRow + 1,
             },
-            properties: { pixelSize: 42 },
+            properties: { pixelSize: 36 },
             fields: "pixelSize",
           },
         });
