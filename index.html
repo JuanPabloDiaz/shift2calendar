@@ -17,6 +17,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="styles.css" />
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-KVRXZGZP52"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -100,21 +101,80 @@
         <div class="step-content">
           <div class="step-title" id="txt-step4-title"></div>
           <div class="step-desc" id="txt-step4-desc"></div>
+
           <div class="input-toggle">
             <button class="input-toggle-btn active" id="btn-json" onclick="setInputMode('json')">JSON</button>
             <button class="input-toggle-btn" id="btn-manual" onclick="setInputMode('manual')">Manual</button>
           </div>
+
           <textarea id="jsonInput" placeholder='{"period": "3/02/26 - 3/08/26", "shifts": [...]}'></textarea>
+
           <div id="manualInput" style="display: none">
             <div class="manual-row">
               <input type="date" id="manualDate" class="manual-input" />
-              <input type="time" id="manualStart" class="manual-input small" />
+              <input type="time" id="manualStart" class="manual-input small" placeholder="Inicio" />
               <span>-</span>
-              <input type="time" id="manualEnd" class="manual-input small" />
+              <input type="time" id="manualEnd" class="manual-input small" placeholder="Fin" />
               <button class="add-shift-btn" onclick="addShift()">+</button>
             </div>
             <div class="manual-shifts" id="manualShiftsList"></div>
-            <button class="clear-shifts-btn" onclick="clearManualShifts()" id="txt-clear-btn"></button>
+            <button class="clear-shifts-btn" onclick="clearManualShifts()" id="txt-clear-btn">Limpiar turnos</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Calendar options -->
+      <div class="step">
+        <div class="step-num" id="stepnum-options">5</div>
+        <div class="step-content">
+          <div class="step-title" id="txt-step5-title"></div>
+          <div class="step-desc" id="txt-step5-desc"></div>
+
+          <!-- Location -->
+          <div class="option-row">
+            <div class="option-label-wrap">
+              <span class="option-icon">📍</span>
+              <label class="option-label" id="txt-opt-location-label"></label>
+            </div>
+            <div class="option-control">
+              <select class="reminder-select" id="locationSelect">
+                <option value="500 Tyvola Rd, Charlotte, NC 28217" selected>CLT</option>
+                <option value="2125 Matthews Township Pkwy, Matthews, NC 28105">Matthews</option>
+                <option value="8800 Charlotte Highway, Indian Land, SC 29707">Indian Land</option>
+                <option value="392 Talbert Rd, Mooresville, NC 28117">Mooresville</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Reminder -->
+          <div class="option-row">
+            <div class="option-label-wrap">
+              <span class="option-icon">🔔</span>
+              <label class="option-label" id="txt-opt-reminder-label"></label>
+            </div>
+            <div class="option-control">
+              <select class="reminder-select" id="reminderSelect">
+                <option value="0" id="opt-none"></option>
+                <option value="15">15 min</option>
+                <option value="30">30 min</option>
+                <option value="60">1 h</option>
+                <option value="120" selected>2 h</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Weekly summary in description -->
+          <div class="option-row">
+            <div class="option-label-wrap">
+              <span class="option-icon">📊</span>
+              <label class="option-label" id="txt-opt-weekly-label"></label>
+            </div>
+            <div class="option-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="weeklyToggle" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -126,7 +186,10 @@
 
       <div class="preview" id="preview">
         <hr class="divider" />
-        <div class="preview-title" id="txt-preview-title"></div>
+        <div class="preview-header">
+          <div class="preview-title" id="txt-preview-title"></div>
+          <div class="weekly-summary" id="weeklySummary"></div>
+        </div>
         <div id="shiftList"></div>
       </div>
     </div>
@@ -152,14 +215,26 @@
           copiedBtn: "¡Copiado!",
           step4Title: "Pega el JSON aquí",
           step4Desc: "Copia la respuesta de AI y pégala abajo",
+          step5Title: "Personaliza los eventos",
+          step5Desc: "Agrega más información a cada evento del calendario",
+          optLocationLabel: "Ubicación",
+          optLocationNone: "Sin ubicación",
+          optReminderLabel: "Recordatorio",
+          optReminderNone: "Sin recordatorio",
+          optWeeklyLabel: "Total de horas en descripción",
           generateBtn: "Generar y descargar .ics",
           previewTitle: "Turnos detectados:",
+          weeklyLabel: "Total semana:",
           errEmpty: "Pega el JSON de AI primero.",
           errJson: "JSON inválido: ",
           errJsonHint: ". Asegúrate de copiar el bloque completo.",
           errNoShifts: "No se encontraron turnos en el JSON.",
           successMsg: "✅ Descargado: ",
           clearBtn: "Limpiar turnos",
+          descShift: "Turno Costco",
+          descHours: "Horas hoy",
+          descWeekTotal: "Total semana",
+          descWeekDays: "días esta semana",
         },
         en: {
           subtitle: "Convert your schedule into calendar events",
@@ -176,20 +251,32 @@
           copiedBtn: "Copied!",
           step4Title: "Paste the JSON here",
           step4Desc: "Copy AI's response and paste it below",
+          step5Title: "Customize events",
+          step5Desc: "Add more information to each calendar event",
+          optLocationLabel: "Location",
+          optLocationNone: "No location",
+          optReminderLabel: "Reminder",
+          optReminderNone: "No reminder",
+          optWeeklyLabel: "Weekly hours total in description",
           generateBtn: "Generate & download .ics",
           previewTitle: "Detected shifts:",
+          weeklyLabel: "Week total:",
           errEmpty: "Paste AI's JSON first.",
           errJson: "Invalid JSON: ",
           errJsonHint: ". Make sure you copied the full block.",
           errNoShifts: "No shifts found in the JSON.",
           successMsg: "✅ Downloaded: ",
           clearBtn: "Clear shifts",
+          descShift: "Costco Shift",
+          descHours: "Hours today",
+          descWeekTotal: "Week total",
+          descWeekDays: "days this week",
         },
       };
 
-      const DAYS_ES = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+      const DAYS_ES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
       const MONTHS_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-      const DAYS_EN = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const DAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       const MONTHS_EN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
       let lang = "en";
@@ -205,6 +292,7 @@
         document.getElementById("nameStep").style.display = mode === "printed" ? "flex" : "none";
         document.getElementById("stepnum-prompt").textContent = mode === "printed" ? "3" : "2";
         document.getElementById("stepnum-json").textContent = mode === "printed" ? "4" : "3";
+        document.getElementById("stepnum-options").textContent = mode === "printed" ? "5" : "4";
         updatePrompt();
       }
 
@@ -297,77 +385,29 @@
         document.getElementById("copyPromptBtn").textContent = t.copyBtn;
         document.getElementById("txt-step4-title").textContent = t.step4Title;
         document.getElementById("txt-step4-desc").textContent = t.step4Desc;
+        document.getElementById("txt-step5-title").textContent = t.step5Title;
+        document.getElementById("txt-step5-desc").textContent = t.step5Desc;
+        document.getElementById("txt-opt-location-label").textContent = t.optLocationLabel;
+        document.getElementById("txt-opt-reminder-label").textContent = t.optReminderLabel;
+        document.getElementById("txt-opt-weekly-label").textContent = t.optWeeklyLabel;
         document.getElementById("txt-generate-btn").textContent = t.generateBtn;
         document.getElementById("txt-preview-title").textContent = t.previewTitle;
         document.getElementById("txt-clear-btn").textContent = t.clearBtn;
+        // Update "No reminder" option
+        const optNone = document.getElementById("opt-none");
+        if (optNone) optNone.textContent = t.optReminderNone;
         renderManualShifts();
       }
 
       function getPromptText(name) {
         if (imageMode === "kronos") {
           return lang === "es"
-            ? `Analiza esta imagen de la app Kronos de Costco que muestra mi horario de trabajo.
-Devuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:
-
-{
-  "period": "M/DD/YY - M/DD/YY",
-  "shifts": [
-    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}
-  ]
-}
-
-Donde X es A o P (AM/PM).
-El campo "period" debe ser el rango de la semana visible, formato "M/DD/YY - M/DD/YY".
-Incluye TODOS los turnos visibles. Cada turno es una entrada separada.
-Ignora entradas duplicadas o que digan "System Calculation Only".
-
-Abre en: https://claude.ai`
-            : `Analyze this Costco Kronos app screenshot showing my work schedule.
-Return ONLY a valid JSON in this exact format, with no explanation or extra text:
-
-{
-  "period": "M/DD/YY - M/DD/YY",
-  "shifts": [
-    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}
-  ]
-}
-
-Where X is A or P (AM/PM).
-The "period" field should be the week date range visible, format "M/DD/YY - M/DD/YY".
-Include ALL visible shifts. Each shift is a separate entry.
-Ignore duplicates and entries that say "System Calculation Only".
-
-Open at: https://claude.ai`;
+            ? `Analiza esta imagen de la app Kronos de Costco que muestra mi horario de trabajo.\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P (AM/PM).\nEl campo "period" debe ser el rango de la semana visible, formato "M/DD/YY - M/DD/YY".\nIncluye TODOS los turnos visibles. Cada turno es una entrada separada.\nIgnora entradas duplicadas o que digan "System Calculation Only".\n\nAbre en: https://claude.ai`
+            : `Analyze this Costco Kronos app screenshot showing my work schedule.\nReturn ONLY a valid JSON in this exact format, with no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P (AM/PM).\nThe "period" field should be the week date range visible, format "M/DD/YY - M/DD/YY".\nInclude ALL visible shifts. Each shift is a separate entry.\nIgnore duplicates and entries that say "System Calculation Only".\n\nOpen at: https://claude.ai`;
         } else {
           return lang === "es"
-            ? `Analiza esta imagen de un horario de Costco y extrae SOLO los turnos de "${name}".
-Devuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:
-
-{
-  "period": "M/DD/YY - M/DD/YY",
-  "shifts": [
-    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}
-  ]
-}
-
-Donde X es A o P. El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").
-Si un dia tiene dos bloques de horario incluyelos como entradas separadas en shifts.
-
-Abre en: https://chatgpt.com o https://claude.ai`
-            : `Analyze this Costco schedule image and extract ONLY the shifts for "${name}".
-Return ONLY a valid JSON in this exact format, with no explanation or extra text:
-
-{
-  "period": "M/DD/YY - M/DD/YY",
-  "shifts": [
-    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}
-  ]
-}
-
-Where X is A or P. The "period" field is the Time Period from the top of the image (e.g. "3/02/26 - 3/08/26").
-If a day has two time blocks include them as separate entries in shifts.
-
-Open at: https://chatgpt.com or https://claude.ai`;
+            ? `Analiza esta imagen de un horario de Costco y extrae SOLO los turnos de "${name}".\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P. El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").\nSi un dia tiene dos bloques de horario incluyelos como entradas separadas en shifts.\n\nAbre en: https://chatgpt.com o https://claude.ai`
+            : `Analyze this Costco schedule image and extract ONLY the shifts for "${name}".\nReturn ONLY a valid JSON in this exact format, with no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P. The "period" field is the Time Period from the top of the image (e.g. "3/02/26 - 3/08/26").\nIf a day has two time blocks include them as separate entries in shifts.\n\nOpen at: https://chatgpt.com or https://claude.ai`;
         }
       }
 
@@ -422,14 +462,68 @@ Open at: https://chatgpt.com or https://claude.ai`;
       }
 
       function buildIcs(shifts) {
+        const t = T[lang];
         const merged = mergeShifts(shifts);
         const now = toIcsDt(new Date()).replace(/T/, "") + "Z";
+
+        // Weekly totals
+        const totalWeekHours = merged.reduce((a, s) => a + parseFloat(s.hours), 0);
+        const totalWeekDays = merged.length;
+
+        // Options
+        const location = document.getElementById("locationSelect").value;
+        const reminderMinutes = parseInt(document.getElementById("reminderSelect").value);
+        const includeWeekly = document.getElementById("weeklyToggle").checked;
+
         let events = "";
         for (const s of merged) {
           const uid = "costco-" + s.date + "-" + Math.random().toString(36).slice(2);
-          events += ["BEGIN:VEVENT", `UID:${uid}`, `DTSTAMP:${now}`, `DTSTART:${toIcsDt(s.startDt)}`, `DTEND:${toIcsDt(s.endDt)}`, "SUMMARY:Costco", "COLOR:grape", `DESCRIPTION:Costco shift - ${s.hours} hrs`, "END:VEVENT"].join("\r\n") + "\r\n";
+
+          // Build rich description
+          let desc = `${t.descShift}\\n`;
+          desc += `⏱ ${t.descHours}: ${s.hours} hrs\\n`;
+          if (includeWeekly) {
+            desc += `📅 ${t.descWeekTotal}: ${totalWeekHours.toFixed(2)} hrs (${totalWeekDays} ${t.descWeekDays})`;
+          }
+
+          let eventLines = [
+            "BEGIN:VEVENT",
+            `UID:${uid}`,
+            `DTSTAMP:${now}`,
+            `DTSTART:${toIcsDt(s.startDt)}`,
+            `DTEND:${toIcsDt(s.endDt)}`,
+            "SUMMARY:Costco",
+            "COLOR:grape",
+            `DESCRIPTION:${desc}`,
+          ];
+
+          if (location) {
+            eventLines.push(`LOCATION:${location}`);
+          }
+
+          if (reminderMinutes > 0) {
+            eventLines.push(
+              "BEGIN:VALARM",
+              "ACTION:DISPLAY",
+              `DESCRIPTION:${t.descShift}`,
+              `TRIGGER:-PT${reminderMinutes}M`,
+              "END:VALARM"
+            );
+          }
+
+          eventLines.push("END:VEVENT");
+          events += eventLines.join("\r\n") + "\r\n";
         }
-        return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CostcoSchedule//EN//", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", events.trim(), "END:VCALENDAR"].join("\r\n");
+
+        return [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "PRODID:-//CostcoSchedule//EN//",
+          "CALSCALE:GREGORIAN",
+          "METHOD:PUBLISH",
+          events.trim(),
+          "END:VCALENDAR",
+        ].join("\r\n");
       }
 
       function periodToFilename(period) {
@@ -438,14 +532,16 @@ Open at: https://chatgpt.com or https://claude.ai`;
 
       function showError(msg) {
         const el = document.getElementById("errorBox");
-        el.textContent = msg; el.style.display = "block";
+        el.textContent = msg;
+        el.style.display = "block";
         document.getElementById("successBox").style.display = "none";
         document.getElementById("preview").style.display = "none";
       }
 
       function showSuccess(msg) {
         const el = document.getElementById("successBox");
-        el.textContent = msg; el.style.display = "block";
+        el.textContent = msg;
+        el.style.display = "block";
         document.getElementById("errorBox").style.display = "none";
       }
 
@@ -480,7 +576,9 @@ Open at: https://chatgpt.com or https://claude.ai`;
         const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = filename; a.click();
+        a.href = url;
+        a.download = filename;
+        a.click();
         URL.revokeObjectURL(url);
 
         showSuccess(t.successMsg + filename);
@@ -488,12 +586,22 @@ Open at: https://chatgpt.com or https://claude.ai`;
         const DAYS = lang === "es" ? DAYS_ES : DAYS_EN;
         const MONTHS = lang === "es" ? MONTHS_ES : MONTHS_EN;
         const merged = mergeShifts(shifts);
+        const totalWeekHours = merged.reduce((a, s) => a + parseFloat(s.hours), 0);
+
+        // Weekly summary pill
+        const summaryEl = document.getElementById("weeklySummary");
+        summaryEl.textContent = `${t.weeklyLabel} ${totalWeekHours.toFixed(2)} hrs`;
+
         const list = document.getElementById("shiftList");
         list.innerHTML = "";
         for (const s of merged) {
           const d = new Date(s.date + "T00:00:00");
           const label = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-          const fmt = (dt) => { let h = dt.getHours(), m = dt.getMinutes(), ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return `${h}:${String(m).padStart(2, "0")} ${ap}`; };
+          const fmt = (dt) => {
+            let h = dt.getHours(), m = dt.getMinutes(), ap = h >= 12 ? "PM" : "AM";
+            h = h % 12 || 12;
+            return `${h}:${String(m).padStart(2, "0")} ${ap}`;
+          };
           list.innerHTML += `<div class="shift-item"><span class="shift-day">${label}</span><span class="shift-time">${fmt(s.startDt)} – ${fmt(s.endDt)}</span><span class="shift-hrs">${s.hours}h</span></div>`;
         }
         document.getElementById("preview").style.display = "block";
@@ -505,7 +613,10 @@ Open at: https://chatgpt.com or https://claude.ai`;
           const btn = document.getElementById("copyPromptBtn");
           btn.textContent = T[lang].copiedBtn;
           btn.classList.add("copied");
-          setTimeout(() => { btn.textContent = T[lang].copyBtn; btn.classList.remove("copied"); }, 2000);
+          setTimeout(() => {
+            btn.textContent = T[lang].copyBtn;
+            btn.classList.remove("copied");
+          }, 2000);
         });
       }
 
