@@ -397,6 +397,13 @@ textarea:focus { border-color: var(--accent); }
   margin-bottom: 8px;
 }
 
+.footer-legal {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  opacity: 0.6;
+}
+
 .input-toggle-btn {
   border: none;
   background: var(--bg);
