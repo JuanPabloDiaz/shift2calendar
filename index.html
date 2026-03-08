@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Schedule image → Google Calendar | Juan Diaz</title>
-    <meta name="description" content="Convert your work schedule image to Google Calendar events." />
+    <title>Costco → Google Calendar | Juan Diaz</title>
+    <meta name="description" content="Convert your Costco schedule to Google Calendar events." />
     <meta name="author" content="Juan Diaz" />
     <meta name="robots" content="index, follow" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E" type="image/svg+xml" />
@@ -166,18 +166,6 @@
             </div>
           </div>
 
-          <!-- Hourly rate (Juan only) -->
-          <div class="option-row" id="hourlyRateRow" style="display:none">
-            <div class="option-label-wrap">
-              <svg class="opt-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              <label class="option-label" id="txt-opt-rate-label"></label>
-            </div>
-            <div class="option-control hourly-rate-control">
-              <span class="rate-prefix">$</span>
-              <input type="number" id="hourlyRate" class="rate-input" value="20" min="1" step="0.5" />
-              <span class="rate-suffix">/hr</span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -248,6 +236,10 @@
       const OWNER_NAME       = "Diaz, Juan";
       const REMINDER_FIXED   = 30; // always-on reminder in minutes
 
+      // ── PAY RATES (update here if your wage changes) ──────────────────────
+      const HOURLY_RATE      = 20;    // regular hourly rate (USD)
+      const SUNDAY_RATE      = HOURLY_RATE * 1.5; // time and a half
+
       // ── TRANSLATIONS ──────────────────────────────────────────────────────
       const T = {
         es: {
@@ -265,7 +257,7 @@
           optReminder2Label:"Recordatorio adicional",
           optReminderNone:"Sin recordatorio",
           optWeeklyLabel:"Total de horas en descripción",
-          optRateLabel:"Tarifa por hora",
+
           generateBtn:"Generar y descargar .ics",
           previewTitle:"Turnos detectados:", weeklyLabel:"Total semana:",
           errEmpty:"Pega el JSON de AI primero.", errJson:"JSON inválido: ", errJsonHint:". Asegúrate de copiar el bloque completo.",
@@ -300,7 +292,7 @@
           optReminder2Label:"Additional reminder",
           optReminderNone:"No reminder",
           optWeeklyLabel:"Weekly hours total in description",
-          optRateLabel:"Hourly rate",
+
           generateBtn:"Generate & download .ics",
           previewTitle:"Detected shifts:", weeklyLabel:"Week total:",
           errEmpty:"Paste AI's JSON first.", errJson:"Invalid JSON: ", errJsonHint:". Make sure you copied the full block.",
@@ -398,9 +390,7 @@
       }
       function onNameInput() { updatePrompt(); checkJuanSection(); }
       function checkJuanSection() {
-        const juan = isJuan();
-        document.getElementById("juanSection").style.display   = juan ? "block" : "none";
-        document.getElementById("hourlyRateRow").style.display = juan ? "flex"  : "none";
+        document.getElementById("juanSection").style.display = isJuan() ? "block" : "none";
       }
 
       // ── RESET / CLEAR ─────────────────────────────────────────────────────
@@ -509,19 +499,17 @@
 
       // ── PAY CALCULATOR ────────────────────────────────────────────────────
       function calcPay(merged) {
-        const rate     = parseFloat(document.getElementById("hourlyRate")?.value || 20);
-        const sunRate  = rate * 1.5;
         let regHrs = 0, sunHrs = 0;
         merged.forEach(s => {
           const h = parseFloat(s.hours);
           if (new Date(s.date + "T00:00:00").getDay() === 0) sunHrs += h;
           else regHrs += h;
         });
-        return { rate, sunRate, regHrs, sunHrs,
+        return { rate: HOURLY_RATE, sunRate: SUNDAY_RATE, regHrs, sunHrs,
           totalHrs : regHrs + sunHrs,
-          regPay   : regHrs * rate,
-          sunPay   : sunHrs * sunRate,
-          totalPay : regHrs * rate + sunHrs * sunRate };
+          regPay   : regHrs * HOURLY_RATE,
+          sunPay   : sunHrs * SUNDAY_RATE,
+          totalPay : regHrs * HOURLY_RATE + sunHrs * SUNDAY_RATE };
       }
 
       // ── SHEETS: create/find tab ────────────────────────────────────────────
@@ -901,7 +889,6 @@
         s("txt-opt-reminder1-label",t.optReminder1Label);
         s("txt-opt-reminder2-label",t.optReminder2Label);
         s("txt-opt-weekly-label",t.optWeeklyLabel);
-        s("txt-opt-rate-label",t.optRateLabel);
         s("txt-generate-btn",t.generateBtn); s("txt-preview-title",t.previewTitle); s("txt-clear-btn",t.clearBtn);
         s("txt-juan-divider",t.juanDivider); s("txt-google-signin",t.googleSignin); s("txt-signout-btn",t.signout);
         const optNone=document.getElementById("opt-none"); if(optNone) optNone.textContent=t.optReminderNone;
