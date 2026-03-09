@@ -7,6 +7,11 @@ Convierte tu horario de Costco en eventos de calendario (.ics) para importar a G
 - 🌙 Modo oscuro/claro
 - 🌐 Soporte español e inglés
 - 📅 Exporta a formato .ics
+- 🔔 Recordatorio fijo de 30 min + recordatorio adicional configurable
+- 🍽️ Recordatorio automático de lunch para turnos mayores a 5 horas (avisa antes de la 5ta hora)
+- 📆 Resumen semanal de horas opcional en la descripción del evento
+- ✅ Integración directa con Google Calendar (crear eventos)
+- 📊 Integración con Google Sheets (guardar horas y pago estimado)
 - 📱 Diseño responsivo
 - ⌨️ Entrada manual sin necesidad de AI
 
@@ -43,6 +48,17 @@ Convierte tu horario de Costco en eventos de calendario (.ics) para importar a G
 5. Escribe `fin` y presiona Enter
 6. Se genera un archivo `.ics` en la misma carpeta
 7. Se abre Google Calendar para importarlo
+
+### Opción 4: Envío directo a Google (Juan Diaz)
+
+1. Abre `index.html` en tu navegador
+2. Genera los turnos con JSON o entrada manual
+3. En la sección **"Solo para Juan Diaz"**, haz clic en **"Connect Google"**
+4. Usa **Calendar**, **Sheets** o **Both** para enviar los datos
+
+Notas:
+- Para cada turno se crea un recordatorio fijo de 30 minutos antes del inicio.
+- Si el turno es mayor a 5 horas, se crea además un evento de aviso de lunch antes de cumplir 5 horas trabajadas.
 
 ## Formato del JSON
 

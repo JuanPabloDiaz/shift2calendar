@@ -599,7 +599,7 @@
           descHours: "Hours today",
           descWeekTotal: "Week total",
           descWeekDays: "days this week",
-          descLunchTitle: "Lunch reminder",
+          descLunchTitle: "Lunch",
           descLunchNote: "Take lunch before reaching 5 hours",
           juanDivider: "Juan Diaz only",
           googleSignin: "Connect Google",
@@ -1066,7 +1066,9 @@
         const isFirstBlock = usedRows === 0;
 
         // Build values: optional header + shift rows + summary row
-        const header = [["Date", "Day", "Start", "End", "Hours", "Pay", "", ""]];
+        const header = [
+          ["Date", "Day", "Start", "End", "Hours", "Pay", "", ""],
+        ];
 
         const shiftRows = merged.map((s) => {
           const d = new Date(s.date + "T00:00:00");
@@ -1102,7 +1104,10 @@
 
         let biweeklyRows = [];
         if (closesPayPeriod) {
-          const existingBiweekly = sumExistingBiweekly(existingValues, biweekly);
+          const existingBiweekly = sumExistingBiweekly(
+            existingValues,
+            biweekly,
+          );
           const currentBiweeklyHrs = merged
             .filter((s) => s.date >= biweekly.start && s.date <= biweekly.end)
             .reduce((a, s) => a + parseFloat(s.hours), 0);
@@ -1319,7 +1324,11 @@
               range: cell(r, 5),
               cell: {
                 userEnteredFormat: {
-                  textFormat: { foregroundColor: GREEN, bold: true, fontSize: 12 },
+                  textFormat: {
+                    foregroundColor: GREEN,
+                    bold: true,
+                    fontSize: 12,
+                  },
                   numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" },
                   horizontalAlignment: "RIGHT",
                 },
@@ -1384,7 +1393,10 @@
           repeatCell: {
             range: cell(summaryRow, 3),
             cell: {
-              userEnteredFormat: { horizontalAlignment: "CENTER", textFormat: { fontSize: 12 } },
+              userEnteredFormat: {
+                horizontalAlignment: "CENTER",
+                textFormat: { fontSize: 12 },
+              },
             },
             fields: "userEnteredFormat",
           },
@@ -1734,10 +1746,7 @@
           if (date < biweekly.start || date > biweekly.end) return;
           const hrs = parseFloat((r[4] || "").toString().replace(/,/g, ""));
           const payVal = parseFloat(
-            (r[5] || "")
-              .toString()
-              .replace(/\$/g, "")
-              .replace(/,/g, ""),
+            (r[5] || "").toString().replace(/\$/g, "").replace(/,/g, ""),
           );
           if (!Number.isNaN(hrs)) hours += hrs;
           if (!Number.isNaN(payVal)) pay += payVal;
@@ -1896,7 +1905,10 @@
               lunchReminderAt.getTime() + LUNCH_EVENT_DURATION_MINUTES * 60000,
             );
             const lunchUid =
-              "costco-lunch-" + s.date + "-" + Math.random().toString(36).slice(2);
+              "costco-lunch-" +
+              s.date +
+              "-" +
+              Math.random().toString(36).slice(2);
             const lunchLines = [
               "BEGIN:VEVENT",
               `UID:${lunchUid}`,
