@@ -1,0 +1,6 @@
+.DS_Store
+*.ics
+.vscode/
+node_modules/
+playwright-report/
+test-results/
