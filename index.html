@@ -1105,6 +1105,7 @@
 
       // ── SHEETS: create/find tab ────────────────────────────────────────────
       const SHEET_TAB_TITLE = "Schedule";
+      const SUMMARY_TAB_TITLE = "Summary";
 
       async function getOrCreateTab(title) {
         const meta = await fetch(
@@ -1164,6 +1165,150 @@
           { headers: { Authorization: "Bearer " + accessToken } },
         ).then((r) => r.json());
         return !!(res.values && res.values.length);
+      }
+
+      async function updateSummaryTab() {
+        const summaryTabId = await getOrCreateTab(SUMMARY_TAB_TITLE);
+        if (summaryTabId === null) return false;
+
+        const values = [
+          ["Schedule Summary"],
+          [""],
+          ["This week hours", '=SUMPRODUCT((IFERROR(DATEVALUE(Schedule!A2:A),0)>=TODAY()-WEEKDAY(TODAY(),2)+1)*(IFERROR(DATEVALUE(Schedule!A2:A),0)<=TODAY()-WEEKDAY(TODAY(),2)+7)*N(Schedule!E2:E))'],
+          ["Last week hours", '=SUMPRODUCT((IFERROR(DATEVALUE(Schedule!A2:A),0)>=TODAY()-WEEKDAY(TODAY(),2)-6)*(IFERROR(DATEVALUE(Schedule!A2:A),0)<=TODAY()-WEEKDAY(TODAY(),2))*N(Schedule!E2:E))'],
+          ["Week-over-week delta", "=B3-B4"],
+          ["Year to date hours", '=SUMPRODUCT((IFERROR(DATEVALUE(Schedule!A2:A),0)>=DATE(YEAR(TODAY()),1,1))*(IFERROR(DATEVALUE(Schedule!A2:A),0)<=TODAY())*N(Schedule!E2:E))'],
+          ["Avg weekly hours (last 4 weeks)", '=SUMPRODUCT((IFERROR(DATEVALUE(Schedule!A2:A),0)>=TODAY()-28)*(IFERROR(DATEVALUE(Schedule!A2:A),0)<=TODAY())*N(Schedule!E2:E))/4'],
+          ["Projected monthly pay", '=SUMPRODUCT((IFERROR(DATEVALUE(Schedule!A2:A),0)>=TODAY()-28)*(IFERROR(DATEVALUE(Schedule!A2:A),0)<=TODAY())*N(Schedule!F2:F))/4*4.345'],
+          ["Avg Sundays per month", '=IFERROR(AVERAGE(FILTER(F12:F,F12:F<>"")),0)'],
+          [""],
+          [
+            '=QUERY({TEXT(IFERROR(DATEVALUE(Schedule!A2:A),),"yyyy-mm"),N(Schedule!E2:E),N(Schedule!F2:F)},"select Col1,sum(Col2),sum(Col3) where Col1 is not null group by Col1 order by Col1 label Col1 \\"Month\\",sum(Col2) \\"Hours\\",sum(Col3) \\"Pay\\"",0)',
+            "",
+            "",
+            "",
+            '=QUERY({TEXT(IFERROR(DATEVALUE(Schedule!A2:A),),"yyyy-mm"),WEEKDAY(IFERROR(DATEVALUE(Schedule!A2:A),),1)},"select Col1,count(Col2) where Col1 is not null and Col2=1 group by Col1 order by Col1 label Col1 \\"Month\\",count(Col2) \\"Sundays\\"",0)',
+          ],
+        ];
+
+        const enc = encodeURIComponent(SUMMARY_TAB_TITLE);
+        const write = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${enc}!A1:F40?valueInputOption=USER_ENTERED`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: "Bearer " + accessToken,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ values }),
+          },
+        );
+        if (!write.ok) return false;
+
+        const requests = [
+          {
+            repeatCell: {
+              range: {
+                sheetId: summaryTabId,
+                startRowIndex: 0,
+                endRowIndex: 1,
+                startColumnIndex: 0,
+                endColumnIndex: 2,
+              },
+              cell: {
+                userEnteredFormat: {
+                  textFormat: { bold: true, fontSize: 16 },
+                  horizontalAlignment: "LEFT",
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          },
+          {
+            repeatCell: {
+              range: {
+                sheetId: summaryTabId,
+                startRowIndex: 2,
+                endRowIndex: 9,
+                startColumnIndex: 1,
+                endColumnIndex: 2,
+              },
+              cell: {
+                userEnteredFormat: {
+                  numberFormat: { type: "NUMBER", pattern: "0.00" },
+                  horizontalAlignment: "RIGHT",
+                },
+              },
+              fields: "userEnteredFormat",
+            },
+          },
+          {
+            repeatCell: {
+              range: {
+                sheetId: summaryTabId,
+                startRowIndex: 7,
+                endRowIndex: 8,
+                startColumnIndex: 1,
+                endColumnIndex: 2,
+              },
+              cell: {
+                userEnteredFormat: {
+                  numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" },
+                },
+              },
+              fields: "userEnteredFormat.numberFormat",
+            },
+          },
+          {
+            updateDimensionProperties: {
+              range: {
+                sheetId: summaryTabId,
+                dimension: "COLUMNS",
+                startIndex: 0,
+                endIndex: 1,
+              },
+              properties: { pixelSize: 260 },
+              fields: "pixelSize",
+            },
+          },
+          {
+            updateDimensionProperties: {
+              range: {
+                sheetId: summaryTabId,
+                dimension: "COLUMNS",
+                startIndex: 1,
+                endIndex: 2,
+              },
+              properties: { pixelSize: 170 },
+              fields: "pixelSize",
+            },
+          },
+          {
+            updateDimensionProperties: {
+              range: {
+                sheetId: summaryTabId,
+                dimension: "COLUMNS",
+                startIndex: 4,
+                endIndex: 6,
+              },
+              properties: { pixelSize: 150 },
+              fields: "pixelSize",
+            },
+          },
+        ];
+
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + accessToken,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ requests }),
+          },
+        );
+        return true;
       }
 
       // ── SHEETS: write data + formatting ───────────────────────────────────
@@ -1846,6 +1991,7 @@
           },
         );
 
+        await updateSummaryTab();
         showGoogleStatus("success", t.googleSheetsOk);
         return true;
       }
@@ -2229,12 +2375,12 @@
       function getPromptText(name) {
         if (imageMode === "kronos") {
           return lang === "es"
-            ? `Analiza esta(s) imagen(es) de la app Kronos que muestran mi horario de trabajo (puede ser 1 o varias).\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P (AM/PM).\nReglas:\n- Incluye TODOS los turnos visibles en TODAS las imagenes.\n- Elimina turnos duplicados.\n- Ignora "System Calculation Only".\n- Devuelve "shifts" en orden cronologico (fecha y hora de inicio).`
-            : `Analyze this/these Kronos schedule image(s) (one or multiple images).\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P.\nRules:\n- Include ALL visible shifts across ALL images.\n- Remove duplicate shifts.\n- Ignore "System Calculation Only".\n- Return "shifts" in chronological order (date + start time).`;
+            ? `Analiza esta(s) imagen(es) de la app Kronos que muestran mi horario de trabajo (puede ser 1 o varias).\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P (AM/PM).\nReglas:\n- Incluye TODOS los turnos visibles en TODAS las imagenes.\n- Elimina turnos duplicados.\n- Ignora "System Calculation Only".\n- Devuelve "shifts" en orden cronologico (fecha y hora de inicio).\n\nAbre en: https://claude.ai`
+            : `Analyze this/these Kronos schedule image(s) (one or multiple images).\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P.\nRules:\n- Include ALL visible shifts across ALL images.\n- Remove duplicate shifts.\n- Ignore "System Calculation Only".\n- Return "shifts" in chronological order (date + start time).\n\nOpen at: https://claude.ai`;
         }
         return lang === "es"
-          ? `Analiza esta(s) imagen(es) de horario y extrae SOLO los turnos de "${name}" (puede ser 1 o varias imagenes).\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P.\nReglas:\n- El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").\n- Incluye todos los turnos visibles en todas las imagenes.\n- Si un dia tiene dos bloques, incluyelos como entradas separadas.\n- Elimina turnos duplicados.\n- Devuelve "shifts" en orden cronologico (fecha y hora de inicio).`
-          : `Analyze this/these schedule image(s) and extract ONLY the shifts for "${name}" (one or multiple images).\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P.\nRules:\n- The "period" field is the Time Period from the top (e.g. "3/02/26 - 3/08/26").\n- Include all visible shifts across all images.\n- If a day has two blocks, include them as separate entries.\n- Remove duplicate shifts.\n- Return "shifts" in chronological order (date + start time).`;
+          ? `Analiza esta(s) imagen(es) de horario y extrae SOLO los turnos de "${name}" (puede ser 1 o varias imagenes).\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P.\nReglas:\n- El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").\n- Incluye todos los turnos visibles en todas las imagenes.\n- Si un dia tiene dos bloques, incluyelos como entradas separadas.\n- Elimina turnos duplicados.\n- Devuelve "shifts" en orden cronologico (fecha y hora de inicio).\n\nAbre en: https://chatgpt.com o https://claude.ai`
+          : `Analyze this/these schedule image(s) and extract ONLY the shifts for "${name}" (one or multiple images).\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P.\nRules:\n- The "period" field is the Time Period from the top (e.g. "3/02/26 - 3/08/26").\n- Include all visible shifts across all images.\n- If a day has two blocks, include them as separate entries.\n- Remove duplicate shifts.\n- Return "shifts" in chronological order (date + start time).\n\nOpen at: https://chatgpt.com or https://claude.ai`;
       }
       function updatePrompt() {
         document.getElementById("promptText").textContent = getPromptText(
