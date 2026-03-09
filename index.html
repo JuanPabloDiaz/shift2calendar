@@ -489,6 +489,29 @@
                 </svg>
                 <span></span>
               </button>
+              <button
+                class="google-action-btn sheets-btn"
+                id="txt-open-sheet"
+                onclick="openOwnerSheet()"
+                style="display: none"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M14 3h7v7" />
+                  <path d="M10 14L21 3" />
+                  <path d="M21 14v7h-7" />
+                  <path d="M3 10V3h7" />
+                </svg>
+                <span></span>
+              </button>
             </div>
           </div>
         </div>
@@ -530,6 +553,7 @@
       const SCOPES =
         "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets";
       const OWNER_NAME = "Diaz, Juan";
+      const OWNER_ALLOWED_EMAILS = ["juan.diaz.rodriguez93@gmail.com"];
       const REMINDER_FIXED = 30; // always-on reminder in minutes
       const LUNCH_THRESHOLD_HOURS = 5; // only generate lunch reminder above this
       const LUNCH_NOTICE_BEFORE_MINUTES = 30; // warn this many minutes before hour 5
@@ -581,7 +605,7 @@
           optReminder2Label: "Recordatorio adicional",
           optReminderNone: "Sin recordatorio",
           optWeeklyLabel: "Total de horas en descripción",
-          optLunchLabel: "Lunch",
+          optLunchLabel: "Recordatorio de lunch",
 
           generateBtn: "Generar y descargar .ics",
           previewTitle: "Turnos detectados:",
@@ -599,6 +623,7 @@
           descLunchTitle: "Recordatorio de lunch",
           descLunchNote: "Toma el lunch antes de cumplir 5 horas",
           juanDivider: "Solo para Juan Diaz",
+          openSheet: "Abrir Sheet",
           googleSignin: "Conectar Google",
           signout: "Cerrar sesión",
           sendCalendar: "Calendar",
@@ -655,7 +680,8 @@
           optReminder2Label: "Additional reminder",
           optReminderNone: "No reminder",
           optWeeklyLabel: "Weekly hours total in description",
-          optLunchLabel: "Lunch",
+          optLunchLabel: "Lunch reminder",
+
           generateBtn: "Generate & download .ics",
           previewTitle: "Detected shifts:",
           weeklyLabel: "Week total:",
@@ -672,6 +698,7 @@
           descLunchTitle: "Lunch",
           descLunchNote: "Take lunch before reaching 5 hours",
           juanDivider: "Juan Diaz only",
+          openSheet: "Open Sheet",
           googleSignin: "Connect Google",
           signout: "Sign out",
           sendCalendar: "Calendar",
@@ -730,6 +757,7 @@
       let manualShifts = [];
       let accessToken = null;
       let tokenClient = null;
+      let signedInUserEmail = "";
 
       // ── SILENT SIGN-IN / AUTO RECONNECT ──────────────────────────────────
       // We wait for the GSI library to load, then attempt silent sign-in
@@ -760,6 +788,8 @@
             if (response.error) {
               // Silent auth failed — clear stored state and show sign-in button
               localStorage.removeItem("gsi_connected");
+              signedInUserEmail = "";
+              updateOwnerSheetButton();
               document.getElementById("googleStatus").style.display = "none";
               return;
             }
@@ -773,10 +803,12 @@
             )
               .then((r) => r.json())
               .catch(() => ({}));
+            signedInUserEmail = (info.email || "").toLowerCase();
             document.getElementById("signedInEmail").textContent =
               info.email || "Connected";
             document.getElementById("googleSignedOut").style.display = "none";
             document.getElementById("googleSignedIn").style.display = "block";
+            updateOwnerSheetButton();
             document.getElementById("googleStatus").style.display = "none";
           },
         });
@@ -792,9 +824,11 @@
           google.accounts.oauth2.revoke(accessToken, () => {});
           accessToken = null;
         }
+        signedInUserEmail = "";
         localStorage.removeItem("gsi_connected");
         document.getElementById("googleSignedOut").style.display = "block";
         document.getElementById("googleSignedIn").style.display = "none";
+        updateOwnerSheetButton();
         document.getElementById("googleStatus").style.display = "none";
       }
 
@@ -811,6 +845,29 @@
         document.getElementById("juanSection").style.display = isJuan()
           ? "block"
           : "none";
+        updateOwnerSheetButton();
+      }
+      function canOpenOwnerSheet() {
+        return (
+          isJuan() &&
+          !!signedInUserEmail &&
+          OWNER_ALLOWED_EMAILS.map((e) => e.toLowerCase().trim()).includes(
+            signedInUserEmail,
+          )
+        );
+      }
+      function updateOwnerSheetButton() {
+        const btn = document.getElementById("txt-open-sheet");
+        if (!btn) return;
+        btn.style.display = canOpenOwnerSheet() ? "inline-flex" : "none";
+      }
+      function openOwnerSheet() {
+        if (!canOpenOwnerSheet()) return;
+        window.open(
+          `https://docs.google.com/spreadsheets/d/${SHEET_ID}`,
+          "_blank",
+          "noopener,noreferrer",
+        );
       }
 
       // ── RESET / CLEAR ─────────────────────────────────────────────────────
@@ -2161,8 +2218,12 @@
         if (shtBtn) shtBtn.querySelector("span").textContent = t.sendSheets;
         const botBtn = document.getElementById("txt-send-both");
         if (botBtn) botBtn.querySelector("span").textContent = t.sendBoth;
+        const openSheetBtn = document.getElementById("txt-open-sheet");
+        if (openSheetBtn)
+          openSheetBtn.querySelector("span").textContent = t.openSheet;
         renderManualShifts();
         validateJsonInputLive();
+        updateOwnerSheetButton();
       }
       function getPromptText(name) {
         if (imageMode === "kronos") {
@@ -2208,7 +2269,11 @@
           const m = String(parseInt(iso[2], 10)).padStart(2, "0");
           const d = String(parseInt(iso[3], 10)).padStart(2, "0");
           const normalized = `${y}-${m}-${d}`;
-          return { value: normalized, changed: normalized !== original, valid: true };
+          return {
+            value: normalized,
+            changed: normalized !== original,
+            valid: true,
+          };
         }
         const md = original.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
         if (!md) return { value: original, valid: false };
@@ -2220,7 +2285,11 @@
           return { value: original, valid: false };
         }
         const normalized = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        return { value: normalized, changed: normalized !== original, valid: true };
+        return {
+          value: normalized,
+          changed: normalized !== original,
+          valid: true,
+        };
       }
       function to12Hour(hour24, minute) {
         const ap = hour24 >= 12 ? "P" : "A";
@@ -2231,24 +2300,39 @@
       function normalizeShiftTime(value) {
         const original = (value || "").toString().trim();
         if (!original) return { value: original, valid: false };
-        const clean = original.toUpperCase().replace(/\./g, "").replace(/\s+/g, "");
+        const clean = original
+          .toUpperCase()
+          .replace(/\./g, "")
+          .replace(/\s+/g, "");
 
         let m = clean.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
         if (m) {
           const normalized = to12Hour(parseInt(m[1], 10), parseInt(m[2], 10));
-          return { value: normalized, changed: normalized !== original, valid: true };
+          return {
+            value: normalized,
+            changed: normalized !== original,
+            valid: true,
+          };
         }
         m = clean.match(/^([01]?\d|2[0-3])$/);
         if (m) {
           const normalized = to12Hour(parseInt(m[1], 10), 0);
-          return { value: normalized, changed: normalized !== original, valid: true };
+          return {
+            value: normalized,
+            changed: normalized !== original,
+            valid: true,
+          };
         }
         m = clean.match(/^(\d{1,2})(?::([0-5]\d))?([AP])M?$/);
         if (m) {
           const hour = parseInt(m[1], 10);
           if (hour < 1 || hour > 12) return { value: original, valid: false };
           const normalized = `${hour}:${(m[2] || "00").padStart(2, "0")}${m[3]}`;
-          return { value: normalized, changed: normalized !== original, valid: true };
+          return {
+            value: normalized,
+            changed: normalized !== original,
+            valid: true,
+          };
         }
         return { value: original, valid: false };
       }
@@ -2261,7 +2345,12 @@
         if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return null;
         const crossedMidnight = e <= s;
         if (crossedMidnight) e = new Date(e.getTime() + 86400000);
-        return { hours: (e - s) / 3600000, crossedMidnight, startDt: s, endDt: e };
+        return {
+          hours: (e - s) / 3600000,
+          crossedMidnight,
+          startDt: s,
+          endDt: e,
+        };
       }
       function validateShiftData(shifts) {
         const t = T[lang];
@@ -2290,7 +2379,9 @@
             return;
           }
           if (calc.crossedMidnight) {
-            issues.push(replaceTpl(t.jsonErrEndBeforeStart, { date: date.value }));
+            issues.push(
+              replaceTpl(t.jsonErrEndBeforeStart, { date: date.value }),
+            );
           }
 
           const h = parseFloat((shift.hours ?? "").toString());
@@ -2303,7 +2394,10 @@
               }),
             );
           } else {
-            if (h < 0) issues.push(replaceTpl(t.jsonErrNegativeHours, { date: date.value }));
+            if (h < 0)
+              issues.push(
+                replaceTpl(t.jsonErrNegativeHours, { date: date.value }),
+              );
             if (Math.abs(h - calc.hours) > 0.11) {
               issues.push(
                 replaceTpl(t.jsonErrMismatchHours, {
@@ -2398,23 +2492,32 @@
           const rowLabel = `#${idx + 1}`;
           const dateNorm = normalizeShiftDate(shift.date);
           if (dateNorm.valid && dateNorm.changed) {
-            changes.push(`${rowLabel} date: "${shift.date}" -> "${dateNorm.value}"`);
+            changes.push(
+              `${rowLabel} date: "${shift.date}" -> "${dateNorm.value}"`,
+            );
             shift.date = dateNorm.value;
           }
           const startNorm = normalizeShiftTime(shift.start);
           if (startNorm.valid && startNorm.changed) {
-            changes.push(`${rowLabel} start: "${shift.start}" -> "${startNorm.value}"`);
+            changes.push(
+              `${rowLabel} start: "${shift.start}" -> "${startNorm.value}"`,
+            );
             shift.start = startNorm.value;
           }
           const endNorm = normalizeShiftTime(shift.end);
           if (endNorm.valid && endNorm.changed) {
-            changes.push(`${rowLabel} end: "${shift.end}" -> "${endNorm.value}"`);
+            changes.push(
+              `${rowLabel} end: "${shift.end}" -> "${endNorm.value}"`,
+            );
             shift.end = endNorm.value;
           }
 
           const calc = calcHoursFromTimes(shift.start, shift.end, shift.date);
           const h = parseFloat((shift.hours ?? "").toString());
-          if (calc && (!Number.isFinite(h) || h < 0 || Math.abs(h - calc.hours) > 0.11)) {
+          if (
+            calc &&
+            (!Number.isFinite(h) || h < 0 || Math.abs(h - calc.hours) > 0.11)
+          ) {
             const old = shift.hours;
             shift.hours = calc.hours.toFixed(2);
             changes.push(`${rowLabel} hours: "${old}" -> "${shift.hours}"`);
@@ -2422,7 +2525,11 @@
         });
 
         const output = isArray ? shifts : payload;
-        document.getElementById("jsonInput").value = JSON.stringify(output, null, 2);
+        document.getElementById("jsonInput").value = JSON.stringify(
+          output,
+          null,
+          2,
+        );
         validateJsonInputLive();
 
         if (!changes.length) {
