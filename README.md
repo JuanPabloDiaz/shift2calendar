@@ -1,6 +1,6 @@
-# Costco Schedule to Calendar
+# Schedule to Calendar
 
-Convierte tu horario de Costco en eventos de calendario (.ics) para importar a Google Calendar.
+Convierte tu horario en eventos de calendario (.ics) para importar a Google Calendar.
 
 ## Características
 
@@ -33,7 +33,7 @@ Convierte tu horario de Costco en eventos de calendario (.ics) para importar a G
 2. En el paso 3, asegúrate de estar en **"JSON"**
 3. Copia el prompt (botón **"Copy prompt"**)
 4. Abre [ChatGPT](https://chatgpt.com) o [Claude](https://claude.ai) y pega el prompt
-5. Adjunta la foto de tu horario de Costco
+5. Adjunta la foto de tu horario
 6. La AI te devolverá un JSON
 7. Copia el JSON y pégalo en el campo de texto
 8. Haz clic en **"Generar y descargar .ics"**
@@ -41,7 +41,7 @@ Convierte tu horario de Costco en eventos de calendario (.ics) para importar a G
 
 ### Opción 3: Script de Python (sin navegador)
 
-1. Ejecuta el script: `python script_schedule_costco.py`
+1. Ejecuta el script de Python del proyecto
 2. El script te mostrará un prompt para usar en Claude.ai
 3. Sube tu foto del schedule a Claude.ai y pídele el JSON
 4. Pega el JSON cuando el script te lo pida

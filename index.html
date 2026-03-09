@@ -340,6 +340,36 @@
               </label>
             </div>
           </div>
+
+          <!-- Lunch reminder toggle -->
+          <div class="option-row">
+            <div class="option-label-wrap">
+              <svg
+                class="opt-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 12h18" />
+                <path d="M7 8v8" />
+                <path d="M17 8v8" />
+                <path d="M10 8v8" />
+                <path d="M14 8v8" />
+              </svg>
+              <label class="option-label" id="txt-opt-lunch-label"></label>
+            </div>
+            <div class="option-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="lunchToggle" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -551,6 +581,7 @@
           optReminder2Label: "Recordatorio adicional",
           optReminderNone: "Sin recordatorio",
           optWeeklyLabel: "Total de horas en descripción",
+          optLunchLabel: "Lunch",
 
           generateBtn: "Generar y descargar .ics",
           previewTitle: "Turnos detectados:",
@@ -624,7 +655,7 @@
           optReminder2Label: "Additional reminder",
           optReminderNone: "No reminder",
           optWeeklyLabel: "Weekly hours total in description",
-
+          optLunchLabel: "Lunch",
           generateBtn: "Generate & download .ics",
           previewTitle: "Detected shifts:",
           weeklyLabel: "Week total:",
@@ -869,6 +900,7 @@
         const totalWeekDays = merged.length;
         const location = document.getElementById("locationSelect").value;
         const includeWeekly = document.getElementById("weeklyToggle").checked;
+        const includeLunch = document.getElementById("lunchToggle").checked;
         const locEl = document.getElementById("locationSelect");
         const locLabel = locEl.options[locEl.selectedIndex].text;
         const reminderOverrides = getReminderOverrides();
@@ -927,7 +959,9 @@
             return false;
           }
 
-          const lunchReminderAt = getLunchReminderDate(s.startDt, s.hours);
+          const lunchReminderAt = includeLunch
+            ? getLunchReminderDate(s.startDt, s.hours)
+            : null;
           if (lunchReminderAt) {
             const lunchEnd = new Date(
               lunchReminderAt.getTime() + LUNCH_EVENT_DURATION_MINUTES * 60000,
@@ -1897,6 +1931,7 @@
           document.getElementById("reminderSelect").value,
         );
         const includeWeekly = document.getElementById("weeklyToggle").checked;
+        const includeLunch = document.getElementById("lunchToggle").checked;
 
         let events = "";
         for (const s of merged) {
@@ -1940,7 +1975,9 @@
           lines.push("END:VEVENT");
           events += lines.join("\r\n") + "\r\n";
 
-          const lunchReminderAt = getLunchReminderDate(s.startDt, s.hours);
+          const lunchReminderAt = includeLunch
+            ? getLunchReminderDate(s.startDt, s.hours)
+            : null;
           if (lunchReminderAt) {
             const lunchEnd = new Date(
               lunchReminderAt.getTime() + LUNCH_EVENT_DURATION_MINUTES * 60000,
@@ -2109,6 +2146,7 @@
         s("txt-opt-reminder1-label", t.optReminder1Label);
         s("txt-opt-reminder2-label", t.optReminder2Label);
         s("txt-opt-weekly-label", t.optWeeklyLabel);
+        s("txt-opt-lunch-label", t.optLunchLabel);
         s("txt-generate-btn", t.generateBtn);
         s("txt-preview-title", t.previewTitle);
         s("txt-clear-btn", t.clearBtn);
