@@ -1457,10 +1457,34 @@
         };
 
         showGoogleStatus("loading", t.googleLoading);
-        const merged = mergeShifts(shifts);
-        const pay = calcPay(merged);
-        const weekStart = merged[0]?.date;
-        const weekEnd = merged[merged.length - 1]?.date;
+
+        // Sort shifts by date and time
+        const sortedShifts = shifts.slice().sort((a, b) => {
+          if (a.date !== b.date) return a.date.localeCompare(b.date);
+          const refA = new Date(a.date + "T00:00:00");
+          const refB = new Date(b.date + "T00:00:00");
+          const timeA = parseTime(a.start, refA);
+          const timeB = parseTime(b.start, refB);
+          return timeA - timeB;
+        });
+
+        // Process each shift individually (no merging)
+        const processedShifts = sortedShifts.map((s) => {
+          const ref = new Date(s.date + "T00:00:00");
+          const startDt = parseTime(s.start, ref);
+          let endDt = parseTime(s.end, ref);
+          if (endDt <= startDt) endDt = new Date(endDt.getTime() + 86400000);
+          return {
+            date: s.date,
+            startDt,
+            endDt,
+            hours: parseFloat(s.hours),
+          };
+        });
+
+        const pay = calcPay(processedShifts);
+        const weekStart = processedShifts[0]?.date;
+        const weekEnd = processedShifts[processedShifts.length - 1]?.date;
         const biweekly = getBiweeklyWindow(weekStart);
         const closesPayPeriod = weekEnd === biweekly.end;
 
@@ -1480,10 +1504,10 @@
           ["Date", "Day", "Start", "End", "Hours", "Pay", "", ""],
         ];
 
-        const shiftRows = merged.map((s) => {
+        const shiftRows = processedShifts.map((s) => {
           const d = new Date(s.date + "T00:00:00");
           const isSun = d.getDay() === 0;
-          const hrs = parseFloat(s.hours);
+          const hrs = s.hours;
           const dayRate = isSun ? pay.sunRate : pay.rate;
           const dayPay = hrs * dayRate;
           const dayLabel = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
@@ -1518,15 +1542,15 @@
             existingValues,
             biweekly,
           );
-          const currentBiweeklyHrs = merged
+          const currentBiweeklyHrs = processedShifts
             .filter((s) => s.date >= biweekly.start && s.date <= biweekly.end)
-            .reduce((a, s) => a + parseFloat(s.hours), 0);
-          const currentBiweeklyPay = merged
+            .reduce((a, s) => a + s.hours, 0);
+          const currentBiweeklyPay = processedShifts
             .filter((s) => s.date >= biweekly.start && s.date <= biweekly.end)
             .reduce((a, s) => {
               const d = new Date(s.date + "T00:00:00");
               const isSun = d.getDay() === 0;
-              return a + parseFloat(s.hours) * (isSun ? pay.sunRate : pay.rate);
+              return a + s.hours * (isSun ? pay.sunRate : pay.rate);
             }, 0);
 
           biweeklyRows = [
@@ -1639,7 +1663,7 @@
         }
 
         // Shift rows
-        merged.forEach((s, i) => {
+        processedShifts.forEach((s, i) => {
           const r = firstShift + i;
           const isSun = new Date(s.date + "T00:00:00").getDay() === 0;
           const bg = isSun ? SUN_BG : i % 2 === 0 ? BASE_BG : ALT_BG;
