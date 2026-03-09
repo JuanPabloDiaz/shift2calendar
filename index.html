@@ -558,6 +558,8 @@
       const LUNCH_THRESHOLD_HOURS = 5; // only generate lunch reminder above this
       const LUNCH_NOTICE_BEFORE_MINUTES = 30; // warn this many minutes before hour 5
       const LUNCH_EVENT_DURATION_MINUTES = 5;
+      const PAID_BREAK_DEDUCTION_HOURS = 0.5; // allow paid-hours inputs (meal deducted)
+      const PAID_BREAK_MIN_SHIFT_HOURS = 5.5; // minimum shift length where deduction can apply
 
       // ── PAY RATES (update here if your wage changes) ──────────────────────
       const HOURLY_RATE = 20; // regular hourly rate (USD)
@@ -2629,6 +2631,19 @@
           endDt: e,
         };
       }
+      function getAcceptedHourValues(rawHours) {
+        const values = [rawHours];
+        if (rawHours >= PAID_BREAK_MIN_SHIFT_HOURS) {
+          values.push(rawHours - PAID_BREAK_DEDUCTION_HOURS);
+        }
+        return values;
+      }
+      function hoursMatchesPolicy(inputHours, rawHours) {
+        if (!Number.isFinite(inputHours)) return false;
+        return getAcceptedHourValues(rawHours).some(
+          (v) => Math.abs(inputHours - v) <= 0.11,
+        );
+      }
       function normalizeAndDedupeShifts(shifts) {
         const cleaned = shifts
           .map((s) => ({
@@ -2707,7 +2722,7 @@
               issues.push(
                 replaceTpl(t.jsonErrNegativeHours, { date: date.value }),
               );
-            if (Math.abs(h - calc.hours) > 0.11) {
+            if (!hoursMatchesPolicy(h, calc.hours)) {
               issues.push(
                 replaceTpl(t.jsonErrMismatchHours, {
                   date: date.value,
@@ -2823,10 +2838,7 @@
 
           const calc = calcHoursFromTimes(shift.start, shift.end, shift.date);
           const h = parseFloat((shift.hours ?? "").toString());
-          if (
-            calc &&
-            (!Number.isFinite(h) || h < 0 || Math.abs(h - calc.hours) > 0.11)
-          ) {
+          if (calc && (!Number.isFinite(h) || h < 0 || !hoursMatchesPolicy(h, calc.hours))) {
             const old = shift.hours;
             shift.hours = calc.hours.toFixed(2);
             changes.push(`${rowLabel} hours: "${old}" -> "${shift.hours}"`);
