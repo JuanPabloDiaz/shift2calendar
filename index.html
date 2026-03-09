@@ -192,6 +192,7 @@
             class="fix-json-btn"
             id="fixJsonBtn"
             onclick="fixJsonInput()"
+            style="display: none"
           ></button>
           <div class="json-validation" id="jsonValidation"></div>
           <div id="manualInput" style="display: none">
@@ -527,7 +528,7 @@
           copiedBtn: "¡Copiado!",
           step4Title: "Pega el JSON aquí",
           step4Desc: "Copia la respuesta de AI y pégala abajo",
-          fixJsonBtn: "Arreglar mi JSON",
+          fixJsonBtn: "Corregir errores",
           jsonWarnTitle: "Revisión de JSON",
           jsonErrPrefix: "Corrige esto antes de continuar:",
           jsonErrBadDate: "Turno en {date}: formato de fecha inválido.",
@@ -601,7 +602,7 @@
           copiedBtn: "Copied!",
           step4Title: "Paste the JSON here",
           step4Desc: "Copy AI's response and paste it below",
-          fixJsonBtn: "Fix my JSON",
+          fixJsonBtn: "Fix Errors",
           jsonWarnTitle: "JSON checks",
           jsonErrPrefix: "Fix this before continuing:",
           jsonErrBadDate: "Shift on {date}: wrong date format.",
@@ -2008,8 +2009,7 @@
           .classList.toggle("active", mode === "manual");
         document.getElementById("jsonInput").style.display =
           mode === "json" ? "block" : "none";
-        document.getElementById("fixJsonBtn").style.display =
-          mode === "json" ? "block" : "none";
+        document.getElementById("fixJsonBtn").style.display = "none";
         document.getElementById("jsonValidation").style.display =
           mode === "json" ? "block" : "none";
         document.getElementById("manualInput").style.display =
@@ -2297,8 +2297,10 @@
       }
       function renderJsonValidation(issues, infoLines = []) {
         const box = document.getElementById("jsonValidation");
+        const fixBtn = document.getElementById("fixJsonBtn");
         if (inputMode !== "json") {
           box.style.display = "none";
+          fixBtn.style.display = "none";
           return;
         }
         const t = T[lang];
@@ -2306,8 +2308,10 @@
           box.style.display = "none";
           box.innerHTML = "";
           box.className = "json-validation";
+          fixBtn.style.display = "none";
           return;
         }
+        fixBtn.style.display = issues.length ? "block" : "none";
         const stateClass = issues.length ? "warning" : "ok";
         box.className = `json-validation ${stateClass}`;
         const lines = issues.length ? issues : infoLines;
