@@ -1499,16 +1499,55 @@
         const existingValues = await getSheetValues(SHEET_TAB_TITLE);
         const isFirstBlock = usedRows === 0;
 
+        // Check for duplicates
+        const existingShifts = existingValues
+          .slice(1) // Skip header
+          .filter((row) => row[0] && row[2] && row[3]) // Must have date, start, end
+          .map((row) => ({
+            date: row[0],
+            start: row[2],
+            end: row[3],
+            hours: parseFloat(row[4]) || 0,
+          }));
+
+        const isDuplicate = (shift) => {
+          const shiftStart = fmtT(shift.startDt);
+          const shiftEnd = fmtT(shift.endDt);
+          return existingShifts.some(
+            (existing) =>
+              existing.date === shift.date &&
+              existing.start === shiftStart &&
+              existing.end === shiftEnd,
+          );
+        };
+
+        const newShifts = processedShifts.filter((s) => !isDuplicate(s));
+        const duplicateCount = processedShifts.length - newShifts.length;
+
+        if (newShifts.length === 0) {
+          showGoogleStatus(
+            "error",
+            duplicateCount > 0
+              ? `All ${duplicateCount} shift${duplicateCount > 1 ? "s" : ""} already exist in the sheet.`
+              : "No shifts to add.",
+          );
+          return false;
+        }
+
+        // Use only new shifts for the rest of the process
+        const filteredShifts = newShifts;
+        const filteredPay = calcPay(filteredShifts);
+
         // Build values: optional header + shift rows + summary row
         const header = [
           ["Date", "Day", "Start", "End", "Hours", "Pay", "", ""],
         ];
 
-        const shiftRows = processedShifts.map((s) => {
+        const shiftRows = filteredShifts.map((s) => {
           const d = new Date(s.date + "T00:00:00");
           const isSun = d.getDay() === 0;
           const hrs = s.hours;
-          const dayRate = isSun ? pay.sunRate : pay.rate;
+          const dayRate = isSun ? filteredPay.sunRate : filteredPay.rate;
           const dayPay = hrs * dayRate;
           const dayLabel = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
           return [
@@ -1519,7 +1558,7 @@
             hrs,
             dayPay,
             isSun ? "Sunday hrs ★" : "",
-            isSun ? `$${pay.sunRate.toFixed(2)}/hr` : "",
+            isSun ? `$${filteredPay.sunRate.toFixed(2)}/hr` : "",
           ];
         });
 
@@ -1529,8 +1568,8 @@
             "",
             "",
             "Total hours",
-            pay.totalHrs,
-            pay.totalPay,
+            filteredPay.totalHrs,
+            filteredPay.totalPay,
             "Pay period",
             `${biweekly.start} - ${biweekly.end}`,
           ],
@@ -1542,15 +1581,15 @@
             existingValues,
             biweekly,
           );
-          const currentBiweeklyHrs = processedShifts
+          const currentBiweeklyHrs = filteredShifts
             .filter((s) => s.date >= biweekly.start && s.date <= biweekly.end)
             .reduce((a, s) => a + s.hours, 0);
-          const currentBiweeklyPay = processedShifts
+          const currentBiweeklyPay = filteredShifts
             .filter((s) => s.date >= biweekly.start && s.date <= biweekly.end)
             .reduce((a, s) => {
               const d = new Date(s.date + "T00:00:00");
               const isSun = d.getDay() === 0;
-              return a + s.hours * (isSun ? pay.sunRate : pay.rate);
+              return a + s.hours * (isSun ? filteredPay.sunRate : filteredPay.rate);
             }, 0);
 
           biweeklyRows = [
@@ -1663,7 +1702,7 @@
         }
 
         // Shift rows
-        processedShifts.forEach((s, i) => {
+        filteredShifts.forEach((s, i) => {
           const r = firstShift + i;
           const isSun = new Date(s.date + "T00:00:00").getDay() === 0;
           const bg = isSun ? SUN_BG : i % 2 === 0 ? BASE_BG : ALT_BG;
@@ -2148,7 +2187,12 @@
         );
 
         await updateSummaryTab();
-        showGoogleStatus("success", t.googleSheetsOk);
+
+        let successMsg = t.googleSheetsOk;
+        if (duplicateCount > 0) {
+          successMsg += ` (${newShifts.length} added, ${duplicateCount} duplicate${duplicateCount > 1 ? "s" : ""} skipped)`;
+        }
+        showGoogleStatus("success", successMsg);
         return true;
       }
 
