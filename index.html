@@ -887,7 +887,7 @@
             showError(t.errNoShifts);
             return null;
           }
-          shifts = manualShifts;
+          shifts = normalizeAndDedupeShifts(manualShifts);
           period = "costco";
         } else {
           const parsedJson = parseJsonInput();
@@ -911,6 +911,7 @@
             showError(t.errNoShifts);
             return null;
           }
+          shifts = normalizeAndDedupeShifts(shifts);
           const issues = validateShiftData(shifts);
           renderJsonValidation(issues);
           if (issues.length) {
@@ -2228,12 +2229,12 @@
       function getPromptText(name) {
         if (imageMode === "kronos") {
           return lang === "es"
-            ? `Analiza esta imagen de la app Kronos de Costco que muestra mi horario de trabajo.\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P (AM/PM). Incluye TODOS los turnos visibles. Ignora duplicados y "System Calculation Only".\n\nAbre en: https://claude.ai`
-            : `Analyze this Costco Kronos app screenshot showing my work schedule.\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P. Include ALL visible shifts. Ignore duplicates and "System Calculation Only".\n\nOpen at: https://claude.ai`;
+            ? `Analiza esta(s) imagen(es) de la app Kronos que muestran mi horario de trabajo (puede ser 1 o varias).\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P (AM/PM).\nReglas:\n- Incluye TODOS los turnos visibles en TODAS las imagenes.\n- Elimina turnos duplicados.\n- Ignora "System Calculation Only".\n- Devuelve "shifts" en orden cronologico (fecha y hora de inicio).`
+            : `Analyze this/these Kronos schedule image(s) (one or multiple images).\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P.\nRules:\n- Include ALL visible shifts across ALL images.\n- Remove duplicate shifts.\n- Ignore "System Calculation Only".\n- Return "shifts" in chronological order (date + start time).`;
         }
         return lang === "es"
-          ? `Analiza esta imagen de un horario de Costco y extrae SOLO los turnos de "${name}".\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P. El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").\nSi un dia tiene dos bloques incluyelos como entradas separadas.\n\nAbre en: https://chatgpt.com o https://claude.ai`
-          : `Analyze this Costco schedule image and extract ONLY the shifts for "${name}".\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P. The "period" field is the Time Period from the top of the image (e.g. "3/02/26 - 3/08/26").\nIf a day has two time blocks include them as separate entries.\n\nOpen at: https://chatgpt.com or https://claude.ai`;
+          ? `Analiza esta(s) imagen(es) de horario y extrae SOLO los turnos de "${name}" (puede ser 1 o varias imagenes).\nDevuelveme UNICAMENTE un JSON valido con este formato exacto, sin explicacion ni texto extra:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nDonde X es A o P.\nReglas:\n- El campo "period" es el Time Period de la parte superior (ej: "3/02/26 - 3/08/26").\n- Incluye todos los turnos visibles en todas las imagenes.\n- Si un dia tiene dos bloques, incluyelos como entradas separadas.\n- Elimina turnos duplicados.\n- Devuelve "shifts" en orden cronologico (fecha y hora de inicio).`
+          : `Analyze this/these schedule image(s) and extract ONLY the shifts for "${name}" (one or multiple images).\nReturn ONLY a valid JSON in this exact format, no explanation or extra text:\n\n{\n  "period": "M/DD/YY - M/DD/YY",\n  "shifts": [\n    {"date": "YYYY-MM-DD", "start": "H:MMX", "end": "H:MMX", "hours": "N.NN"}\n  ]\n}\n\nWhere X is A or P.\nRules:\n- The "period" field is the Time Period from the top (e.g. "3/02/26 - 3/08/26").\n- Include all visible shifts across all images.\n- If a day has two blocks, include them as separate entries.\n- Remove duplicate shifts.\n- Return "shifts" in chronological order (date + start time).`;
       }
       function updatePrompt() {
         document.getElementById("promptText").textContent = getPromptText(
@@ -2351,6 +2352,38 @@
           startDt: s,
           endDt: e,
         };
+      }
+      function normalizeAndDedupeShifts(shifts) {
+        const cleaned = shifts
+          .map((s) => ({
+            ...s,
+            date: normalizeShiftDate(s.date).value || (s.date || "").toString().trim(),
+            start: normalizeShiftTime(s.start).value || (s.start || "").toString().trim(),
+            end: normalizeShiftTime(s.end).value || (s.end || "").toString().trim(),
+          }))
+          .filter((s) => s.date && s.start && s.end);
+
+        const seen = new Set();
+        const deduped = cleaned.filter((s) => {
+          const key = `${s.date}|${s.start}|${s.end}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        const timeRank = (date, time) => {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return Number.MAX_SAFE_INTEGER;
+          const ref = new Date(date + "T00:00:00");
+          if (Number.isNaN(ref.getTime())) return Number.MAX_SAFE_INTEGER;
+          const t = normalizeShiftTime(time);
+          if (!t.valid) return Number.MAX_SAFE_INTEGER;
+          return parseTime(t.value, ref).getTime();
+        };
+
+        return deduped.sort((a, b) => {
+          if (a.date !== b.date) return a.date.localeCompare(b.date);
+          return timeRank(a.date, a.start) - timeRank(b.date, b.start);
+        });
       }
       function validateShiftData(shifts) {
         const t = T[lang];
