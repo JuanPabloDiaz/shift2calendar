@@ -185,8 +185,16 @@
           </div>
           <textarea
             id="jsonInput"
+            oninput="validateJsonInputLive()"
             placeholder='{"period": "3/02/26 - 3/08/26", "shifts": [...]}'
           ></textarea>
+          <button
+            class="fix-json-btn"
+            id="fixJsonBtn"
+            onclick="fixJsonInput()"
+            style="display: none"
+          ></button>
+          <div class="json-validation" id="jsonValidation"></div>
           <div id="manualInput" style="display: none">
             <div class="manual-row">
               <input type="date" id="manualDate" class="manual-input" />
@@ -520,6 +528,22 @@
           copiedBtn: "¡Copiado!",
           step4Title: "Pega el JSON aquí",
           step4Desc: "Copia la respuesta de AI y pégala abajo",
+          fixJsonBtn: "Corregir errores",
+          jsonWarnTitle: "Revisión de JSON",
+          jsonErrPrefix: "Corrige esto antes de continuar:",
+          jsonErrBadDate: "Turno en {date}: formato de fecha inválido.",
+          jsonErrBadTime: "Turno en {date}: hora inválida.",
+          jsonErrEndBeforeStart:
+            "Turno en {date}: la hora de fin es antes del inicio.",
+          jsonErrNegativeHours: "Turno en {date}: horas negativas.",
+          jsonErrMismatchHours:
+            "Turno en {date}: horas no coinciden (JSON {jsonHours} vs calculado {calcHours}).",
+          jsonErrOverlap:
+            "Turno en {date}: se sobrepone con otro turno del mismo día.",
+          jsonFixNoInput: "Pega JSON primero.",
+          jsonFixInvalid: "No se pudo corregir: JSON inválido.",
+          jsonFixDone: "JSON corregido. Cambios:",
+          jsonFixNoChanges: "No encontré correcciones automáticas.",
           step5Title: "Personaliza los eventos",
           step5Desc: "Información adicional para cada evento",
           optLocationLabel: "Ubicación",
@@ -578,6 +602,21 @@
           copiedBtn: "Copied!",
           step4Title: "Paste the JSON here",
           step4Desc: "Copy AI's response and paste it below",
+          fixJsonBtn: "Fix Errors",
+          jsonWarnTitle: "JSON checks",
+          jsonErrPrefix: "Fix this before continuing:",
+          jsonErrBadDate: "Shift on {date}: wrong date format.",
+          jsonErrBadTime: "Shift on {date}: invalid time format.",
+          jsonErrEndBeforeStart: "Shift on {date}: end is before start.",
+          jsonErrNegativeHours: "Shift on {date}: negative hours.",
+          jsonErrMismatchHours:
+            "Shift on {date}: hours mismatch (JSON {jsonHours} vs calculated {calcHours}).",
+          jsonErrOverlap:
+            "Shift on {date}: overlaps with another shift on the same day.",
+          jsonFixNoInput: "Paste JSON first.",
+          jsonFixInvalid: "Could not fix: invalid JSON.",
+          jsonFixDone: "JSON fixed. Changes:",
+          jsonFixNoChanges: "No automatic fixes were needed.",
           step5Title: "Customize events",
           step5Desc: "Additional info for each calendar event",
           optLocationLabel: "Location",
@@ -746,6 +785,7 @@
       // ── RESET / CLEAR ─────────────────────────────────────────────────────
       function resetAfterAction() {
         document.getElementById("jsonInput").value = "";
+        renderJsonValidation([]);
         manualShifts = [];
         renderManualShifts();
       }
@@ -762,19 +802,14 @@
           shifts = manualShifts;
           period = "costco";
         } else {
-          let raw = document.getElementById("jsonInput").value.trim();
-          if (!raw) {
+          const parsedJson = parseJsonInput();
+          if (!parsedJson) {
             showError(t.errEmpty);
             return null;
           }
-          raw = fixQuotes(raw);
-          const match = raw.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-          if (match) raw = match[0];
-          let data;
-          try {
-            data = JSON.parse(raw);
-          } catch (e) {
-            showError(t.errJson + e.message + t.errJsonHint);
+          const { data, error } = parsedJson;
+          if (error) {
+            showError(t.errJson + error + t.errJsonHint);
             return null;
           }
           if (Array.isArray(data)) {
@@ -786,6 +821,12 @@
           }
           if (!shifts.length) {
             showError(t.errNoShifts);
+            return null;
+          }
+          const issues = validateShiftData(shifts);
+          renderJsonValidation(issues);
+          if (issues.length) {
+            showError(`${t.jsonErrPrefix} ${issues[0]}`);
             return null;
           }
         }
@@ -1968,8 +2009,12 @@
           .classList.toggle("active", mode === "manual");
         document.getElementById("jsonInput").style.display =
           mode === "json" ? "block" : "none";
+        document.getElementById("fixJsonBtn").style.display = "none";
+        document.getElementById("jsonValidation").style.display =
+          mode === "json" ? "block" : "none";
         document.getElementById("manualInput").style.display =
           mode === "manual" ? "block" : "none";
+        if (mode === "json") validateJsonInputLive();
       }
       function addShift() {
         const date = document.getElementById("manualDate").value,
@@ -2057,6 +2102,7 @@
         s("copyPromptBtn", t.copyBtn);
         s("txt-step4-title", t.step4Title);
         s("txt-step4-desc", t.step4Desc);
+        s("fixJsonBtn", t.fixJsonBtn);
         s("txt-step5-title", t.step5Title);
         s("txt-step5-desc", t.step5Desc);
         s("txt-opt-location-label", t.optLocationLabel);
@@ -2078,6 +2124,7 @@
         const botBtn = document.getElementById("txt-send-both");
         if (botBtn) botBtn.querySelector("span").textContent = t.sendBoth;
         renderManualShifts();
+        validateJsonInputLive();
       }
       function getPromptText(name) {
         if (imageMode === "kronos") {
@@ -2098,6 +2145,255 @@
         return s
           .replace(/[\u201c\u201d]/g, '"')
           .replace(/[\u2018\u2019]/g, '"');
+      }
+      function parseJsonInput() {
+        const rawInput = document.getElementById("jsonInput").value.trim();
+        if (!rawInput) return null;
+        let raw = fixQuotes(rawInput);
+        const match = raw.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+        if (match) raw = match[0];
+        try {
+          return { data: JSON.parse(raw), raw };
+        } catch (e) {
+          return { data: null, raw, error: e.message };
+        }
+      }
+      function replaceTpl(str, map) {
+        return str.replace(/\{(\w+)\}/g, (_, key) => map[key] ?? "");
+      }
+      function normalizeShiftDate(value) {
+        const original = (value || "").toString().trim();
+        if (!original) return { value: original, valid: false };
+        const iso = original.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (iso) {
+          const y = iso[1];
+          const m = String(parseInt(iso[2], 10)).padStart(2, "0");
+          const d = String(parseInt(iso[3], 10)).padStart(2, "0");
+          const normalized = `${y}-${m}-${d}`;
+          return { value: normalized, changed: normalized !== original, valid: true };
+        }
+        const md = original.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+        if (!md) return { value: original, valid: false };
+        let year = parseInt(md[3], 10);
+        if (md[3].length === 2) year += 2000;
+        const month = parseInt(md[1], 10);
+        const day = parseInt(md[2], 10);
+        if (month < 1 || month > 12 || day < 1 || day > 31) {
+          return { value: original, valid: false };
+        }
+        const normalized = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        return { value: normalized, changed: normalized !== original, valid: true };
+      }
+      function to12Hour(hour24, minute) {
+        const ap = hour24 >= 12 ? "P" : "A";
+        let h12 = hour24 % 12;
+        if (h12 === 0) h12 = 12;
+        return `${h12}:${String(minute).padStart(2, "0")}${ap}`;
+      }
+      function normalizeShiftTime(value) {
+        const original = (value || "").toString().trim();
+        if (!original) return { value: original, valid: false };
+        const clean = original.toUpperCase().replace(/\./g, "").replace(/\s+/g, "");
+
+        let m = clean.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+        if (m) {
+          const normalized = to12Hour(parseInt(m[1], 10), parseInt(m[2], 10));
+          return { value: normalized, changed: normalized !== original, valid: true };
+        }
+        m = clean.match(/^([01]?\d|2[0-3])$/);
+        if (m) {
+          const normalized = to12Hour(parseInt(m[1], 10), 0);
+          return { value: normalized, changed: normalized !== original, valid: true };
+        }
+        m = clean.match(/^(\d{1,2})(?::([0-5]\d))?([AP])M?$/);
+        if (m) {
+          const hour = parseInt(m[1], 10);
+          if (hour < 1 || hour > 12) return { value: original, valid: false };
+          const normalized = `${hour}:${(m[2] || "00").padStart(2, "0")}${m[3]}`;
+          return { value: normalized, changed: normalized !== original, valid: true };
+        }
+        return { value: original, valid: false };
+      }
+      function calcHoursFromTimes(start, end, date) {
+        if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+        const ref = new Date(date + "T00:00:00");
+        if (Number.isNaN(ref.getTime())) return null;
+        const s = parseTime(start, ref);
+        let e = parseTime(end, ref);
+        if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return null;
+        const crossedMidnight = e <= s;
+        if (crossedMidnight) e = new Date(e.getTime() + 86400000);
+        return { hours: (e - s) / 3600000, crossedMidnight, startDt: s, endDt: e };
+      }
+      function validateShiftData(shifts) {
+        const t = T[lang];
+        const issues = [];
+        const byDate = {};
+
+        shifts.forEach((shift, idx) => {
+          const dateRaw = (shift.date || "").toString();
+          const date = normalizeShiftDate(dateRaw);
+          const safeDate = date.value || dateRaw || `#${idx + 1}`;
+          if (!date.valid) {
+            issues.push(replaceTpl(t.jsonErrBadDate, { date: safeDate }));
+            return;
+          }
+
+          const start = normalizeShiftTime(shift.start);
+          const end = normalizeShiftTime(shift.end);
+          if (!start.valid || !end.valid) {
+            issues.push(replaceTpl(t.jsonErrBadTime, { date: date.value }));
+            return;
+          }
+
+          const calc = calcHoursFromTimes(start.value, end.value, date.value);
+          if (!calc) {
+            issues.push(replaceTpl(t.jsonErrBadTime, { date: date.value }));
+            return;
+          }
+          if (calc.crossedMidnight) {
+            issues.push(replaceTpl(t.jsonErrEndBeforeStart, { date: date.value }));
+          }
+
+          const h = parseFloat((shift.hours ?? "").toString());
+          if (!Number.isFinite(h)) {
+            issues.push(
+              replaceTpl(t.jsonErrMismatchHours, {
+                date: date.value,
+                jsonHours: String(shift.hours ?? ""),
+                calcHours: calc.hours.toFixed(2),
+              }),
+            );
+          } else {
+            if (h < 0) issues.push(replaceTpl(t.jsonErrNegativeHours, { date: date.value }));
+            if (Math.abs(h - calc.hours) > 0.11) {
+              issues.push(
+                replaceTpl(t.jsonErrMismatchHours, {
+                  date: date.value,
+                  jsonHours: h.toFixed(2),
+                  calcHours: calc.hours.toFixed(2),
+                }),
+              );
+            }
+          }
+
+          if (!byDate[date.value]) byDate[date.value] = [];
+          byDate[date.value].push({
+            startDt: calc.startDt,
+            endDt: calc.endDt,
+          });
+        });
+
+        Object.entries(byDate).forEach(([date, rows]) => {
+          const sorted = [...rows].sort((a, b) => a.startDt - b.startDt);
+          for (let i = 1; i < sorted.length; i++) {
+            if (sorted[i].startDt < sorted[i - 1].endDt) {
+              issues.push(replaceTpl(t.jsonErrOverlap, { date }));
+            }
+          }
+        });
+
+        return issues;
+      }
+      function renderJsonValidation(issues, infoLines = []) {
+        const box = document.getElementById("jsonValidation");
+        const fixBtn = document.getElementById("fixJsonBtn");
+        if (inputMode !== "json") {
+          box.style.display = "none";
+          fixBtn.style.display = "none";
+          return;
+        }
+        const t = T[lang];
+        if (!issues.length && !infoLines.length) {
+          box.style.display = "none";
+          box.innerHTML = "";
+          box.className = "json-validation";
+          fixBtn.style.display = "none";
+          return;
+        }
+        fixBtn.style.display = issues.length ? "block" : "none";
+        const stateClass = issues.length ? "warning" : "ok";
+        box.className = `json-validation ${stateClass}`;
+        const lines = issues.length ? issues : infoLines;
+        box.innerHTML = `<div class="json-validation-title">${t.jsonWarnTitle}</div><ul>${lines
+          .map((msg) => `<li>${msg}</li>`)
+          .join("")}</ul>`;
+        box.style.display = "block";
+      }
+      function validateJsonInputLive() {
+        if (inputMode !== "json") return;
+        const parsed = parseJsonInput();
+        if (!parsed) {
+          renderJsonValidation([]);
+          return;
+        }
+        if (parsed.error) {
+          renderJsonValidation([T[lang].jsonFixInvalid]);
+          return;
+        }
+        const shifts = Array.isArray(parsed.data)
+          ? parsed.data
+          : parsed.data?.shifts || [];
+        if (!shifts.length) {
+          renderJsonValidation([]);
+          return;
+        }
+        renderJsonValidation(validateShiftData(shifts));
+      }
+      function fixJsonInput() {
+        const t = T[lang];
+        const parsed = parseJsonInput();
+        if (!parsed) {
+          showError(t.jsonFixNoInput);
+          return;
+        }
+        if (parsed.error) {
+          showError(t.jsonFixInvalid);
+          return;
+        }
+        const isArray = Array.isArray(parsed.data);
+        const payload = isArray ? { shifts: parsed.data } : parsed.data;
+        const shifts = Array.isArray(payload.shifts) ? payload.shifts : [];
+        const changes = [];
+
+        shifts.forEach((shift, idx) => {
+          const rowLabel = `#${idx + 1}`;
+          const dateNorm = normalizeShiftDate(shift.date);
+          if (dateNorm.valid && dateNorm.changed) {
+            changes.push(`${rowLabel} date: "${shift.date}" -> "${dateNorm.value}"`);
+            shift.date = dateNorm.value;
+          }
+          const startNorm = normalizeShiftTime(shift.start);
+          if (startNorm.valid && startNorm.changed) {
+            changes.push(`${rowLabel} start: "${shift.start}" -> "${startNorm.value}"`);
+            shift.start = startNorm.value;
+          }
+          const endNorm = normalizeShiftTime(shift.end);
+          if (endNorm.valid && endNorm.changed) {
+            changes.push(`${rowLabel} end: "${shift.end}" -> "${endNorm.value}"`);
+            shift.end = endNorm.value;
+          }
+
+          const calc = calcHoursFromTimes(shift.start, shift.end, shift.date);
+          const h = parseFloat((shift.hours ?? "").toString());
+          if (calc && (!Number.isFinite(h) || h < 0 || Math.abs(h - calc.hours) > 0.11)) {
+            const old = shift.hours;
+            shift.hours = calc.hours.toFixed(2);
+            changes.push(`${rowLabel} hours: "${old}" -> "${shift.hours}"`);
+          }
+        });
+
+        const output = isArray ? shifts : payload;
+        document.getElementById("jsonInput").value = JSON.stringify(output, null, 2);
+        validateJsonInputLive();
+
+        if (!changes.length) {
+          showSuccess(t.jsonFixNoChanges);
+          renderJsonValidation([], [t.jsonFixNoChanges]);
+          return;
+        }
+        showSuccess(t.jsonFixDone);
+        renderJsonValidation([], [`${t.jsonFixDone} ${changes.join(" | ")}`]);
       }
       function parseTime(str, refDate) {
         str = str.trim().toUpperCase();
