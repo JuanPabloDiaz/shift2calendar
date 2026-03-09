@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Costco Schedule -> Google Calendar
+Schedule -> Google Calendar
 ==================================
 1. Sube tu foto del schedule a Claude.ai y pidele el JSON
 2. Pega el JSON cuando el script te lo pida
