@@ -1701,6 +1701,35 @@ function getBiweeklyWindow(dateStr) {
   };
 }
 
+function groupShiftsByPayPeriod(shifts) {
+  // Sort shifts chronologically first
+  const sorted = [...shifts].sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return (a.start || "").localeCompare(b.start || "");
+  });
+
+  // Group by biweekly pay period
+  const byPeriod = {};
+  sorted.forEach((shift) => {
+    const biweekly = getBiweeklyWindow(shift.date);
+    const key = `${biweekly.start}_${biweekly.end}`;
+    if (!byPeriod[key]) {
+      byPeriod[key] = {
+        period: `${biweekly.start.replace(/-/g, "/")} - ${biweekly.end.replace(/-/g, "/")}`,
+        shifts: [],
+      };
+    }
+    byPeriod[key].shifts.push(shift);
+  });
+
+  // Convert to array and sort by start date
+  return Object.values(byPeriod).sort((a, b) => {
+    const dateA = a.shifts[0]?.date || "";
+    const dateB = b.shifts[0]?.date || "";
+    return dateA.localeCompare(dateB);
+  });
+}
+
 function sumExistingBiweekly(values, biweekly) {
   let hours = 0;
   let pay = 0;
@@ -2317,32 +2346,58 @@ function renderJsonValidation(issues, infoLines = []) {
 }
 function validateJsonInputLive() {
   if (inputMode !== "json") return;
+  const t = T[lang];
   const parsed = parseJsonInput();
   if (!parsed) {
     renderJsonValidation([]);
     return;
   }
   if (parsed.error) {
-    renderJsonValidation([T[lang].jsonFixInvalid]);
+    renderJsonValidation([t.jsonFixInvalid]);
     return;
   }
 
-  let shifts;
+  const issues = [];
+  let allShifts = [];
+
   // Check if it's an array of periods
   if (Array.isArray(parsed.data) && parsed.data.length > 0 && parsed.data[0].period && parsed.data[0].shifts) {
-    // Multiple periods - validate all shifts combined
-    shifts = parsed.data.flatMap((p) => p.shifts || []);
+    // Validate each period doesn't span more than one pay week
+    parsed.data.forEach((periodData, idx) => {
+      const shifts = periodData.shifts || [];
+      if (shifts.length === 0) return;
+
+      allShifts.push(...shifts);
+
+      // Get unique biweekly periods in this period's shifts
+      const periods = new Set();
+      shifts.forEach((shift) => {
+        if (shift.date) {
+          const biweekly = getBiweeklyWindow(shift.date);
+          periods.add(`${biweekly.start}_${biweekly.end}`);
+        }
+      });
+
+      if (periods.size > 1) {
+        issues.push(
+          `Period #${idx + 1} "${periodData.period || "unknown"}" spans multiple pay weeks (${periods.size} weeks detected). Each period must contain only one week.`
+        );
+      }
+    });
   } else if (Array.isArray(parsed.data)) {
-    shifts = parsed.data;
+    allShifts = parsed.data;
   } else {
-    shifts = parsed.data?.shifts || [];
+    allShifts = parsed.data?.shifts || [];
   }
 
-  if (!shifts.length) {
+  if (!allShifts.length) {
     renderJsonValidation([]);
     return;
   }
-  renderJsonValidation(validateShiftData(shifts));
+
+  // Also validate individual shifts
+  const shiftIssues = validateShiftData(allShifts);
+  renderJsonValidation([...issues, ...shiftIssues]);
 }
 function fixJsonInput() {
   const t = T[lang];
@@ -2355,44 +2410,110 @@ function fixJsonInput() {
     showError(t.jsonFixInvalid);
     return;
   }
-  const isArray = Array.isArray(parsed.data);
-  const payload = isArray ? { shifts: parsed.data } : parsed.data;
-  const shifts = Array.isArray(payload.shifts) ? payload.shifts : [];
+
   const changes = [];
+  let output;
 
-  shifts.forEach((shift, idx) => {
-    const rowLabel = `#${idx + 1}`;
-    const dateNorm = normalizeShiftDate(shift.date);
-    if (dateNorm.valid && dateNorm.changed) {
-      changes.push(`${rowLabel} date: "${shift.date}" -> "${dateNorm.value}"`);
-      shift.date = dateNorm.value;
-    }
-    const startNorm = normalizeShiftTime(shift.start);
-    if (startNorm.valid && startNorm.changed) {
-      changes.push(
-        `${rowLabel} start: "${shift.start}" -> "${startNorm.value}"`,
-      );
-      shift.start = startNorm.value;
-    }
-    const endNorm = normalizeShiftTime(shift.end);
-    if (endNorm.valid && endNorm.changed) {
-      changes.push(`${rowLabel} end: "${shift.end}" -> "${endNorm.value}"`);
-      shift.end = endNorm.value;
-    }
+  // Check if it's multiple periods
+  if (Array.isArray(parsed.data) && parsed.data.length > 0 && parsed.data[0].period && parsed.data[0].shifts) {
+    // Multiple periods - split any that span multiple weeks
+    const fixedPeriods = [];
 
-    const calc = calcHoursFromTimes(shift.start, shift.end, shift.date);
-    const h = parseFloat((shift.hours ?? "").toString());
-    if (
-      calc &&
-      (!Number.isFinite(h) || h < 0 || !hoursMatchesPolicy(h, calc.hours))
-    ) {
-      const old = shift.hours;
-      shift.hours = calc.hours.toFixed(2);
-      changes.push(`${rowLabel} hours: "${old}" -> "${shift.hours}"`);
-    }
-  });
+    parsed.data.forEach((periodData) => {
+      const shifts = periodData.shifts || [];
+      if (shifts.length === 0) {
+        fixedPeriods.push(periodData);
+        return;
+      }
 
-  const output = isArray ? shifts : payload;
+      // Group shifts by biweekly period
+      const byWeek = {};
+      shifts.forEach((shift) => {
+        if (shift.date) {
+          const biweekly = getBiweeklyWindow(shift.date);
+          const key = `${biweekly.start}_${biweekly.end}`;
+          if (!byWeek[key]) {
+            byWeek[key] = { biweekly, shifts: [] };
+          }
+          byWeek[key].shifts.push(shift);
+        }
+      });
+
+      const weeks = Object.values(byWeek);
+      if (weeks.length > 1) {
+        changes.push(`Split period "${periodData.period}" into ${weeks.length} separate weeks`);
+      }
+
+      // Create one period per week
+      weeks.forEach((week) => {
+        // Fix each shift
+        week.shifts.forEach((shift) => {
+          const dateNorm = normalizeShiftDate(shift.date);
+          if (dateNorm.valid && dateNorm.changed) shift.date = dateNorm.value;
+
+          const startNorm = normalizeShiftTime(shift.start);
+          if (startNorm.valid && startNorm.changed) shift.start = startNorm.value;
+
+          const endNorm = normalizeShiftTime(shift.end);
+          if (endNorm.valid && endNorm.changed) shift.end = endNorm.value;
+
+          const calc = calcHoursFromTimes(shift.start, shift.end, shift.date);
+          const h = parseFloat((shift.hours ?? "").toString());
+          if (calc && (!Number.isFinite(h) || h < 0 || !hoursMatchesPolicy(h, calc.hours))) {
+            shift.hours = calc.hours.toFixed(2);
+          }
+        });
+
+        // Sort shifts by date
+        week.shifts.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+
+        const startDate = week.shifts[0]?.date || week.biweekly.start;
+        const endDate = week.shifts[week.shifts.length - 1]?.date || week.biweekly.end;
+
+        fixedPeriods.push({
+          period: `${startDate.replace(/-/g, "/")} - ${endDate.replace(/-/g, "/")}`,
+          shifts: week.shifts,
+        });
+      });
+    });
+
+    output = fixedPeriods;
+  } else {
+    // Single period or array of shifts - original logic
+    const isArray = Array.isArray(parsed.data);
+    const payload = isArray ? { shifts: parsed.data } : parsed.data;
+    const shifts = Array.isArray(payload.shifts) ? payload.shifts : [];
+
+    shifts.forEach((shift, idx) => {
+      const rowLabel = `#${idx + 1}`;
+      const dateNorm = normalizeShiftDate(shift.date);
+      if (dateNorm.valid && dateNorm.changed) {
+        changes.push(`${rowLabel} date: "${shift.date}" -> "${dateNorm.value}"`);
+        shift.date = dateNorm.value;
+      }
+      const startNorm = normalizeShiftTime(shift.start);
+      if (startNorm.valid && startNorm.changed) {
+        changes.push(`${rowLabel} start: "${shift.start}" -> "${startNorm.value}"`);
+        shift.start = startNorm.value;
+      }
+      const endNorm = normalizeShiftTime(shift.end);
+      if (endNorm.valid && endNorm.changed) {
+        changes.push(`${rowLabel} end: "${shift.end}" -> "${endNorm.value}"`);
+        shift.end = endNorm.value;
+      }
+
+      const calc = calcHoursFromTimes(shift.start, shift.end, shift.date);
+      const h = parseFloat((shift.hours ?? "").toString());
+      if (calc && (!Number.isFinite(h) || h < 0 || !hoursMatchesPolicy(h, calc.hours))) {
+        const old = shift.hours;
+        shift.hours = calc.hours.toFixed(2);
+        changes.push(`${rowLabel} hours: "${old}" -> "${shift.hours}"`);
+      }
+    });
+
+    output = isArray ? shifts : payload;
+  }
+
   document.getElementById("jsonInput").value = JSON.stringify(output, null, 2);
   validateJsonInputLive();
 
