@@ -528,16 +528,24 @@ async function sendToSheets() {
     const parsedJson = parseJsonInput();
     if (parsedJson && !parsedJson.error) {
       const data = parsedJson.data;
-      // Multiple periods - process each separately
+      // Multiple periods - process each separately, divided by calendar week
       if (Array.isArray(data) && data.length > 0 && data[0].period && data[0].shifts) {
         showGoogleStatus("loading", t.googleLoading);
-        let successCount = 0;
+        let totalWeeksAdded = 0;
+
         for (const periodData of data) {
-          const ok = await _doSheets(periodData.shifts, periodData.period);
-          if (ok !== false) successCount++;
+          // Divide this period into calendar weeks (Monday-Sunday)
+          const weeks = groupShiftsByCalendarWeek(periodData.shifts || []);
+
+          for (const week of weeks) {
+            const weekPeriod = `${week.weekStart.replace(/-/g, "/")} - ${week.weekEnd.replace(/-/g, "/")}`;
+            const ok = await _doSheets(week.shifts, weekPeriod);
+            if (ok !== false) totalWeeksAdded++;
+          }
         }
-        if (successCount > 0) {
-          showGoogleStatus("success", `${t.googleSheetsOk} (${successCount} period${successCount > 1 ? 's' : ''} added)`);
+
+        if (totalWeeksAdded > 0) {
+          showGoogleStatus("success", `${t.googleSheetsOk} (${totalWeeksAdded} week${totalWeeksAdded > 1 ? 's' : ''} added)`);
           renderPreview(data.flatMap(p => p.shifts));
           resetAfterAction();
         }
@@ -546,11 +554,20 @@ async function sendToSheets() {
     }
   }
 
-  // Single period - original logic
+  // Single period - divide into calendar weeks
   const parsed = parseAndValidate();
   if (!parsed) return;
-  const ok = await _doSheets(parsed.shifts, parsed.period);
-  if (ok !== false) {
+
+  const weeks = groupShiftsByCalendarWeek(parsed.shifts);
+  let successCount = 0;
+
+  for (const week of weeks) {
+    const weekPeriod = `${week.weekStart.replace(/-/g, "/")} - ${week.weekEnd.replace(/-/g, "/")}`;
+    const ok = await _doSheets(week.shifts, weekPeriod);
+    if (ok !== false) successCount++;
+  }
+
+  if (successCount > 0) {
     renderPreview(parsed.shifts);
     resetAfterAction();
   }
@@ -1701,33 +1718,52 @@ function getBiweeklyWindow(dateStr) {
   };
 }
 
-function groupShiftsByPayPeriod(shifts) {
-  // Sort shifts chronologically first
+function getWeekBounds(dateStr) {
+  // Get Monday-Sunday week for a given date
+  const d = new Date(dateStr + "T12:00:00");
+  const day = d.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+
+  // Calculate Monday of this week
+  const daysToMonday = day === 0 ? -6 : -(day - 1);
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + daysToMonday);
+
+  // Calculate Sunday of this week
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  return {
+    start: toIsoDate(monday),
+    end: toIsoDate(sunday),
+  };
+}
+
+function groupShiftsByCalendarWeek(shifts) {
+  // Sort shifts chronologically
   const sorted = [...shifts].sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
     return (a.start || "").localeCompare(b.start || "");
   });
 
-  // Group by biweekly pay period
-  const byPeriod = {};
+  // Group by calendar week (Monday-Sunday)
+  const byWeek = {};
   sorted.forEach((shift) => {
-    const biweekly = getBiweeklyWindow(shift.date);
-    const key = `${biweekly.start}_${biweekly.end}`;
-    if (!byPeriod[key]) {
-      byPeriod[key] = {
-        period: `${biweekly.start.replace(/-/g, "/")} - ${biweekly.end.replace(/-/g, "/")}`,
+    const week = getWeekBounds(shift.date);
+    const key = `${week.start}_${week.end}`;
+    if (!byWeek[key]) {
+      byWeek[key] = {
+        weekStart: week.start,
+        weekEnd: week.end,
         shifts: [],
       };
     }
-    byPeriod[key].shifts.push(shift);
+    byWeek[key].shifts.push(shift);
   });
 
   // Convert to array and sort by start date
-  return Object.values(byPeriod).sort((a, b) => {
-    const dateA = a.shifts[0]?.date || "";
-    const dateB = b.shifts[0]?.date || "";
-    return dateA.localeCompare(dateB);
-  });
+  return Object.values(byWeek).sort((a, b) =>
+    a.weekStart.localeCompare(b.weekStart),
+  );
 }
 
 function sumExistingBiweekly(values, biweekly) {
@@ -2412,107 +2448,87 @@ function fixJsonInput() {
   }
 
   const changes = [];
-  let output;
 
-  // Check if it's multiple periods
+  // Collect ALL shifts from all periods
+  let allShifts = [];
   if (Array.isArray(parsed.data) && parsed.data.length > 0 && parsed.data[0].period && parsed.data[0].shifts) {
-    // Multiple periods - split any that span multiple weeks
-    const fixedPeriods = [];
-
+    // Multiple periods - extract all shifts
     parsed.data.forEach((periodData) => {
-      const shifts = periodData.shifts || [];
-      if (shifts.length === 0) {
-        fixedPeriods.push(periodData);
-        return;
-      }
-
-      // Group shifts by biweekly period
-      const byWeek = {};
-      shifts.forEach((shift) => {
-        if (shift.date) {
-          const biweekly = getBiweeklyWindow(shift.date);
-          const key = `${biweekly.start}_${biweekly.end}`;
-          if (!byWeek[key]) {
-            byWeek[key] = { biweekly, shifts: [] };
-          }
-          byWeek[key].shifts.push(shift);
-        }
-      });
-
-      const weeks = Object.values(byWeek);
-      if (weeks.length > 1) {
-        changes.push(`Split period "${periodData.period}" into ${weeks.length} separate weeks`);
-      }
-
-      // Create one period per week
-      weeks.forEach((week) => {
-        // Fix each shift
-        week.shifts.forEach((shift) => {
-          const dateNorm = normalizeShiftDate(shift.date);
-          if (dateNorm.valid && dateNorm.changed) shift.date = dateNorm.value;
-
-          const startNorm = normalizeShiftTime(shift.start);
-          if (startNorm.valid && startNorm.changed) shift.start = startNorm.value;
-
-          const endNorm = normalizeShiftTime(shift.end);
-          if (endNorm.valid && endNorm.changed) shift.end = endNorm.value;
-
-          const calc = calcHoursFromTimes(shift.start, shift.end, shift.date);
-          const h = parseFloat((shift.hours ?? "").toString());
-          if (calc && (!Number.isFinite(h) || h < 0 || !hoursMatchesPolicy(h, calc.hours))) {
-            shift.hours = calc.hours.toFixed(2);
-          }
-        });
-
-        // Sort shifts by date
-        week.shifts.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-
-        const startDate = week.shifts[0]?.date || week.biweekly.start;
-        const endDate = week.shifts[week.shifts.length - 1]?.date || week.biweekly.end;
-
-        fixedPeriods.push({
-          period: `${startDate.replace(/-/g, "/")} - ${endDate.replace(/-/g, "/")}`,
-          shifts: week.shifts,
-        });
-      });
+      allShifts.push(...(periodData.shifts || []));
     });
-
-    output = fixedPeriods;
+  } else if (Array.isArray(parsed.data)) {
+    allShifts = parsed.data;
   } else {
-    // Single period or array of shifts - original logic
-    const isArray = Array.isArray(parsed.data);
-    const payload = isArray ? { shifts: parsed.data } : parsed.data;
-    const shifts = Array.isArray(payload.shifts) ? payload.shifts : [];
-
-    shifts.forEach((shift, idx) => {
-      const rowLabel = `#${idx + 1}`;
-      const dateNorm = normalizeShiftDate(shift.date);
-      if (dateNorm.valid && dateNorm.changed) {
-        changes.push(`${rowLabel} date: "${shift.date}" -> "${dateNorm.value}"`);
-        shift.date = dateNorm.value;
-      }
-      const startNorm = normalizeShiftTime(shift.start);
-      if (startNorm.valid && startNorm.changed) {
-        changes.push(`${rowLabel} start: "${shift.start}" -> "${startNorm.value}"`);
-        shift.start = startNorm.value;
-      }
-      const endNorm = normalizeShiftTime(shift.end);
-      if (endNorm.valid && endNorm.changed) {
-        changes.push(`${rowLabel} end: "${shift.end}" -> "${endNorm.value}"`);
-        shift.end = endNorm.value;
-      }
-
-      const calc = calcHoursFromTimes(shift.start, shift.end, shift.date);
-      const h = parseFloat((shift.hours ?? "").toString());
-      if (calc && (!Number.isFinite(h) || h < 0 || !hoursMatchesPolicy(h, calc.hours))) {
-        const old = shift.hours;
-        shift.hours = calc.hours.toFixed(2);
-        changes.push(`${rowLabel} hours: "${old}" -> "${shift.hours}"`);
-      }
-    });
-
-    output = isArray ? shifts : payload;
+    allShifts = parsed.data?.shifts || [];
   }
+
+  // Normalize and fix each shift
+  allShifts.forEach((shift) => {
+    const dateNorm = normalizeShiftDate(shift.date);
+    if (dateNorm.valid && dateNorm.changed) shift.date = dateNorm.value;
+
+    const startNorm = normalizeShiftTime(shift.start);
+    if (startNorm.valid && startNorm.changed) shift.start = startNorm.value;
+
+    const endNorm = normalizeShiftTime(shift.end);
+    if (endNorm.valid && endNorm.changed) shift.end = endNorm.value;
+
+    const calc = calcHoursFromTimes(shift.start, shift.end, shift.date);
+    const h = parseFloat((shift.hours ?? "").toString());
+    if (calc && (!Number.isFinite(h) || h < 0 || !hoursMatchesPolicy(h, calc.hours))) {
+      shift.hours = calc.hours.toFixed(2);
+    }
+  });
+
+  // Remove duplicates (same date + start + end)
+  const uniqueShifts = [];
+  const seen = new Set();
+  allShifts.forEach((shift) => {
+    const key = `${shift.date}_${shift.start}_${shift.end}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueShifts.push(shift);
+    }
+  });
+
+  if (allShifts.length !== uniqueShifts.length) {
+    changes.push(`Removed ${allShifts.length - uniqueShifts.length} duplicate shift${allShifts.length - uniqueShifts.length > 1 ? 's' : ''}`);
+  }
+
+  // Sort chronologically
+  uniqueShifts.sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return (a.start || "").localeCompare(b.start || "");
+  });
+
+  // Group by biweekly pay period
+  const byPayPeriod = {};
+  uniqueShifts.forEach((shift) => {
+    if (shift.date) {
+      const biweekly = getBiweeklyWindow(shift.date);
+      const key = `${biweekly.start}_${biweekly.end}`;
+      if (!byPayPeriod[key]) {
+        byPayPeriod[key] = { biweekly, shifts: [] };
+      }
+      byPayPeriod[key].shifts.push(shift);
+    }
+  });
+
+  // Create periods sorted chronologically
+  const periods = Object.values(byPayPeriod)
+    .sort((a, b) => a.biweekly.start.localeCompare(b.biweekly.start));
+
+  const output = periods.map((period) => {
+    const startDate = period.shifts[0]?.date || period.biweekly.start;
+    const endDate = period.shifts[period.shifts.length - 1]?.date || period.biweekly.end;
+
+    return {
+      period: `${startDate.replace(/-/g, "/")} - ${endDate.replace(/-/g, "/")}`,
+      shifts: period.shifts,
+    };
+  });
+
+  changes.push(`Organized into ${output.length} period${output.length > 1 ? 's' : ''}`);
 
   document.getElementById("jsonInput").value = JSON.stringify(output, null, 2);
   validateJsonInputLive();
