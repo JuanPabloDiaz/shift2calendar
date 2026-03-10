@@ -1859,9 +1859,10 @@ function renderPreview(shifts) {
   const DAYS = lang === "es" ? DAYS_ES : DAYS_EN;
   const MONTHS = lang === "es" ? MONTHS_ES : MONTHS_EN;
   const merged = mergeShifts(shifts);
-  const total = merged.reduce((a, s) => a + parseFloat(s.hours), 0);
-  document.getElementById("weeklySummary").textContent =
-    `${t.weeklyLabel} ${total.toFixed(2)} hrs`;
+
+  // Group by calendar week
+  const weeks = groupShiftsByCalendarWeek(shifts);
+
   const fmt = (dt) => {
     let h = dt.getHours(),
       m = dt.getMinutes(),
@@ -1869,12 +1870,42 @@ function renderPreview(shifts) {
     h = h % 12 || 12;
     return `${h}:${String(m).padStart(2, "0")} ${ap}`;
   };
-  document.getElementById("shiftList").innerHTML = merged
-    .map((s) => {
-      const d = new Date(s.date + "T00:00:00");
-      return `<div class="shift-item"><span class="shift-day">${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</span><span class="shift-time">${fmt(s.startDt)} &ndash; ${fmt(s.endDt)}</span><span class="shift-hrs">${s.hours}h</span></div>`;
-    })
-    .join("");
+
+  // If multiple weeks, show summary per week
+  if (weeks.length > 1) {
+    const grandTotal = merged.reduce((a, s) => a + parseFloat(s.hours), 0);
+    const totalShifts = merged.length;
+    document.getElementById("weeklySummary").textContent =
+      `${t.weeklyLabel} ${grandTotal.toFixed(2)} hrs (${weeks.length} ${lang === 'es' ? 'semanas' : 'weeks'}, ${totalShifts} ${lang === 'es' ? 'turnos' : 'shifts'})`;
+
+    let html = '';
+    weeks.forEach((week, idx) => {
+      const weekMerged = mergeShifts(week.shifts);
+      const weekTotal = weekMerged.reduce((a, s) => a + parseFloat(s.hours), 0);
+      html += `<div style="margin: 16px 0 8px; padding: 8px; background: #f0f0f0; border-radius: 4px; font-weight: bold;">
+        ${lang === 'es' ? 'Semana' : 'Week'} ${idx + 1}: ${week.weekStart.replace(/-/g, '/')} - ${week.weekEnd.replace(/-/g, '/')} (${weekTotal.toFixed(2)} hrs)
+      </div>`;
+      html += weekMerged
+        .map((s) => {
+          const d = new Date(s.date + "T00:00:00");
+          return `<div class="shift-item"><span class="shift-day">${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</span><span class="shift-time">${fmt(s.startDt)} &ndash; ${fmt(s.endDt)}</span><span class="shift-hrs">${s.hours.toFixed(2)}h</span></div>`;
+        })
+        .join("");
+    });
+    document.getElementById("shiftList").innerHTML = html;
+  } else {
+    // Single week - show as before
+    const total = merged.reduce((a, s) => a + parseFloat(s.hours), 0);
+    document.getElementById("weeklySummary").textContent =
+      `${t.weeklyLabel} ${total.toFixed(2)} hrs`;
+    document.getElementById("shiftList").innerHTML = merged
+      .map((s) => {
+        const d = new Date(s.date + "T00:00:00");
+        return `<div class="shift-item"><span class="shift-day">${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</span><span class="shift-time">${fmt(s.startDt)} &ndash; ${fmt(s.endDt)}</span><span class="shift-hrs">${s.hours.toFixed(2)}h</span></div>`;
+      })
+      .join("");
+  }
+
   document.getElementById("preview").style.display = "block";
 }
 
