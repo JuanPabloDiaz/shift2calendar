@@ -827,7 +827,7 @@ async function updateSummaryTab() {
     ["Regular Pay", `=B10*${HOURLY_RATE}`, "$"],
     ["Sunday Premium", `=B11*${SUNDAY_RATE}`, "$"],
     ["Total Pay", "=B12+B13", "$"],
-    ["Weeks of Data", `=COUNTIF(Schedule!B:B,"WEEK SUMMARY*")`, "weeks"],
+    ["Weeks of Data", `=COUNTIF(Schedule!B:B,"WEEK SUMM*")`, "weeks"],
     [""],
     ["🏥 SICK TIME TRACKING"],
     ["Sick Time Earned", `=B9/30`, "hrs"],
@@ -848,7 +848,7 @@ async function updateSummaryTab() {
     [""],
     ["📅 MONTHLY SUMMARY"],
     ["Month", "Total Hours", "Total Pay", "Days Worked"],
-    ["2026-03", `=SUMIFS(Schedule!E:E,Schedule!A:A,">=2026-03-01",Schedule!A:A,"<2026-04-01",Schedule!E:E,">0")`, `=SUMIFS(Schedule!F:F,Schedule!A:A,">=2026-03-01",Schedule!A:A,"<2026-04-01",Schedule!F:F,">0")`, `=COUNTIFS(Schedule!A:A,">=2026-03-01",Schedule!A:A,"<2026-04-01",Schedule!E:E,">0")`],
+    ["2026-03", `=SUMIFS(Schedule!E:E,Schedule!A:A,">="&DATE(2026,3,1),Schedule!A:A,"<"&DATE(2026,4,1))`, `=SUMIFS(Schedule!F:F,Schedule!A:A,">="&DATE(2026,3,1),Schedule!A:A,"<"&DATE(2026,4,1))`, `=COUNTIFS(Schedule!A:A,">="&DATE(2026,3,1),Schedule!A:A,"<"&DATE(2026,4,1),Schedule!E:E,">0")`],
     ["Total", "=B37", "=C37", "=D37"],
   ];
 
