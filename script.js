@@ -2326,9 +2326,18 @@ function validateJsonInputLive() {
     renderJsonValidation([T[lang].jsonFixInvalid]);
     return;
   }
-  const shifts = Array.isArray(parsed.data)
-    ? parsed.data
-    : parsed.data?.shifts || [];
+
+  let shifts;
+  // Check if it's an array of periods
+  if (Array.isArray(parsed.data) && parsed.data.length > 0 && parsed.data[0].period && parsed.data[0].shifts) {
+    // Multiple periods - validate all shifts combined
+    shifts = parsed.data.flatMap((p) => p.shifts || []);
+  } else if (Array.isArray(parsed.data)) {
+    shifts = parsed.data;
+  } else {
+    shifts = parsed.data?.shifts || [];
+  }
+
   if (!shifts.length) {
     renderJsonValidation([]);
     return;
