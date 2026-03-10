@@ -1037,8 +1037,8 @@ async function _doSheets(shifts, period) {
     const dayRate = isSun ? filteredPay.sunRate : filteredPay.rate;
     const dayPay = hrs * dayRate;
     const dayLabel = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-    // Format hours: show as integer if whole number, otherwise 1 decimal
-    const hrsFormatted = hrs % 1 === 0 ? hrs : parseFloat(hrs.toFixed(1));
+    // Format hours: show as integer if whole number, otherwise show exact value (no rounding)
+    const hrsFormatted = hrs % 1 === 0 ? hrs : parseFloat(hrs.toFixed(2));
     return [
       s.date,
       dayLabel,
@@ -2484,29 +2484,26 @@ function fixJsonInput() {
     return (a.start || "").localeCompare(b.start || "");
   });
 
-  // Group by biweekly pay period
-  const byPayPeriod = {};
+  // Group by calendar week (Monday-Sunday)
+  const byWeek = {};
   uniqueShifts.forEach((shift) => {
     if (shift.date) {
-      const biweekly = getBiweeklyWindow(shift.date);
-      const key = `${biweekly.start}_${biweekly.end}`;
-      if (!byPayPeriod[key]) {
-        byPayPeriod[key] = { biweekly, shifts: [] };
+      const week = getWeekBounds(shift.date);
+      const key = `${week.start}_${week.end}`;
+      if (!byWeek[key]) {
+        byWeek[key] = { week, shifts: [] };
       }
-      byPayPeriod[key].shifts.push(shift);
+      byWeek[key].shifts.push(shift);
     }
   });
 
   // Create periods sorted chronologically
-  const periods = Object.values(byPayPeriod)
-    .sort((a, b) => a.biweekly.start.localeCompare(b.biweekly.start));
+  const periods = Object.values(byWeek)
+    .sort((a, b) => a.week.start.localeCompare(b.week.start));
 
   const output = periods.map((period) => {
-    const startDate = period.shifts[0]?.date || period.biweekly.start;
-    const endDate = period.shifts[period.shifts.length - 1]?.date || period.biweekly.end;
-
     return {
-      period: `${startDate.replace(/-/g, "/")} - ${endDate.replace(/-/g, "/")}`,
+      period: `${period.week.start.replace(/-/g, "/")} - ${period.week.end.replace(/-/g, "/")}`,
       shifts: period.shifts,
     };
   });
