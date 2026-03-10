@@ -123,49 +123,94 @@ function processSheetData(rows) {
     const row = rows[i];
     if (!row || row.length < 2) continue;
 
-    const date = row[0];
-    const day = row[1];
+    const date = row[0] || '';
+    const day = row[1] || '';
 
-    // Skip summary rows completely (they contain totals, not individual shifts)
-    if (day && (day.includes('WEEK SUMM') || day.includes('BIWEEKLY') || day.includes('Total hours'))) {
-      // Extract for chart data
-      if (day.includes('WEEK SUMM')) {
-        weekSummaries.push({
-          label: day.replace('WEEK SUMMARY ', '').replace('WEEK SUMM ', ''),
-          hours: parseFloat(row[4]) || 0,
-          pay: parseFloat(row[5]) || 0,
-        });
-      }
-      if (day.includes('BIWEEKLY')) {
-        biweeklySummaries.push({
-          label: day.replace('BIWEEKLY TOTAL ', ''),
-          hours: parseFloat(row[4]) || 0,
-          pay: parseFloat(row[5]) || 0,
-        });
-      }
+    // Debug log for first few rows
+    if (i <= 5) {
+      console.log(`Row ${i}:`, { date, day, hours: row[4], pay: row[5] });
+    }
+
+    // Detect and extract WEEK SUMMARY rows for charts
+    if (day.includes('WEEK SUMM')) {
+      const weekData = {
+        label: day.replace('WEEK SUMMARY ', '').replace('WEEK SUMM ', ''),
+        hours: parseFloat(row[4]) || 0,
+        pay: parseFloat(row[5]) || 0,
+      };
+      console.log('Week summary found:', weekData);
+      weekSummaries.push(weekData);
       continue; // Skip to next row
     }
 
+    // Detect BIWEEKLY TOTAL rows
+    if (day.includes('BIWEEKLY')) {
+      biweeklySummaries.push({
+        label: day.replace('BIWEEKLY TOTAL ', ''),
+        hours: parseFloat(row[4]) || 0,
+        pay: parseFloat(row[5]) || 0,
+      });
+      continue; // Skip to next row
+    }
+
+    // Skip other summary rows
+    if (day.includes('Total hours') || day.includes('Pay period')) {
+      continue;
+    }
+
     // Only count regular shift rows (must have a date AND be a weekday/Sunday)
-    if (date && day && row[4] && !day.includes('Pay period') && /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(day)) {
+    if (date && day && row[4] && /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(day)) {
+      const hours = parseFloat(row[4]) || 0;
+      const pay = parseFloat(row[5]) || 0;
+
       shifts.push({
         date: date,
         day: day,
-        start: row[2],
-        end: row[3],
-        hours: parseFloat(row[4]) || 0,
-        pay: parseFloat(row[5]) || 0,
+        start: row[2] || '',
+        end: row[3] || '',
+        hours: hours,
+        pay: pay,
         isSunday: day.includes('Sun'),
       });
     }
   }
 
+  console.log('Total shifts found:', shifts.length);
+  console.log('Week summaries found:', weekSummaries.length);
+  console.log('Sample shift:', shifts[0]);
+
   // Calculate totals
   const totalHours = shifts.reduce((sum, s) => sum + s.hours, 0);
-  const totalPay = shifts.reduce((sum, s) => sum + s.pay, 0);
+  const totalPayFromShifts = shifts.reduce((sum, s) => sum + s.pay, 0);
   const sundayHours = shifts.filter(s => s.isSunday).reduce((sum, s) => sum + s.hours, 0);
   const regularHours = totalHours - sundayHours;
   const sundayPremium = sundayHours * SUNDAY_RATE;
+  const regularPay = regularHours * HOURLY_RATE;
+
+  // Use calculated pay if shift pay is 0 (means pay column is empty)
+  const totalPay = totalPayFromShifts > 0 ? totalPayFromShifts : (regularPay + sundayPremium);
+
+  // Estimate weeks from date range if no week summaries found
+  let weeksWorked = weekSummaries.length;
+  if (weeksWorked === 0 && shifts.length > 0) {
+    // Estimate from date range
+    const dates = shifts.map(s => new Date(s.date));
+    const minDate = new Date(Math.min(...dates));
+    const maxDate = new Date(Math.max(...dates));
+    const daysDiff = (maxDate - minDate) / (1000 * 60 * 60 * 24);
+    weeksWorked = Math.max(1, Math.ceil(daysDiff / 7));
+  }
+
+  console.log('Calculated totals:', {
+    totalHours,
+    totalPayFromShifts,
+    totalPay,
+    sundayHours,
+    regularHours,
+    sundayPremium,
+    regularPay,
+    weeksWorked
+  });
 
   return {
     shifts,
@@ -176,8 +221,35 @@ function processSheetData(rows) {
     sundayHours,
     regularHours,
     sundayPremium,
-    weeksWorked: weekSummaries.length,
+    weeksWorked,
   };
+}
+
+// ── GROUP SHIFTS BY WEEK (fallback) ────────────────────────────────────
+function groupShiftsByWeek(shifts) {
+  const byWeek = {};
+
+  shifts.forEach(shift => {
+    const date = new Date(shift.date);
+    // Get Monday of the week
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(date.setDate(diff));
+    const weekKey = monday.toISOString().split('T')[0];
+
+    if (!byWeek[weekKey]) {
+      byWeek[weekKey] = {
+        label: weekKey,
+        hours: 0,
+        pay: 0,
+      };
+    }
+
+    byWeek[weekKey].hours += shift.hours;
+    byWeek[weekKey].pay += shift.pay || (shift.hours * (shift.isSunday ? SUNDAY_RATE : HOURLY_RATE));
+  });
+
+  return Object.values(byWeek).sort((a, b) => a.label.localeCompare(b.label));
 }
 
 // ── UPDATE SUMMARY STATS ───────────────────────────────────────────────
@@ -205,14 +277,22 @@ function createCharts(data) {
   Object.values(chartInstances).forEach(chart => chart.destroy());
   chartInstances = {};
 
+  // Use week summaries if available, otherwise group shifts by week
+  let weekData = data.weekSummaries;
+  if (weekData.length === 0 && data.shifts.length > 0) {
+    // Group shifts by week programmatically
+    weekData = groupShiftsByWeek(data.shifts);
+    console.log('Created week data from shifts:', weekData);
+  }
+
   // Hours Over Time Chart
   chartInstances.hours = new Chart(document.getElementById('hoursChart'), {
     type: 'line',
     data: {
-      labels: data.weekSummaries.map(w => w.label),
+      labels: weekData.map(w => w.label),
       datasets: [{
         label: 'Hours per Week',
-        data: data.weekSummaries.map(w => w.hours),
+        data: weekData.map(w => w.hours),
         borderColor: '#667eea',
         backgroundColor: 'rgba(102, 126, 234, 0.1)',
         tension: 0.4,
@@ -245,10 +325,10 @@ function createCharts(data) {
   chartInstances.pay = new Chart(document.getElementById('payChart'), {
     type: 'bar',
     data: {
-      labels: data.weekSummaries.map(w => w.label),
+      labels: weekData.map(w => w.label),
       datasets: [{
         label: 'Pay per Week',
-        data: data.weekSummaries.map(w => w.pay),
+        data: weekData.map(w => w.pay),
         backgroundColor: '#764ba2',
       }]
     },
@@ -305,7 +385,7 @@ function createCharts(data) {
   });
 
   // Weekly Breakdown (last 6 weeks)
-  const last6Weeks = data.weekSummaries.slice(-6);
+  const last6Weeks = weekData.slice(-6);
   chartInstances.weekly = new Chart(document.getElementById('weeklyChart'), {
     type: 'bar',
     data: {
