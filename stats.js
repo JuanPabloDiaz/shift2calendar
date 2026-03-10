@@ -7,6 +7,56 @@ const SUNDAY_RATE = 30;
 
 let accessToken = null;
 let chartInstances = {};
+let lang = "en";
+let theme = localStorage.getItem("theme") || "light";
+
+// ── TRANSLATIONS ──────────────────────────────────────────────────────
+const T = {
+  es: {
+    title: "Tus Estadísticas de Trabajo",
+    subtitle: "Datos históricos e información de tu horario",
+    back: "Volver al Horario",
+    signout: "Cerrar sesión",
+    authTitle: "Inicia sesión para ver tus estadísticas",
+    authDesc: "Inicia sesión con tu cuenta de Google para acceder a tus estadísticas de trabajo",
+    authBtn: "Iniciar sesión con Google",
+    totalHours: "Horas Totales Trabajadas",
+    totalEarnings: "Ganancias Totales",
+    avgHours: "Promedio Horas/Semana",
+    sundayPremium: "Prima Dominical",
+    sickTime: "Tiempo de Enfermedad Acumulado",
+    raiseProgress: "Progreso para Aumento",
+    hoursUnit: "horas",
+    hrsWkUnit: "hrs/sem",
+    sickUnit: "horas",
+    chartHours: "Horas Trabajadas en el Tiempo",
+    chartEarnings: "Ganancias en el Tiempo",
+    chartSunday: "Horas Dominicales vs Regulares",
+    chartWeekly: "Desglose Semanal",
+  },
+  en: {
+    title: "Your Work Statistics",
+    subtitle: "Historical data and insights from your schedule",
+    back: "Back to Schedule",
+    signout: "Sign Out",
+    authTitle: "Sign in to view your stats",
+    authDesc: "Sign in with your Google account to access your work statistics",
+    authBtn: "Sign In with Google",
+    totalHours: "Total Hours Worked",
+    totalEarnings: "Total Earnings",
+    avgHours: "Avg Hours/Week",
+    sundayPremium: "Sunday Premium",
+    sickTime: "Sick Time Earned",
+    raiseProgress: "Progress to Raise",
+    hoursUnit: "hours",
+    hrsWkUnit: "hrs/wk",
+    sickUnit: "hours",
+    chartHours: "Hours Worked Over Time",
+    chartEarnings: "Earnings Over Time",
+    chartSunday: "Sunday vs Regular Hours",
+    chartWeekly: "Weekly Breakdown",
+  },
+};
 
 // ── GOOGLE AUTH ────────────────────────────────────────────────────────
 
@@ -500,8 +550,77 @@ function createCharts(data) {
   });
 }
 
+// ── THEME & LANGUAGE ───────────────────────────────────────────────────
+function toggleTheme() {
+  theme = theme === "light" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const icon =
+    theme === "light"
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+
+  const btn1 = document.getElementById("themeToggle");
+  const btn2 = document.getElementById("themeToggleAuth");
+  if (btn1) btn1.innerHTML = icon;
+  if (btn2) btn2.innerHTML = icon;
+}
+
+function setLang(l) {
+  lang = l;
+  document.getElementById("btn-es").classList.toggle("active", l === "es");
+  document.getElementById("btn-en").classList.toggle("active", l === "en");
+  document.getElementById("btn-es-auth").classList.toggle("active", l === "es");
+  document.getElementById("btn-en-auth").classList.toggle("active", l === "en");
+  applyTranslations();
+}
+
+function applyTranslations() {
+  const t = T[lang];
+  const s = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  };
+
+  // Main content
+  s("txt-title", t.title);
+  s("txt-subtitle", t.subtitle);
+  s("txt-back", t.back);
+  s("txt-signout", t.signout);
+
+  // Auth section
+  s("txt-auth-title", t.authTitle);
+  s("txt-auth-desc", t.authDesc);
+  s("txt-auth-btn", t.authBtn);
+
+  // Stats cards
+  s("txt-total-hours", t.totalHours);
+  s("txt-total-earnings", t.totalEarnings);
+  s("txt-avg-hours", t.avgHours);
+  s("txt-sunday-premium", t.sundayPremium);
+  s("txt-sick-time", t.sickTime);
+  s("txt-raise-progress", t.raiseProgress);
+  s("txt-hours-unit", t.hoursUnit);
+  s("txt-hrs-wk-unit", t.hrsWkUnit);
+  s("txt-sick-unit", t.sickUnit);
+
+  // Charts
+  s("txt-chart-hours", t.chartHours);
+  s("txt-chart-earnings", t.chartEarnings);
+  s("txt-chart-sunday", t.chartSunday);
+  s("txt-chart-weekly", t.chartWeekly);
+}
+
 // ── INITIALIZATION ─────────────────────────────────────────────────────
 window.onload = function() {
+  // Apply theme and language
+  document.documentElement.setAttribute("data-theme", theme);
+  updateThemeIcon();
+  applyTranslations();
   // Check for saved token first
   const savedToken = loadSavedToken();
 
