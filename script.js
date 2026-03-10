@@ -2553,11 +2553,14 @@ function mergeShifts(shifts) {
         if (e <= sts[i]) e = new Date(e.getTime() + 86400000);
         return e;
       });
-      const totalHours = ds.reduce((a, s) => a + parseFloat(s.hours), 0);
+      // Calculate total hours from earliest start to latest end (includes short breaks)
+      const startDt = new Date(Math.min(...sts));
+      const endDt = new Date(Math.max(...ens));
+      const totalHours = (endDt - startDt) / 3600000; // Convert milliseconds to hours
       return {
         date: day,
-        startDt: new Date(Math.min(...sts)),
-        endDt: new Date(Math.max(...ens)),
+        startDt: startDt,
+        endDt: endDt,
         hours: totalHours, // Keep as number, not string
       };
     });
