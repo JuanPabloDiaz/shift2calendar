@@ -352,17 +352,8 @@ function parseAndValidate() {
       return null;
     }
     if (Array.isArray(data)) {
-      // Check if it's an array of periods [{period, shifts}, ...]
-      if (data.length > 0 && data[0].period && data[0].shifts) {
-        // Multiple periods - combine all shifts
-        shifts = data.flatMap((p) => p.shifts || []);
-        const periods = data.map((p) => p.period).filter(Boolean);
-        period = periods.length > 0 ? periods.join(", ") : "costco";
-      } else {
-        // Array of shifts directly
-        shifts = data;
-        period = "costco";
-      }
+      shifts = data;
+      period = "costco";
     } else {
       shifts = data.shifts || [];
       period = data.period || "costco";
@@ -530,6 +521,32 @@ async function _doCalendar(shifts, period) {
 
 // ── GOOGLE SHEETS ─────────────────────────────────────────────────────
 async function sendToSheets() {
+  const t = T[lang];
+
+  // Check if input has multiple periods
+  if (inputMode === "json") {
+    const parsedJson = parseJsonInput();
+    if (parsedJson && !parsedJson.error) {
+      const data = parsedJson.data;
+      // Multiple periods - process each separately
+      if (Array.isArray(data) && data.length > 0 && data[0].period && data[0].shifts) {
+        showGoogleStatus("loading", t.googleLoading);
+        let successCount = 0;
+        for (const periodData of data) {
+          const ok = await _doSheets(periodData.shifts, periodData.period);
+          if (ok !== false) successCount++;
+        }
+        if (successCount > 0) {
+          showGoogleStatus("success", `${t.googleSheetsOk} (${successCount} period${successCount > 1 ? 's' : ''} added)`);
+          renderPreview(data.flatMap(p => p.shifts));
+          resetAfterAction();
+        }
+        return;
+      }
+    }
+  }
+
+  // Single period - original logic
   const parsed = parseAndValidate();
   if (!parsed) return;
   const ok = await _doSheets(parsed.shifts, parsed.period);
