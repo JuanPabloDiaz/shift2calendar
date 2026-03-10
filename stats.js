@@ -121,39 +121,41 @@ function processSheetData(rows) {
   // Skip header row
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    if (!row || row.length < 5) continue;
+    if (!row || row.length < 2) continue;
 
+    const date = row[0];
     const day = row[1];
 
-    // Detect summary rows
-    if (day && day.includes('WEEK SUMMARY')) {
-      weekSummaries.push({
-        label: day.replace('WEEK SUMMARY ', ''),
-        hours: parseFloat(row[4]) || 0,
-        pay: parseFloat(row[5]) || 0,
-      });
-      continue;
+    // Skip summary rows completely (they contain totals, not individual shifts)
+    if (day && (day.includes('WEEK SUMM') || day.includes('BIWEEKLY') || day.includes('Total hours'))) {
+      // Extract for chart data
+      if (day.includes('WEEK SUMM')) {
+        weekSummaries.push({
+          label: day.replace('WEEK SUMMARY ', '').replace('WEEK SUMM ', ''),
+          hours: parseFloat(row[4]) || 0,
+          pay: parseFloat(row[5]) || 0,
+        });
+      }
+      if (day.includes('BIWEEKLY')) {
+        biweeklySummaries.push({
+          label: day.replace('BIWEEKLY TOTAL ', ''),
+          hours: parseFloat(row[4]) || 0,
+          pay: parseFloat(row[5]) || 0,
+        });
+      }
+      continue; // Skip to next row
     }
 
-    if (day && day.includes('BIWEEKLY TOTAL')) {
-      biweeklySummaries.push({
-        label: day.replace('BIWEEKLY TOTAL ', ''),
-        hours: parseFloat(row[4]) || 0,
-        pay: parseFloat(row[5]) || 0,
-      });
-      continue;
-    }
-
-    // Regular shift row
-    if (row[0] && row[4]) {
+    // Only count regular shift rows (must have a date AND be a weekday/Sunday)
+    if (date && day && row[4] && !day.includes('Pay period') && /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(day)) {
       shifts.push({
-        date: row[0],
-        day: row[1],
+        date: date,
+        day: day,
         start: row[2],
         end: row[3],
         hours: parseFloat(row[4]) || 0,
         pay: parseFloat(row[5]) || 0,
-        isSunday: row[1] && row[1].includes('Sun'),
+        isSunday: day.includes('Sun'),
       });
     }
   }
@@ -354,19 +356,6 @@ function createCharts(data) {
   });
 }
 
-// ── MANUAL TOKEN ───────────────────────────────────────────────────────
-function useManualToken() {
-  const token = document.getElementById('manualToken').value.trim();
-  if (!token) {
-    alert('Por favor pega un access token válido');
-    return;
-  }
-
-  accessToken = token;
-  showStatsContent();
-  loadData();
-}
-
 // ── INITIALIZATION ─────────────────────────────────────────────────────
 window.onload = function() {
   // Initialize Google Sign-In
@@ -382,7 +371,4 @@ window.onload = function() {
 
   // Sign out button
   document.getElementById('signOutButton').addEventListener('click', signOut);
-
-  // Manual token button
-  document.getElementById('useManualToken').addEventListener('click', useManualToken);
 };

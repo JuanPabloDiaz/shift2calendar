@@ -1,9 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>📊 Costco Work Stats</title>
+    <title>Costco Work Stats</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E"
+      type="image/svg+xml"
+    />
     <style>
       * {
         margin: 0;
@@ -12,7 +21,9 @@
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         min-height: 100vh;
         padding: 20px;
@@ -67,6 +78,14 @@
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .stat-card h3 i {
+        font-size: 1.1rem;
+        color: #667eea;
       }
 
       .stat-card .value {
@@ -92,6 +111,13 @@
       .chart-container h2 {
         margin-bottom: 20px;
         color: #333;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .chart-container h2 i {
+        color: #667eea;
       }
 
       .chart-wrapper {
@@ -191,106 +217,89 @@
   <body>
     <div class="container">
       <div id="authSection">
-        <h2>🔐 Sign in to view your stats</h2>
-        <p style="margin-bottom: 20px; color: #666;">Sign in with your Google account to access your work statistics</p>
-
-        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 4px; text-align: left;">
-          <strong>⚠️ Importante:</strong>
-          <ol style="margin: 10px 0 0 20px; color: #856404;">
-            <li>Debes <strong>permitir popups</strong> en tu navegador</li>
-            <li>Abre desde <code>http://localhost:5500/stats.html</code> (no 127.0.0.1)</li>
-            <li>Si usas Live Server en VS Code, ya debería funcionar</li>
-          </ol>
-        </div>
-
+        <h2><i class="fas fa-lock"></i> Sign in to view your stats</h2>
+        <p style="margin-bottom: 30px; color: #666">
+          Sign in with your Google account to access your work statistics
+        </p>
         <button id="authButton" class="btn">Sign In with Google</button>
-
-        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: left;">
-          <strong>💡 ¿Problemas para autenticarte?</strong>
-          <p style="margin: 10px 0; color: #666;">
-            Si el popup está bloqueado, puedes copiar manualmente el access token desde la página principal:
-          </p>
-          <ol style="margin: 10px 0 0 20px; color: #666;">
-            <li>Abre la página principal (index.html)</li>
-            <li>Autentícate normalmente</li>
-            <li>Abre la consola (F12) y escribe: <code>accessToken</code></li>
-            <li>Copia el token y pégalo aquí abajo:</li>
-          </ol>
-          <div style="margin-top: 15px;">
-            <input type="text" id="manualToken" placeholder="Pega el access token aquí" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-family: monospace; font-size: 0.9rem;">
-            <button id="useManualToken" class="btn" style="margin-top: 10px; width: 100%;">Usar Token Manual</button>
-          </div>
-        </div>
       </div>
 
-      <div id="statsContent" style="display: none;">
+      <div id="statsContent" style="display: none">
         <div class="header">
-          <h1>📊 Your Work Statistics</h1>
+          <h1><i class="fas fa-chart-line"></i> Your Work Statistics</h1>
           <p>Historical data and insights from your schedule</p>
-          <button id="signOutButton" class="btn" style="margin-top: 15px;">Sign Out</button>
+          <button id="signOutButton" class="btn" style="margin-top: 15px">
+            <i class="fas fa-sign-out-alt"></i> Sign Out
+          </button>
         </div>
 
         <div class="loading" id="loadingMessage">Loading your data...</div>
 
-        <div id="dataContent" style="display: none;">
+        <div id="dataContent" style="display: none">
           <!-- Summary Stats -->
           <div class="stats-grid">
             <div class="stat-card">
-              <h3>Total Hours Worked</h3>
+              <h3><i class="fas fa-clock"></i> Total Hours Worked</h3>
               <div class="value" id="totalHours">0</div>
               <div class="unit">hours</div>
             </div>
             <div class="stat-card">
-              <h3>Total Earnings</h3>
+              <h3><i class="fas fa-dollar-sign"></i> Total Earnings</h3>
               <div class="value" id="totalPay">$0</div>
             </div>
             <div class="stat-card">
-              <h3>Avg Hours/Week</h3>
+              <h3><i class="fas fa-calendar-week"></i> Avg Hours/Week</h3>
               <div class="value" id="avgHoursWeek">0</div>
               <div class="unit">hrs/wk</div>
             </div>
             <div class="stat-card">
-              <h3>Sunday Premium</h3>
+              <h3><i class="fas fa-sun"></i> Sunday Premium</h3>
               <div class="value" id="sundayPremium">$0</div>
             </div>
             <div class="stat-card">
-              <h3>Sick Time Earned</h3>
+              <h3><i class="fas fa-heartbeat"></i> Sick Time Earned</h3>
               <div class="value" id="sickTime">0</div>
               <div class="unit">hours</div>
             </div>
             <div class="stat-card">
-              <h3>Progress to Raise</h3>
+              <h3><i class="fas fa-trophy"></i> Progress to Raise</h3>
               <div class="value" id="raiseProgress">0%</div>
               <div class="progress-bar">
-                <div class="progress-fill" id="raiseProgressBar" style="width: 0%;">0%</div>
+                <div
+                  class="progress-fill"
+                  id="raiseProgressBar"
+                  style="width: 0%"
+                >
+                  0%
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Charts -->
           <div class="chart-container">
-            <h2>📈 Hours Worked Over Time</h2>
+            <h2><i class="fas fa-chart-area"></i> Hours Worked Over Time</h2>
             <div class="chart-wrapper">
               <canvas id="hoursChart"></canvas>
             </div>
           </div>
 
           <div class="chart-container">
-            <h2>💰 Earnings Over Time</h2>
+            <h2><i class="fas fa-money-bill-wave"></i> Earnings Over Time</h2>
             <div class="chart-wrapper">
               <canvas id="payChart"></canvas>
             </div>
           </div>
 
           <div class="chart-container">
-            <h2>☀️ Sunday vs Regular Hours</h2>
+            <h2><i class="fas fa-chart-pie"></i> Sunday vs Regular Hours</h2>
             <div class="chart-wrapper">
               <canvas id="sundayChart"></canvas>
             </div>
           </div>
 
           <div class="chart-container">
-            <h2>📊 Weekly Breakdown</h2>
+            <h2><i class="fas fa-chart-bar"></i> Weekly Breakdown</h2>
             <div class="chart-wrapper">
               <canvas id="weeklyChart"></canvas>
             </div>
