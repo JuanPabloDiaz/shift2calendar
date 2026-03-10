@@ -19,6 +19,12 @@ const SUNDAY_RATE = HOURLY_RATE * 1.5; // time and a half
 const PAY_PERIOD_ANCHOR_START = "2026-02-16"; // paystub period start
 const PAY_PERIOD_LENGTH_DAYS = 14; // biweekly
 
+// ── BENEFITS & CAREER ──────────────────────────────────────────────────
+const SICK_TIME_ACCRUAL_RATE = 1 / 30; // 1 hour per 30 hours worked
+const HOURS_FOR_NEXT_RAISE = 1000; // hours until next raise milestone
+const YTD_START_DATE = "2026-01-01"; // year-to-date start (or your hire date)
+const YTD_START_HOURS = 0; // starting hours for the year (if tracking from mid-year)
+
 // ── TRANSLATIONS ──────────────────────────────────────────────────────
 const T = {
   es: {
@@ -659,6 +665,9 @@ async function checkTabHasData(sheetName) {
 }
 
 async function ensureSummaryCharts(summaryTabId) {
+  // Charts disabled for now - will add clearer charts in future update
+  return true;
+
   const meta = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`,
     { headers: { Authorization: "Bearer " + accessToken } },
@@ -804,43 +813,42 @@ async function updateSummaryTab() {
   if (summaryTabId === null) return false;
 
   const values = [
-    ["Schedule Summary"],
+    ["📊 WORK SUMMARY & PROJECTIONS"],
     [""],
-    [
-      "This week hours",
-      '=SUMPRODUCT((IFERROR(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),0)>=TODAY()-WEEKDAY(TODAY(),2)+1)*(IFERROR(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),0)<=TODAY()-WEEKDAY(TODAY(),2)+7)*N(Schedule!E2:E))',
-    ],
-    [
-      "Last week hours",
-      '=SUMPRODUCT((IFERROR(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),0)>=TODAY()-WEEKDAY(TODAY(),2)-6)*(IFERROR(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),0)<=TODAY()-WEEKDAY(TODAY(),2))*N(Schedule!E2:E))',
-    ],
-    ["Week-over-week delta", "=B3-B4"],
-    [
-      "Year to date hours",
-      '=SUMPRODUCT((IFERROR(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),0)>=DATE(YEAR(TODAY()),1,1))*(IFERROR(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),0)<=TODAY())*N(Schedule!E2:E))',
-    ],
-    [
-      "Avg weekly hours (last 4 weeks)",
-      '=SUMPRODUCT((IFERROR(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),0)>=TODAY()-28)*(IFERROR(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),0)<=TODAY())*N(Schedule!E2:E))/4',
-    ],
-    [
-      "Projected monthly pay",
-      '=SUMPRODUCT((IFERROR(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),0)>=TODAY()-28)*(IFERROR(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),0)<=TODAY())*N(Schedule!F2:F))/4*4.345',
-    ],
-    ["Avg Sundays per month", '=IFERROR(AVERAGE(FILTER(F12:F,F12:F<>"")),0)'],
+    ["💰 PAY PERIOD INFO"],
+    ["Latest Period Date", '=INDEX(Schedule!H:H,2)'],
+    ["Hours This Period", '=SUMIF(Schedule!H:H,B4,Schedule!E:E)', "hrs"],
+    ["Pay This Period", `=SUMIF(Schedule!H:H,B4,Schedule!F:F)`, "$"],
     [""],
-    [
-      '=ARRAYFORMULA(QUERY({TEXT(Schedule!A2:A,"yyyy-mm"),Schedule!E2:E,Schedule!F2:F},"select Col1,sum(Col2),sum(Col3) where Col1<>\'\' and Col2 is not null group by Col1 order by Col1 label Col1 \'Month\', sum(Col2) \'Hours\', sum(Col3) \'Pay\'",0))',
-      "",
-      "",
-      "",
-      '=ARRAYFORMULA(QUERY({TEXT(Schedule!A2:A,"yyyy-mm"),WEEKDAY(Schedule!A2:A)},"select Col1,count(Col2) where Col1<>\'\' and Col2=1 group by Col1 order by Col1 label Col1 \'Month\', count(Col2) \'Sundays\'",0))',
-    ],
+    [`📈 YEAR-TO-DATE TOTALS`],
+    ["Total Hours", `=SUMIF(Schedule!E:E,">0")`, "hrs"],
+    ["Regular Hours", `=B9-SUMIFS(Schedule!E:E,Schedule!B:B,"*Sun*")`, "hrs"],
+    ["Sunday Hours", `=SUMIFS(Schedule!E:E,Schedule!B:B,"*Sun*")`, "hrs"],
+    ["Regular Pay", `=B10*${HOURLY_RATE}`, "$"],
+    ["Sunday Premium", `=B11*${SUNDAY_RATE}`, "$"],
+    ["Total Pay", "=B12+B13", "$"],
+    [""],
+    ["🏥 SICK TIME TRACKING"],
+    ["Sick Time Earned", `=B9/30`, "hrs"],
+    ["Time Format", '=INT(B17)&":"&TEXT(MOD(B17,1)*60,"00")', "h:mm"],
+    ["Next Hour At", `=CEILING(B9/30,1)*30`, "hrs worked"],
+    ["Hours Until Next", `=B19-B9`, "hrs"],
+    [""],
+    ["🎯 RAISE PROGRESS"],
+    ["Current Rate", `$${HOURLY_RATE}/hr`],
+    ["Next Milestone", `=CEILING(B9/1000,1)*1000`, "hrs"],
+    ["Hours to Go", `=B24-B9`, "hrs"],
+    ["Progress %", `=B9/B24`, "%"],
+    [""],
+    ["📊 QUICK STATS"],
+    ["Avg Hours/Week", "=B9/3", "hrs/wk (est)"],
+    ["Avg Pay/Week", "=B14/3", "$/wk (est)"],
+    ["Total Pay YTD", "=B14", "$"],
   ];
 
   const enc = encodeURIComponent(SUMMARY_TAB_TITLE);
   const write = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${enc}!A1:F40?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${enc}!A1:F100?valueInputOption=USER_ENTERED`,
     {
       method: "PUT",
       headers: {
