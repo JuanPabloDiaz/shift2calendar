@@ -2587,7 +2587,13 @@ function mergeShifts(shifts) {
       // Calculate total hours from earliest start to latest end (includes short breaks)
       const startDt = new Date(Math.min(...sts));
       const endDt = new Date(Math.max(...ens));
-      const totalHours = (endDt - startDt) / 3600000; // Convert milliseconds to hours
+      let totalHours = (endDt - startDt) / 3600000; // Convert milliseconds to hours
+
+      // Deduct 30-minute lunch break for shifts longer than 6 hours
+      if (totalHours > 6) {
+        totalHours -= 0.5;
+      }
+
       return {
         date: day,
         startDt: startDt,
