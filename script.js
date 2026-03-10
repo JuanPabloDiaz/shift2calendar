@@ -847,8 +847,9 @@ async function updateSummaryTab() {
     ["Sunday Premium", "=B13", "$"],
     [""],
     ["📅 MONTHLY SUMMARY"],
-    ["Month", "Hours", "Pay ($)", "Days"],
-    ['=QUERY({TEXT(Schedule!A2:A,"yyyy-mm"),Schedule!E2:E,Schedule!F2:F},"select Col1,sum(Col2),sum(Col3),count(Col1) where Col2>0 group by Col1 order by Col1 desc",0)'],
+    ["Month", "Total Hours", "Total Pay", "Days Worked"],
+    ["2026-03", `=SUMIFS(Schedule!E:E,Schedule!A:A,">=2026-03-01",Schedule!A:A,"<2026-04-01",Schedule!E:E,">0")`, `=SUMIFS(Schedule!F:F,Schedule!A:A,">=2026-03-01",Schedule!A:A,"<2026-04-01",Schedule!F:F,">0")`, `=COUNTIFS(Schedule!A:A,">=2026-03-01",Schedule!A:A,"<2026-04-01",Schedule!E:E,">0")`],
+    ["Total", "=B37", "=C37", "=D37"],
   ];
 
   const enc = encodeURIComponent(SUMMARY_TAB_TITLE);
