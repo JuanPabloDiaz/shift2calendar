@@ -352,8 +352,17 @@ function parseAndValidate() {
       return null;
     }
     if (Array.isArray(data)) {
-      shifts = data;
-      period = "costco";
+      // Check if it's an array of periods [{period, shifts}, ...]
+      if (data.length > 0 && data[0].period && data[0].shifts) {
+        // Multiple periods - combine all shifts
+        shifts = data.flatMap((p) => p.shifts || []);
+        const periods = data.map((p) => p.period).filter(Boolean);
+        period = periods.length > 0 ? periods.join(", ") : "costco";
+      } else {
+        // Array of shifts directly
+        shifts = data;
+        period = "costco";
+      }
     } else {
       shifts = data.shifts || [];
       period = data.period || "costco";
