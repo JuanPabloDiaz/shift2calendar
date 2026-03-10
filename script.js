@@ -491,6 +491,41 @@ function getReminderOverrides() {
 
 // ── GOOGLE CALENDAR ───────────────────────────────────────────────────
 async function sendToGoogleCalendar() {
+  const t = T[lang];
+
+  // Check if input has multiple periods
+  if (inputMode === "json") {
+    const parsedJson = parseJsonInput();
+    if (parsedJson && !parsedJson.error) {
+      const data = parsedJson.data;
+      // Multiple periods - process each separately
+      if (Array.isArray(data) && data.length > 0 && data[0].period && data[0].shifts) {
+        showGoogleStatus("loading", t.googleLoading);
+        let totalShiftsAdded = 0;
+
+        for (const periodData of data) {
+          const shifts = periodData.shifts || [];
+          const period = periodData.period || "costco";
+
+          if (shifts.length > 0) {
+            const ok = await _doCalendar(shifts, period);
+            if (ok !== false) {
+              totalShiftsAdded += shifts.length;
+            }
+          }
+        }
+
+        if (totalShiftsAdded > 0) {
+          showGoogleStatus("success", `${t.googleCalOk} (${totalShiftsAdded} shift${totalShiftsAdded > 1 ? 's' : ''} added)`);
+          renderPreview(data.flatMap(p => p.shifts));
+          resetAfterAction();
+        }
+        return;
+      }
+    }
+  }
+
+  // Single period
   const parsed = parseAndValidate();
   if (!parsed) return;
   const ok = await _doCalendar(parsed.shifts, parsed.period);
@@ -1917,6 +1952,48 @@ function confirmDuplicate() {
 }
 
 async function sendToBoth() {
+  const t = T[lang];
+
+  // Check if input has multiple periods
+  if (inputMode === "json") {
+    const parsedJson = parseJsonInput();
+    if (parsedJson && !parsedJson.error) {
+      const data = parsedJson.data;
+      // Multiple periods - process each separately, divided by calendar week
+      if (Array.isArray(data) && data.length > 0 && data[0].period && data[0].shifts) {
+        showGoogleStatus("loading", t.googleLoading);
+        let totalWeeksAdded = 0;
+
+        for (const periodData of data) {
+          const shifts = periodData.shifts || [];
+          const period = periodData.period || "costco";
+
+          if (shifts.length > 0) {
+            // For Calendar: add all shifts at once with the period
+            const calOk = await _doCalendar(shifts, period);
+            if (calOk === false) continue;
+
+            // For Sheets: divide into calendar weeks
+            const weeks = groupShiftsByCalendarWeek(shifts);
+            for (const week of weeks) {
+              const weekPeriod = `${week.weekStart.replace(/-/g, "/")} - ${week.weekEnd.replace(/-/g, "/")}`;
+              const shtOk = await _doSheets(week.shifts, weekPeriod);
+              if (shtOk !== false) totalWeeksAdded++;
+            }
+          }
+        }
+
+        if (totalWeeksAdded > 0) {
+          showGoogleStatus("success", t.googleBothOk);
+          renderPreview(data.flatMap(p => p.shifts));
+          resetAfterAction();
+        }
+        return;
+      }
+    }
+  }
+
+  // Single period
   const parsed = parseAndValidate();
   if (!parsed) return;
   const calOk = await _doCalendar(parsed.shifts, parsed.period);
