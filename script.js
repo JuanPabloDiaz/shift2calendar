@@ -2398,27 +2398,10 @@ function validateJsonInputLive() {
 
   // Check if it's an array of periods
   if (Array.isArray(parsed.data) && parsed.data.length > 0 && parsed.data[0].period && parsed.data[0].shifts) {
-    // Validate each period doesn't span more than one pay week
-    parsed.data.forEach((periodData, idx) => {
+    // Just collect all shifts from all periods
+    parsed.data.forEach((periodData) => {
       const shifts = periodData.shifts || [];
-      if (shifts.length === 0) return;
-
       allShifts.push(...shifts);
-
-      // Get unique biweekly periods in this period's shifts
-      const periods = new Set();
-      shifts.forEach((shift) => {
-        if (shift.date) {
-          const biweekly = getBiweeklyWindow(shift.date);
-          periods.add(`${biweekly.start}_${biweekly.end}`);
-        }
-      });
-
-      if (periods.size > 1) {
-        issues.push(
-          `Period #${idx + 1} "${periodData.period || "unknown"}" spans multiple pay weeks (${periods.size} weeks detected). Each period must contain only one week.`
-        );
-      }
     });
   } else if (Array.isArray(parsed.data)) {
     allShifts = parsed.data;
