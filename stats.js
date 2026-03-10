@@ -9,6 +9,42 @@ let accessToken = null;
 let chartInstances = {};
 
 // ── GOOGLE AUTH ────────────────────────────────────────────────────────
+
+// Save token to localStorage with expiry timestamp
+function saveToken(token) {
+  const expiryTime = Date.now() + 3600000; // 1 hour from now
+  localStorage.setItem('googleAccessToken', token);
+  localStorage.setItem('tokenExpiry', expiryTime.toString());
+  console.log('Token saved, expires at:', new Date(expiryTime).toLocaleTimeString());
+}
+
+// Load token from localStorage if valid
+function loadSavedToken() {
+  const savedToken = localStorage.getItem('googleAccessToken');
+  const expiry = localStorage.getItem('tokenExpiry');
+
+  if (!savedToken || !expiry) {
+    return null;
+  }
+
+  // Check if token is expired
+  if (Date.now() >= parseInt(expiry)) {
+    console.log('Saved token expired, clearing...');
+    clearSavedToken();
+    return null;
+  }
+
+  const remainingMinutes = Math.floor((parseInt(expiry) - Date.now()) / 60000);
+  console.log(`Token loaded, ${remainingMinutes} minutes remaining`);
+  return savedToken;
+}
+
+// Clear saved token
+function clearSavedToken() {
+  localStorage.removeItem('googleAccessToken');
+  localStorage.removeItem('tokenExpiry');
+}
+
 function handleCredentialResponse(response) {
   const credential = response.credential;
   // Decode JWT to get user info
@@ -19,18 +55,27 @@ function handleCredentialResponse(response) {
   requestAccessToken();
 }
 
-function requestAccessToken() {
+function requestAccessToken(useSilent = false) {
   const client = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: SCOPES,
     callback: (response) => {
       if (response.error) {
         console.error('OAuth error:', response);
+
+        // If silent refresh failed, try with consent prompt
+        if (useSilent) {
+          console.log('Silent refresh failed, requesting consent...');
+          requestAccessToken(false);
+          return;
+        }
+
         showError('Failed to get access token. Please check popup blockers and try again.');
         return;
       }
       if (response.access_token) {
         accessToken = response.access_token;
+        saveToken(response.access_token); // Save to localStorage
         showStatsContent();
         loadData();
       }
@@ -38,10 +83,15 @@ function requestAccessToken() {
   });
 
   try {
-    client.requestAccessToken({ prompt: 'consent' });
+    // Use silent refresh if requested (no popup), otherwise ask for consent
+    const prompt = useSilent ? '' : 'consent';
+    console.log('Requesting token with prompt:', prompt || 'silent');
+    client.requestAccessToken({ prompt });
   } catch (error) {
     console.error('Token request error:', error);
-    showError('Please allow popups for this site and try again.');
+    if (!useSilent) {
+      showError('Please allow popups for this site and try again.');
+    }
   }
 }
 
@@ -70,9 +120,13 @@ function showStatsContent() {
 
 function signOut() {
   accessToken = null;
+  clearSavedToken(); // Clear from localStorage
   document.getElementById('authSection').style.display = 'block';
   document.getElementById('statsContent').style.display = 'none';
+  document.getElementById('loadingMessage').style.display = 'block';
+  document.getElementById('dataContent').style.display = 'none';
   google.accounts.id.disableAutoSelect();
+  console.log('Signed out and cleared saved token');
 }
 
 // ── DATA FETCHING ──────────────────────────────────────────────────────
@@ -90,6 +144,16 @@ async function loadData() {
     );
 
     if (!response.ok) {
+      // If unauthorized, token might be invalid/expired
+      if (response.status === 401) {
+        console.error('Token expired or invalid');
+        clearSavedToken();
+        accessToken = null;
+        document.getElementById('authSection').style.display = 'block';
+        document.getElementById('statsContent').style.display = 'none';
+        showError('Session expired. Please sign in again.');
+        return;
+      }
       throw new Error('Failed to fetch data');
     }
 
@@ -438,16 +502,35 @@ function createCharts(data) {
 
 // ── INITIALIZATION ─────────────────────────────────────────────────────
 window.onload = function() {
-  // Initialize Google Sign-In
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleCredentialResponse
-  });
+  // Check for saved token first
+  const savedToken = loadSavedToken();
 
-  google.accounts.id.renderButton(
-    document.getElementById('authButton'),
-    { theme: 'filled_blue', size: 'large', text: 'signin_with' }
-  );
+  if (savedToken) {
+    // Token is valid, use it directly
+    console.log('Using saved token');
+    accessToken = savedToken;
+    showStatsContent();
+    loadData();
+  } else {
+    // No valid token, try silent refresh
+    console.log('No saved token, attempting silent refresh...');
+
+    // Initialize Google Sign-In
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById('authButton'),
+      { theme: 'filled_blue', size: 'large', text: 'signin_with' }
+    );
+
+    // Try silent token refresh (if user was previously signed in)
+    setTimeout(() => {
+      requestAccessToken(true); // Silent attempt
+    }, 500);
+  }
 
   // Sign out button
   document.getElementById('signOutButton').addEventListener('click', signOut);

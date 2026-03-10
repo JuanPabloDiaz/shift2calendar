@@ -84,6 +84,7 @@ const T = {
     descLunchNote: "Toma el lunch antes de cumplir 5 horas",
     juanDivider: "Solo para Juan Diaz",
     openSheet: "Abrir Sheet",
+    viewStats: "Ver Stats",
     googleSignin: "Conectar Google",
     signout: "Cerrar sesión",
     sendCalendar: "Calendar",
@@ -158,6 +159,7 @@ const T = {
     descLunchNote: "Take lunch before reaching 5 hours",
     juanDivider: "Juan Diaz only",
     openSheet: "Open Sheet",
+    viewStats: "View Stats",
     googleSignin: "Connect Google",
     signout: "Sign out",
     sendCalendar: "Calendar",
@@ -218,19 +220,103 @@ let accessToken = null;
 let tokenClient = null;
 let signedInUserEmail = "";
 
+// ── TOKEN PERSISTENCE ──────────────────────────────────────────────────
+
+// Save token to localStorage with expiry timestamp
+function saveToken(token) {
+  const expiryTime = Date.now() + 3600000; // 1 hour from now
+  localStorage.setItem('googleAccessToken', token);
+  localStorage.setItem('tokenExpiry', expiryTime.toString());
+  console.log('Token saved, expires at:', new Date(expiryTime).toLocaleTimeString());
+}
+
+// Load token from localStorage if valid
+function loadSavedToken() {
+  const savedToken = localStorage.getItem('googleAccessToken');
+  const expiry = localStorage.getItem('tokenExpiry');
+
+  if (!savedToken || !expiry) {
+    return null;
+  }
+
+  // Check if token is expired
+  if (Date.now() >= parseInt(expiry)) {
+    console.log('Saved token expired, clearing...');
+    clearSavedToken();
+    return null;
+  }
+
+  const remainingMinutes = Math.floor((parseInt(expiry) - Date.now()) / 60000);
+  console.log(`Token loaded, ${remainingMinutes} minutes remaining`);
+  return savedToken;
+}
+
+// Clear saved token
+function clearSavedToken() {
+  localStorage.removeItem('googleAccessToken');
+  localStorage.removeItem('tokenExpiry');
+  localStorage.removeItem('gsi_connected'); // Legacy flag
+}
+
+// Helper function to copy access token (for stats page)
+window.getAccessToken = function() {
+  if (!accessToken) {
+    console.log('⚠️ No access token available. Please sign in first.');
+    return null;
+  }
+  console.log('✅ Access token copied to clipboard!');
+  console.log('📋 Token:', accessToken);
+  navigator.clipboard.writeText(accessToken).catch(() => {
+    console.log('⚠️ Could not copy to clipboard automatically. Copy manually from above.');
+  });
+  return accessToken;
+};
+
 // ── SILENT SIGN-IN / AUTO RECONNECT ──────────────────────────────────
 // We wait for the GSI library to load, then attempt silent sign-in
 // if the user has previously authorized.
 window.addEventListener("load", () => {
   // Give GSI library time to initialize
-  const tryAutoConnect = () => {
+  const tryAutoConnect = async () => {
     if (typeof google === "undefined" || !google.accounts) {
       setTimeout(tryAutoConnect, 300);
       return;
     }
+
+    // Check for saved token first
+    const savedToken = loadSavedToken();
+
+    if (savedToken && isJuan()) {
+      // Token is valid, use it directly
+      console.log('Using saved token');
+      accessToken = savedToken;
+
+      // Get user info with saved token
+      try {
+        const info = await fetch(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: { Authorization: "Bearer " + accessToken },
+          }
+        ).then((r) => r.json());
+
+        signedInUserEmail = (info.email || "").toLowerCase();
+        document.getElementById("signedInEmail").textContent = info.email || "Connected";
+        document.getElementById("googleSignedOut").style.display = "none";
+        document.getElementById("googleSignedIn").style.display = "block";
+        updateOwnerSheetButton();
+      } catch (error) {
+        console.log('Saved token invalid, clearing...');
+        clearSavedToken();
+        accessToken = null;
+      }
+    }
+
+    // Initialize token client for future sign-ins
     initTokenClient();
-    // If previously connected, attempt silent token refresh
-    if (localStorage.getItem("gsi_connected") === "1" && isJuan()) {
+
+    // If no valid saved token, try silent refresh
+    if (!savedToken && localStorage.getItem("gsi_connected") === "1" && isJuan()) {
       showGoogleStatus("loading", T[lang].autoConnecting);
       tokenClient.requestAccessToken({ prompt: "" }); // empty prompt = silent
     }
@@ -246,14 +332,14 @@ function initTokenClient() {
     callback: async (response) => {
       if (response.error) {
         // Silent auth failed — clear stored state and show sign-in button
-        localStorage.removeItem("gsi_connected");
+        clearSavedToken();
         signedInUserEmail = "";
         updateOwnerSheetButton();
         document.getElementById("googleStatus").style.display = "none";
         return;
       }
       accessToken = response.access_token;
-      localStorage.setItem("gsi_connected", "1");
+      saveToken(response.access_token); // Save token with expiry
       const info = await fetch(
         "https://www.googleapis.com/oauth2/v3/userinfo",
         {
@@ -284,11 +370,12 @@ function signOut() {
     accessToken = null;
   }
   signedInUserEmail = "";
-  localStorage.removeItem("gsi_connected");
+  clearSavedToken(); // Clear token from localStorage
   document.getElementById("googleSignedOut").style.display = "block";
   document.getElementById("googleSignedIn").style.display = "none";
   updateOwnerSheetButton();
   document.getElementById("googleStatus").style.display = "none";
+  console.log('Signed out and cleared saved token');
 }
 
 function isJuan() {
@@ -314,10 +401,14 @@ function canOpenOwnerSheet() {
   );
 }
 function updateOwnerSheetButton() {
-  const btn = document.getElementById("txt-open-sheet");
-  if (!btn) return;
-  btn.style.display = canOpenOwnerSheet() ? "inline-flex" : "none";
+  const sheetBtn = document.getElementById("txt-open-sheet");
+  const statsBtn = document.getElementById("txt-view-stats");
+  const canOpen = canOpenOwnerSheet();
+
+  if (sheetBtn) sheetBtn.style.display = canOpen ? "inline-flex" : "none";
+  if (statsBtn) statsBtn.style.display = canOpen ? "inline-flex" : "none";
 }
+
 function openOwnerSheet() {
   if (!canOpenOwnerSheet()) return;
   window.open(
@@ -325,6 +416,11 @@ function openOwnerSheet() {
     "_blank",
     "noopener,noreferrer",
   );
+}
+
+function openStats() {
+  if (!canOpenOwnerSheet()) return;
+  window.open("stats.html", "_blank", "noopener,noreferrer");
 }
 
 // ── RESET / CLEAR ─────────────────────────────────────────────────────
@@ -2150,6 +2246,9 @@ function applyTranslations() {
   const openSheetBtn = document.getElementById("txt-open-sheet");
   if (openSheetBtn)
     openSheetBtn.querySelector("span").textContent = t.openSheet;
+  const statsBtn = document.getElementById("txt-view-stats");
+  if (statsBtn)
+    statsBtn.querySelector("span").textContent = t.viewStats;
   renderManualShifts();
   validateJsonInputLive();
   updateOwnerSheetButton();

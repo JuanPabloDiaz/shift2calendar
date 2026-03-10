@@ -986,6 +986,10 @@ input:checked + .toggle-slider:before {
   background: #34a853;
   color: white;
 }
+.stats-btn {
+  background: #9b51e0;
+  color: white;
+}
 .both-btn {
   background: var(--accent);
   color: white;
