@@ -787,11 +787,11 @@ async function updateSummaryTab() {
     ["Avg Sundays per month", '=IFERROR(AVERAGE(FILTER(F12:F,F12:F<>"")),0)'],
     [""],
     [
-      '=QUERY({IFERROR(TEXT(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),"yyyy-mm"),),N(Schedule!E2:E),N(Schedule!F2:F)},"select Col1,sum(Col2),sum(Col3) where Col1 is not null group by Col1 order by Col1 label Col1 \'Month\', sum(Col2) \'Hours\', sum(Col3) \'Pay\'",0)',
+      '=ARRAYFORMULA(QUERY({TEXT(Schedule!A2:A,"yyyy-mm"),Schedule!E2:E,Schedule!F2:F},"select Col1,sum(Col2),sum(Col3) where Col1<>\'\' and Col2 is not null group by Col1 order by Col1 label Col1 \'Month\', sum(Col2) \'Hours\', sum(Col3) \'Pay\'",0))',
       "",
       "",
       "",
-      '=QUERY({IFERROR(TEXT(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),"yyyy-mm"),),IFERROR(WEEKDAY(IF(ISNUMBER(Schedule!A2:A),Schedule!A2:A,DATE(VALUE(LEFT(Schedule!A2:A&"",4)),VALUE(MID(Schedule!A2:A&"",6,2)),VALUE(MID(Schedule!A2:A&"",9,2)))),1),)},"select Col1,count(Col2) where Col1 is not null and Col2=1 group by Col1 order by Col1 label Col1 \'Month\', count(Col2) \'Sundays\'",0)',
+      '=ARRAYFORMULA(QUERY({TEXT(Schedule!A2:A,"yyyy-mm"),WEEKDAY(Schedule!A2:A)},"select Col1,count(Col2) where Col1<>\'\' and Col2=1 group by Col1 order by Col1 label Col1 \'Month\', count(Col2) \'Sundays\'",0))',
     ],
   ];
 
