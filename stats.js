@@ -213,6 +213,9 @@ async function loadData() {
     // Process data
     const processedData = processSheetData(rows);
 
+    // Save data globally for theme updates
+    window.lastProcessedData = processedData;
+
     // Update UI
     updateSummaryStats(processedData);
     createCharts(processedData);
@@ -386,10 +389,26 @@ function updateSummaryStats(data) {
 }
 
 // ── CREATE CHARTS ──────────────────────────────────────────────────────
+
+// Get CSS theme colors for charts
+function getChartColors() {
+  const computedStyle = getComputedStyle(document.documentElement);
+  return {
+    accent: computedStyle.getPropertyValue('--accent').trim(),
+    accentHover: computedStyle.getPropertyValue('--accent-hover').trim(),
+    text: computedStyle.getPropertyValue('--text').trim(),
+    textSecondary: computedStyle.getPropertyValue('--text-secondary').trim(),
+    border: computedStyle.getPropertyValue('--border').trim(),
+  };
+}
+
 function createCharts(data) {
   // Destroy existing charts
   Object.values(chartInstances).forEach(chart => chart.destroy());
   chartInstances = {};
+
+  // Get theme colors
+  const colors = getChartColors();
 
   // Use week summaries if available, otherwise group shifts by week
   let weekData = data.weekSummaries;
@@ -407,10 +426,15 @@ function createCharts(data) {
       datasets: [{
         label: 'Hours per Week',
         data: weekData.map(w => w.hours),
-        borderColor: '#667eea',
-        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        borderColor: colors.accent,
+        backgroundColor: colors.accent + '20',
         tension: 0.4,
         fill: true,
+        borderWidth: 3,
+        pointBackgroundColor: colors.accent,
+        pointBorderColor: colors.accent,
+        pointHoverBackgroundColor: colors.accentHover,
+        pointHoverBorderColor: colors.accentHover,
       }]
     },
     options: {
@@ -419,6 +443,9 @@ function createCharts(data) {
       plugins: {
         legend: { display: false },
         tooltip: {
+          backgroundColor: colors.accent,
+          titleColor: '#fff',
+          bodyColor: '#fff',
           callbacks: {
             label: (context) => `${context.parsed.y.toFixed(1)} hours`
           }
@@ -427,8 +454,20 @@ function createCharts(data) {
       scales: {
         y: {
           beginAtZero: true,
+          grid: {
+            color: colors.border,
+          },
           ticks: {
+            color: colors.textSecondary,
             callback: (value) => value + ' hrs'
+          }
+        },
+        x: {
+          grid: {
+            color: colors.border,
+          },
+          ticks: {
+            color: colors.textSecondary,
           }
         }
       }
@@ -443,7 +482,9 @@ function createCharts(data) {
       datasets: [{
         label: 'Pay per Week',
         data: weekData.map(w => w.pay),
-        backgroundColor: '#764ba2',
+        backgroundColor: colors.accent,
+        hoverBackgroundColor: colors.accentHover,
+        borderRadius: 6,
       }]
     },
     options: {
@@ -452,6 +493,9 @@ function createCharts(data) {
       plugins: {
         legend: { display: false },
         tooltip: {
+          backgroundColor: colors.accent,
+          titleColor: '#fff',
+          bodyColor: '#fff',
           callbacks: {
             label: (context) => '$' + context.parsed.y.toFixed(2)
           }
@@ -460,8 +504,20 @@ function createCharts(data) {
       scales: {
         y: {
           beginAtZero: true,
+          grid: {
+            color: colors.border,
+          },
           ticks: {
+            color: colors.textSecondary,
             callback: (value) => '$' + value
+          }
+        },
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            color: colors.textSecondary,
           }
         }
       }
@@ -475,15 +531,29 @@ function createCharts(data) {
       labels: ['Regular Hours', 'Sunday Hours'],
       datasets: [{
         data: [data.regularHours, data.sundayHours],
-        backgroundColor: ['#667eea', '#ffd93d'],
+        backgroundColor: [colors.accent, colors.accentHover],
+        borderColor: colors.border,
+        borderWidth: 2,
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom' },
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: colors.text,
+            padding: 15,
+            font: {
+              size: 12,
+            }
+          }
+        },
         tooltip: {
+          backgroundColor: colors.accent,
+          titleColor: '#fff',
+          bodyColor: '#fff',
           callbacks: {
             label: (context) => {
               const label = context.label || '';
@@ -508,14 +578,18 @@ function createCharts(data) {
         {
           label: 'Hours',
           data: last6Weeks.map(w => w.hours),
-          backgroundColor: '#667eea',
+          backgroundColor: colors.accent,
+          hoverBackgroundColor: colors.accentHover,
           yAxisID: 'y',
+          borderRadius: 6,
         },
         {
           label: 'Pay',
           data: last6Weeks.map(w => w.pay),
-          backgroundColor: '#764ba2',
+          backgroundColor: colors.accentHover,
+          hoverBackgroundColor: colors.accent,
           yAxisID: 'y1',
+          borderRadius: 6,
         }
       ]
     },
@@ -523,14 +597,32 @@ function createCharts(data) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' }
+        legend: {
+          position: 'top',
+          labels: {
+            color: colors.text,
+            padding: 15,
+            font: {
+              size: 12,
+            }
+          }
+        },
+        tooltip: {
+          backgroundColor: colors.accent,
+          titleColor: '#fff',
+          bodyColor: '#fff',
+        }
       },
       scales: {
         y: {
           type: 'linear',
           display: true,
           position: 'left',
+          grid: {
+            color: colors.border,
+          },
           ticks: {
+            color: colors.textSecondary,
             callback: (value) => value + ' hrs'
           }
         },
@@ -542,12 +634,29 @@ function createCharts(data) {
             drawOnChartArea: false,
           },
           ticks: {
+            color: colors.textSecondary,
             callback: (value) => '$' + value
           }
         },
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            color: colors.textSecondary,
+          }
+        }
       }
     }
   });
+}
+
+// Re-create charts when theme changes to update colors
+function updateChartColors() {
+  const data = window.lastProcessedData;
+  if (data) {
+    createCharts(data);
+  }
 }
 
 // ── THEME & LANGUAGE ───────────────────────────────────────────────────
@@ -556,6 +665,9 @@ function toggleTheme() {
   document.documentElement.setAttribute("data-theme", theme);
   localStorage.setItem("theme", theme);
   updateThemeIcon();
+
+  // Update chart colors when theme changes
+  updateChartColors();
 }
 
 function updateThemeIcon() {

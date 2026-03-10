@@ -13,65 +13,9 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E"
       type="image/svg+xml"
     />
+    <link rel="stylesheet" href="styles.css" />
     <style>
-      :root {
-        --bg: #f0f2f5;
-        --card-bg: #ffffff;
-        --text: #1a1a2e;
-        --text-secondary: #666;
-        --text-muted: #888;
-        --border: #dde3f0;
-        --border-light: #eee;
-        --accent: #005eb8;
-        --accent-hover: #004a94;
-        --prompt-bg: #f8f9ff;
-        --shift-bg: #f8f9ff;
-        --success-bg: #f0fff4;
-        --success-border: #b2dfdb;
-        --success-text: #1b5e20;
-        --error-bg: #fff0f0;
-        --error-border: #ffcccc;
-        --error-text: #c0392b;
-        --shadow: rgba(0, 0, 0, 0.08);
-      }
-
-      [data-theme="dark"] {
-        --bg: #121212;
-        --card-bg: #1e1e1e;
-        --text: #e8e8e8;
-        --text-secondary: #a0a0a0;
-        --text-muted: #707070;
-        --border: #2a2a2a;
-        --border-light: #2a2a2a;
-        --accent: #1db954;
-        --accent-hover: #1ed760;
-        --prompt-bg: #161916;
-        --shift-bg: #161916;
-        --success-bg: #0d2818;
-        --success-border: #1db954;
-        --success-text: #1db954;
-        --error-bg: #2a1616;
-        --error-border: #e91429;
-        --error-text: #e91429;
-        --shadow: rgba(0, 0, 0, 0.4);
-      }
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-          Cantarell, sans-serif;
-        background: var(--bg);
-        min-height: 100vh;
-        padding: 20px;
-        color: var(--text);
-        transition: background 0.3s ease, color 0.3s ease;
-      }
+      /* Stats page specific styles */
 
       .container {
         max-width: 1400px;
@@ -83,14 +27,18 @@
         padding: 30px;
         border-radius: 16px;
         margin-bottom: 30px;
-        box-shadow: 0 8px 32px var(--shadow);
+        box-shadow: 0 2px 12px var(--shadow);
         position: relative;
+        transition: background 0.3s;
       }
 
       .header h1 {
         font-size: 2.5rem;
         color: var(--text);
         margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
 
       .header p {
@@ -198,129 +146,6 @@
         margin-bottom: 20px;
       }
 
-      @media (max-width: 768px) {
-        .container {
-          padding: 10px;
-        }
-
-        .header h1 {
-          font-size: 1.8rem;
-        }
-
-        .stats-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .stat-card .value {
-          font-size: 2rem;
-        }
-
-        .chart-wrapper {
-          height: 300px;
-        }
-      }
-
-      .error {
-        background: #ff6b6b;
-        color: white;
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-      }
-
-      .btn {
-        background: var(--accent);
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: background 0.2s, transform 0.1s;
-      }
-
-      .btn:hover {
-        background: var(--accent-hover);
-      }
-
-      .btn:active {
-        transform: scale(0.97);
-      }
-
-      .theme-toggle {
-        background: var(--card-bg);
-        border: 2px solid var(--text-secondary);
-        border-radius: 8px;
-        padding: 8px 10px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-        width: 38px;
-        height: 38px;
-      }
-
-      .theme-toggle:hover {
-        border-color: var(--accent);
-      }
-
-      .theme-toggle svg {
-        color: var(--text);
-      }
-
-      .lang-toggle {
-        display: flex;
-        background: var(--card-bg);
-        border-radius: 8px;
-        overflow: hidden;
-        border: 2px solid var(--text-secondary);
-      }
-
-      .lang-btn {
-        background: transparent;
-        border: none;
-        padding: 8px 12px;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        transition: all 0.15s;
-      }
-
-      .lang-btn.active {
-        background: var(--accent);
-        color: white;
-      }
-
-      .lang-btn:hover:not(.active) {
-        color: var(--text);
-      }
-
-      .filters {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 30px;
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-
-      .filters label {
-        font-weight: 600;
-        color: #333;
-      }
-
-      .filters select,
-      .filters input {
-        padding: 8px 12px;
-        border: 2px solid #e0e0e0;
-        border-radius: 6px;
-        font-size: 0.9rem;
-      }
-
       .progress-bar {
         width: 100%;
         height: 30px;
@@ -348,8 +173,9 @@
         background: var(--card-bg);
         padding: 60px;
         border-radius: 16px;
-        box-shadow: 0 8px 32px var(--shadow);
+        box-shadow: 0 2px 12px var(--shadow);
         transition: background 0.3s ease;
+        position: relative;
       }
 
       #authSection h2 {
@@ -359,6 +185,61 @@
 
       #authSection p {
         color: var(--text-secondary);
+      }
+
+      .header .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        padding: 10px 20px;
+      }
+
+      .header .btn i {
+        font-size: 0.9em;
+      }
+
+      #backToIndexButton {
+        background: var(--text-secondary);
+      }
+
+      #backToIndexButton:hover {
+        background: var(--text);
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 10px;
+        }
+
+        .header {
+          padding: 20px;
+        }
+
+        .header h1 {
+          font-size: 1.5rem;
+        }
+
+        .header p {
+          font-size: 0.95rem;
+        }
+
+        .header .btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .stat-card .value {
+          font-size: 2rem;
+        }
+
+        .chart-wrapper {
+          height: 300px;
+        }
       }
     </style>
   </head>
@@ -408,12 +289,14 @@
           </div>
           <h1><i class="fas fa-chart-line"></i> <span id="txt-title">Your Work Statistics</span></h1>
           <p id="txt-subtitle">Historical data and insights from your schedule</p>
-          <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+          <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
             <button id="backToIndexButton" class="btn" onclick="window.location.href='index.html'">
-              <i class="fas fa-arrow-left"></i> <span id="txt-back">Back to Schedule</span>
+              <i class="fas fa-arrow-left"></i>
+              <span id="txt-back">Back to Schedule</span>
             </button>
             <button id="signOutButton" class="btn">
-              <i class="fas fa-sign-out-alt"></i> <span id="txt-signout">Sign Out</span>
+              <i class="fas fa-sign-out-alt"></i>
+              <span id="txt-signout">Sign Out</span>
             </button>
           </div>
         </div>
