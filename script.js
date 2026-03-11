@@ -799,33 +799,6 @@ async function getSheetValues(sheetName) {
   ).then((r) => r.json());
   return res.values || [];
 }
-                rowIndex: 29,
-                columnIndex: 3,
-              },
-              offsetXPixels: 0,
-              offsetYPixels: 0,
-              widthPixels: 520,
-              heightPixels: 260,
-            },
-          },
-        },
-      },
-    },
-  ];
-
-  await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ requests }),
-    },
-  );
-  return true;
-}
 
 async function updateSummaryTab() {
   const summaryTabId = await getOrCreateTab(SUMMARY_TAB_TITLE);
