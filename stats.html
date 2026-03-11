@@ -197,18 +197,25 @@
         gap: 8px;
         font-size: 0.95rem;
         padding: 10px 20px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+      }
+
+      .header .btn:hover {
+        background: var(--accent-hover);
+      }
+
+      .header .btn:active {
+        transform: scale(0.97);
       }
 
       .header .btn i {
         font-size: 0.9em;
-      }
-
-      #backToIndexButton {
-        background: var(--text-secondary);
-      }
-
-      #backToIndexButton:hover {
-        background: var(--text);
       }
 
       @media (max-width: 768px) {
