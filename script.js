@@ -800,6 +800,52 @@ async function getSheetValues(sheetName) {
   return res.values || [];
 }
 
+// Check which weeks already exist in Sheets (for preview warnings)
+async function checkExistingWeeks(shifts) {
+  console.log("🔍 checkExistingWeeks called", { hasToken: !!accessToken, shiftsCount: shifts.length });
+  if (!accessToken) {
+    console.log("⚠️ No access token, skipping check");
+    return new Set();
+  }
+
+  const weeks = groupShiftsByCalendarWeek(shifts);
+  const existingWeeks = new Set();
+  console.log("📅 Checking weeks:", weeks.map(w => `${w.weekStart} - ${w.weekEnd}`));
+
+  try {
+    // Get existing data from Schedule tab
+    const existingValues = await getSheetValues(SHEET_TAB_TITLE);
+    console.log("📊 Existing values from Sheets:", existingValues.length, "rows");
+
+    // Extract existing dates (skip header row)
+    const existingDates = new Set();
+    existingValues.slice(1).forEach((row) => {
+      if (row[0]) { // Date is in column A
+        existingDates.add(row[0]); // Format: YYYY-MM-DD
+      }
+    });
+    console.log("📆 Existing dates in Sheets:", Array.from(existingDates));
+
+    // Check each week to see if it has any shifts that already exist
+    weeks.forEach((week) => {
+      const weekPeriod = `${week.weekStart.replace(/-/g, "/")} - ${week.weekEnd.replace(/-/g, "/")}`;
+      const hasExistingShifts = week.shifts.some((shift) => existingDates.has(shift.date));
+
+      if (hasExistingShifts) {
+        existingWeeks.add(weekPeriod);
+        console.log("⚠️ Week has existing shifts:", weekPeriod);
+      } else {
+        console.log("✓ Week is new:", weekPeriod);
+      }
+    });
+  } catch (err) {
+    console.warn("❌ Could not check existing weeks:", err);
+  }
+
+  console.log("🏁 Final existingWeeks:", Array.from(existingWeeks));
+  return existingWeeks;
+}
+
 async function updateSummaryTab() {
   const summaryTabId = await getOrCreateTab(SUMMARY_TAB_TITLE);
   if (summaryTabId === null) return false;
@@ -1900,7 +1946,7 @@ function generate() {
   resetAfterAction();
 }
 
-function renderPreview(shifts) {
+function renderPreview(shifts, existingWeeks = new Set()) {
   const t = T[lang];
   const DAYS = lang === "es" ? DAYS_ES : DAYS_EN;
   const MONTHS = lang === "es" ? MONTHS_ES : MONTHS_EN;
@@ -1928,8 +1974,16 @@ function renderPreview(shifts) {
     weeks.forEach((week, idx) => {
       const weekMerged = mergeShifts(week.shifts);
       const weekTotal = weekMerged.reduce((a, s) => a + parseFloat(s.hours), 0);
-      html += `<div style="margin: 16px 0 8px; padding: 8px; background: #f0f0f0; border-radius: 4px; font-weight: bold;">
-        ${lang === "es" ? "Semana" : "Week"} ${idx + 1}: ${week.weekStart.replace(/-/g, "/")} - ${week.weekEnd.replace(/-/g, "/")} (${weekTotal.toFixed(2)} hrs)
+      const weekPeriod = `${week.weekStart.replace(/-/g, "/")} - ${week.weekEnd.replace(/-/g, "/")}`;
+      const exists = existingWeeks.has(weekPeriod);
+      const statusIcon = exists ? "⚠️" : "✓";
+      const statusText = exists
+        ? (lang === "es" ? "Ya existe en Sheets" : "Already exists in Sheets")
+        : (lang === "es" ? "Nueva" : "New");
+      const weekClass = exists ? "week-header week-warning" : "week-header";
+      html += `<div class="${weekClass}">
+        ${statusIcon} ${lang === "es" ? "Semana" : "Week"} ${idx + 1}: ${weekPeriod} (${weekTotal.toFixed(2)} hrs)
+        ${existingWeeks.size > 0 ? `<span class="week-status">${statusText}</span>` : ""}
       </div>`;
       html += weekMerged
         .map((s) => {
@@ -2128,7 +2182,15 @@ function renderManualShifts() {
 
   // Show preview automatically when there are shifts
   if (manualShifts.length > 0) {
-    renderPreview(manualShifts);
+    // Check for existing weeks if user is Juan Diaz and authenticated
+    const employeeName = document.getElementById("employeeName").value.trim();
+    if (employeeName === OWNER_NAME && accessToken) {
+      checkExistingWeeks(manualShifts).then((existingWeeks) => {
+        renderPreview(manualShifts, existingWeeks);
+      });
+    } else {
+      renderPreview(manualShifts);
+    }
   } else {
     document.getElementById("preview").style.display = "none";
   }
@@ -2515,7 +2577,15 @@ function validateJsonInputLive() {
 
   // Show preview automatically if JSON is valid (no errors)
   if (shiftIssues.length === 0) {
-    renderPreview(allShifts);
+    // Check for existing weeks if user is Juan Diaz and authenticated
+    const employeeName = document.getElementById("employeeName").value.trim();
+    if (employeeName === OWNER_NAME && accessToken) {
+      checkExistingWeeks(allShifts).then((existingWeeks) => {
+        renderPreview(allShifts, existingWeeks);
+      });
+    } else {
+      renderPreview(allShifts);
+    }
   } else {
     document.getElementById("preview").style.display = "none";
   }
