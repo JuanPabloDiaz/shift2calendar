@@ -225,15 +225,18 @@ let signedInUserEmail = "";
 // Save token to localStorage with expiry timestamp
 function saveToken(token) {
   const expiryTime = Date.now() + 3600000; // 1 hour from now
-  localStorage.setItem('googleAccessToken', token);
-  localStorage.setItem('tokenExpiry', expiryTime.toString());
-  console.log('Token saved, expires at:', new Date(expiryTime).toLocaleTimeString());
+  localStorage.setItem("googleAccessToken", token);
+  localStorage.setItem("tokenExpiry", expiryTime.toString());
+  console.log(
+    "Token saved, expires at:",
+    new Date(expiryTime).toLocaleTimeString(),
+  );
 }
 
 // Load token from localStorage if valid
 function loadSavedToken() {
-  const savedToken = localStorage.getItem('googleAccessToken');
-  const expiry = localStorage.getItem('tokenExpiry');
+  const savedToken = localStorage.getItem("googleAccessToken");
+  const expiry = localStorage.getItem("tokenExpiry");
 
   if (!savedToken || !expiry) {
     return null;
@@ -241,7 +244,7 @@ function loadSavedToken() {
 
   // Check if token is expired
   if (Date.now() >= parseInt(expiry)) {
-    console.log('Saved token expired, clearing...');
+    console.log("Saved token expired, clearing...");
     clearSavedToken();
     return null;
   }
@@ -253,21 +256,23 @@ function loadSavedToken() {
 
 // Clear saved token
 function clearSavedToken() {
-  localStorage.removeItem('googleAccessToken');
-  localStorage.removeItem('tokenExpiry');
-  localStorage.removeItem('gsi_connected'); // Legacy flag
+  localStorage.removeItem("googleAccessToken");
+  localStorage.removeItem("tokenExpiry");
+  localStorage.removeItem("gsi_connected"); // Legacy flag
 }
 
 // Helper function to copy access token (for stats page)
-window.getAccessToken = function() {
+window.getAccessToken = function () {
   if (!accessToken) {
-    console.log('⚠️ No access token available. Please sign in first.');
+    console.log("⚠️ No access token available. Please sign in first.");
     return null;
   }
-  console.log('✅ Access token copied to clipboard!');
-  console.log('📋 Token:', accessToken);
+  console.log("✅ Access token copied to clipboard!");
+  console.log("📋 Token:", accessToken);
   navigator.clipboard.writeText(accessToken).catch(() => {
-    console.log('⚠️ Could not copy to clipboard automatically. Copy manually from above.');
+    console.log(
+      "⚠️ Could not copy to clipboard automatically. Copy manually from above.",
+    );
   });
   return accessToken;
 };
@@ -288,7 +293,7 @@ window.addEventListener("load", () => {
 
     if (savedToken && isJuan()) {
       // Token is valid, use it directly
-      console.log('Using saved token');
+      console.log("Using saved token");
       accessToken = savedToken;
 
       // Get user info with saved token
@@ -297,16 +302,17 @@ window.addEventListener("load", () => {
           "https://www.googleapis.com/oauth2/v3/userinfo",
           {
             headers: { Authorization: "Bearer " + accessToken },
-          }
+          },
         ).then((r) => r.json());
 
         signedInUserEmail = (info.email || "").toLowerCase();
-        document.getElementById("signedInEmail").textContent = info.email || "Connected";
+        document.getElementById("signedInEmail").textContent =
+          info.email || "Connected";
         document.getElementById("googleSignedOut").style.display = "none";
         document.getElementById("googleSignedIn").style.display = "block";
         updateOwnerSheetButton();
       } catch (error) {
-        console.log('Saved token invalid, clearing...');
+        console.log("Saved token invalid, clearing...");
         clearSavedToken();
         accessToken = null;
       }
@@ -316,7 +322,11 @@ window.addEventListener("load", () => {
     initTokenClient();
 
     // If no valid saved token, try silent refresh
-    if (!savedToken && localStorage.getItem("gsi_connected") === "1" && isJuan()) {
+    if (
+      !savedToken &&
+      localStorage.getItem("gsi_connected") === "1" &&
+      isJuan()
+    ) {
       showGoogleStatus("loading", T[lang].autoConnecting);
       tokenClient.requestAccessToken({ prompt: "" }); // empty prompt = silent
     }
@@ -375,7 +385,7 @@ function signOut() {
   document.getElementById("googleSignedIn").style.display = "none";
   updateOwnerSheetButton();
   document.getElementById("googleStatus").style.display = "none";
-  console.log('Signed out and cleared saved token');
+  console.log("Signed out and cleared saved token");
 }
 
 function isJuan() {
@@ -499,7 +509,12 @@ async function sendToGoogleCalendar() {
     if (parsedJson && !parsedJson.error) {
       const data = parsedJson.data;
       // Multiple periods - process each separately
-      if (Array.isArray(data) && data.length > 0 && data[0].period && data[0].shifts) {
+      if (
+        Array.isArray(data) &&
+        data.length > 0 &&
+        data[0].period &&
+        data[0].shifts
+      ) {
         showGoogleStatus("loading", t.googleLoading);
         let totalShiftsAdded = 0;
 
@@ -516,8 +531,11 @@ async function sendToGoogleCalendar() {
         }
 
         if (totalShiftsAdded > 0) {
-          showGoogleStatus("success", `${t.googleCalOk} (${totalShiftsAdded} shift${totalShiftsAdded > 1 ? 's' : ''} added)`);
-          renderPreview(data.flatMap(p => p.shifts));
+          showGoogleStatus(
+            "success",
+            `${t.googleCalOk} (${totalShiftsAdded} shift${totalShiftsAdded > 1 ? "s" : ""} added)`,
+          );
+          // Preview is already shown automatically when JSON is pasted
           resetAfterAction();
         }
         return;
@@ -530,7 +548,7 @@ async function sendToGoogleCalendar() {
   if (!parsed) return;
   const ok = await _doCalendar(parsed.shifts, parsed.period);
   if (ok !== false) {
-    renderPreview(parsed.shifts);
+    // Preview is already shown automatically when JSON is pasted or shifts are added manually
     resetAfterAction();
   }
 }
@@ -666,7 +684,12 @@ async function sendToSheets() {
     if (parsedJson && !parsedJson.error) {
       const data = parsedJson.data;
       // Multiple periods - process each separately, divided by calendar week
-      if (Array.isArray(data) && data.length > 0 && data[0].period && data[0].shifts) {
+      if (
+        Array.isArray(data) &&
+        data.length > 0 &&
+        data[0].period &&
+        data[0].shifts
+      ) {
         showGoogleStatus("loading", t.googleLoading);
         let totalWeeksAdded = 0;
 
@@ -682,8 +705,11 @@ async function sendToSheets() {
         }
 
         if (totalWeeksAdded > 0) {
-          showGoogleStatus("success", `${t.googleSheetsOk} (${totalWeeksAdded} week${totalWeeksAdded > 1 ? 's' : ''} added)`);
-          renderPreview(data.flatMap(p => p.shifts));
+          showGoogleStatus(
+            "success",
+            `${t.googleSheetsOk} (${totalWeeksAdded} week${totalWeeksAdded > 1 ? "s" : ""} added)`,
+          );
+          // Preview is already shown automatically when JSON is pasted
           resetAfterAction();
         }
         return;
@@ -705,7 +731,7 @@ async function sendToSheets() {
   }
 
   if (successCount > 0) {
-    renderPreview(parsed.shifts);
+    // Preview is already shown automatically when JSON is pasted or shifts are added manually
     resetAfterAction();
   }
 }
@@ -773,144 +799,6 @@ async function getSheetValues(sheetName) {
   ).then((r) => r.json());
   return res.values || [];
 }
-
-async function clearTab(sheetName) {
-  await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A1:Z200:clear`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-        "Content-Type": "application/json",
-      },
-    },
-  );
-}
-
-async function checkTabHasData(sheetName) {
-  const res = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!A2`,
-    { headers: { Authorization: "Bearer " + accessToken } },
-  ).then((r) => r.json());
-  return !!(res.values && res.values.length);
-}
-
-async function ensureSummaryCharts(summaryTabId) {
-  // Charts disabled for now - will add clearer charts in future update
-  return true;
-
-  const meta = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`,
-    { headers: { Authorization: "Bearer " + accessToken } },
-  ).then((r) => r.json());
-  const summarySheet = (meta.sheets || []).find(
-    (s) => s.properties?.sheetId === summaryTabId,
-  );
-  const existingCharts = summarySheet?.charts || [];
-  if (existingCharts.length >= 3) return true;
-
-  const chartRange = (colStart, colEnd) => ({
-    sourceRange: {
-      sources: [
-        {
-          sheetId: summaryTabId,
-          startRowIndex: 10,
-          endRowIndex: 220,
-          startColumnIndex: colStart,
-          endColumnIndex: colEnd,
-        },
-      ],
-    },
-  });
-
-  const requests = [
-    {
-      addChart: {
-        chart: {
-          spec: {
-            title: "Hours by Month",
-            basicChart: {
-              chartType: "COLUMN",
-              legendPosition: "NO_LEGEND",
-              axis: [
-                { position: "BOTTOM_AXIS", title: "Month" },
-                { position: "LEFT_AXIS", title: "Hours" },
-              ],
-              domains: [{ domain: chartRange(0, 1) }],
-              series: [{ series: chartRange(1, 2), targetAxis: "LEFT_AXIS" }],
-              headerCount: 1,
-            },
-          },
-          position: {
-            overlayPosition: {
-              anchorCell: {
-                sheetId: summaryTabId,
-                rowIndex: 1,
-                columnIndex: 3,
-              },
-              offsetXPixels: 0,
-              offsetYPixels: 0,
-              widthPixels: 520,
-              heightPixels: 260,
-            },
-          },
-        },
-      },
-    },
-    {
-      addChart: {
-        chart: {
-          spec: {
-            title: "Pay by Month",
-            basicChart: {
-              chartType: "LINE",
-              legendPosition: "NO_LEGEND",
-              axis: [
-                { position: "BOTTOM_AXIS", title: "Month" },
-                { position: "LEFT_AXIS", title: "Pay" },
-              ],
-              domains: [{ domain: chartRange(0, 1) }],
-              series: [{ series: chartRange(2, 3), targetAxis: "LEFT_AXIS" }],
-              headerCount: 1,
-            },
-          },
-          position: {
-            overlayPosition: {
-              anchorCell: {
-                sheetId: summaryTabId,
-                rowIndex: 15,
-                columnIndex: 3,
-              },
-              offsetXPixels: 0,
-              offsetYPixels: 0,
-              widthPixels: 520,
-              heightPixels: 260,
-            },
-          },
-        },
-      },
-    },
-    {
-      addChart: {
-        chart: {
-          spec: {
-            title: "Sundays by Month",
-            basicChart: {
-              chartType: "COLUMN",
-              legendPosition: "NO_LEGEND",
-              axis: [
-                { position: "BOTTOM_AXIS", title: "Month" },
-                { position: "LEFT_AXIS", title: "Sundays" },
-              ],
-              domains: [{ domain: chartRange(4, 5) }],
-              series: [{ series: chartRange(5, 6), targetAxis: "LEFT_AXIS" }],
-              headerCount: 1,
-            },
-          },
-          position: {
-            overlayPosition: {
-              anchorCell: {
-                sheetId: summaryTabId,
                 rowIndex: 29,
                 columnIndex: 3,
               },
@@ -947,8 +835,8 @@ async function updateSummaryTab() {
     ["📊 WORK SUMMARY & PROJECTIONS"],
     [""],
     ["💰 PAY PERIOD INFO"],
-    ["Latest Period Date", '=INDEX(Schedule!H:H,2)'],
-    ["Hours This Period", '=SUMIF(Schedule!H:H,B4,Schedule!E:E)', "hrs"],
+    ["Latest Period Date", "=INDEX(Schedule!H:H,2)"],
+    ["Hours This Period", "=SUMIF(Schedule!H:H,B4,Schedule!E:E)", "hrs"],
     ["Pay This Period", `=SUMIF(Schedule!H:H,B4,Schedule!F:F)`, "$"],
     [""],
     [`📈 YEAR-TO-DATE TOTALS`],
@@ -1960,7 +1848,12 @@ async function sendToBoth() {
     if (parsedJson && !parsedJson.error) {
       const data = parsedJson.data;
       // Multiple periods - process each separately, divided by calendar week
-      if (Array.isArray(data) && data.length > 0 && data[0].period && data[0].shifts) {
+      if (
+        Array.isArray(data) &&
+        data.length > 0 &&
+        data[0].period &&
+        data[0].shifts
+      ) {
         showGoogleStatus("loading", t.googleLoading);
         let totalWeeksAdded = 0;
 
@@ -1985,7 +1878,7 @@ async function sendToBoth() {
 
         if (totalWeeksAdded > 0) {
           showGoogleStatus("success", t.googleBothOk);
-          renderPreview(data.flatMap(p => p.shifts));
+          // Preview is already shown automatically when JSON is pasted
           resetAfterAction();
         }
         return;
@@ -2001,7 +1894,7 @@ async function sendToBoth() {
   const shtOk = await _doSheets(parsed.shifts, parsed.period);
   if (shtOk === false) return;
   showGoogleStatus("success", T[lang].googleBothOk);
-  renderPreview(parsed.shifts);
+  // Preview is already shown automatically when JSON is pasted or shifts are added manually
   resetAfterAction();
 }
 
@@ -2017,7 +1910,6 @@ function generate() {
   const t = T[lang];
   document.getElementById("errorBox").style.display = "none";
   document.getElementById("successBox").style.display = "none";
-  document.getElementById("preview").style.display = "none";
   const parsed = parseAndValidate();
   if (!parsed) return;
 
@@ -2031,7 +1923,7 @@ function generate() {
   a.click();
   URL.revokeObjectURL(url);
   showSuccess(t.successMsg + periodToFilename(parsed.period));
-  renderPreview(parsed.shifts);
+  // Preview is already shown automatically when JSON is pasted or shifts are added manually
   resetAfterAction();
 }
 
@@ -2057,14 +1949,14 @@ function renderPreview(shifts) {
     const grandTotal = merged.reduce((a, s) => a + parseFloat(s.hours), 0);
     const totalShifts = merged.length;
     document.getElementById("weeklySummary").textContent =
-      `${t.weeklyLabel} ${grandTotal.toFixed(2)} hrs (${weeks.length} ${lang === 'es' ? 'semanas' : 'weeks'}, ${totalShifts} ${lang === 'es' ? 'turnos' : 'shifts'})`;
+      `${t.weeklyLabel} ${grandTotal.toFixed(2)} hrs (${weeks.length} ${lang === "es" ? "semanas" : "weeks"}, ${totalShifts} ${lang === "es" ? "turnos" : "shifts"})`;
 
-    let html = '';
+    let html = "";
     weeks.forEach((week, idx) => {
       const weekMerged = mergeShifts(week.shifts);
       const weekTotal = weekMerged.reduce((a, s) => a + parseFloat(s.hours), 0);
       html += `<div style="margin: 16px 0 8px; padding: 8px; background: #f0f0f0; border-radius: 4px; font-weight: bold;">
-        ${lang === 'es' ? 'Semana' : 'Week'} ${idx + 1}: ${week.weekStart.replace(/-/g, '/')} - ${week.weekEnd.replace(/-/g, '/')} (${weekTotal.toFixed(2)} hrs)
+        ${lang === "es" ? "Semana" : "Week"} ${idx + 1}: ${week.weekStart.replace(/-/g, "/")} - ${week.weekEnd.replace(/-/g, "/")} (${weekTotal.toFixed(2)} hrs)
       </div>`;
       html += weekMerged
         .map((s) => {
@@ -2103,7 +1995,8 @@ function buildIcs(shifts) {
 
   let events = "";
   for (const s of merged) {
-    const uid = "costco-" + s.date + "-" + Math.random().toString(36).slice(2);
+    const uid =
+      "schedule-" + s.date + "-" + Math.random().toString(36).slice(2);
     let desc = `${t.descShift}\\n⏱ ${t.descHours}: ${s.hours} hrs`;
     if (includeWeekly)
       desc += `\\n📅 ${t.descWeekTotal}: ${totalWeekHours.toFixed(2)} hrs (${totalWeekDays} ${t.descWeekDays})`;
@@ -2259,6 +2152,13 @@ function renderManualShifts() {
       return `<div class="manual-shift-item"><span>${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</span><span>${s.start} - ${s.end}</span><button onclick="removeShift(${i})">×</button></div>`;
     })
     .join("");
+
+  // Show preview automatically when there are shifts
+  if (manualShifts.length > 0) {
+    renderPreview(manualShifts);
+  } else {
+    document.getElementById("preview").style.display = "none";
+  }
 }
 function toggleTheme() {
   theme = theme === "light" ? "dark" : "light";
@@ -2324,8 +2224,7 @@ function applyTranslations() {
   if (openSheetBtn)
     openSheetBtn.querySelector("span").textContent = t.openSheet;
   const statsBtn = document.getElementById("txt-view-stats");
-  if (statsBtn)
-    statsBtn.querySelector("span").textContent = t.viewStats;
+  if (statsBtn) statsBtn.querySelector("span").textContent = t.viewStats;
   renderManualShifts();
   validateJsonInputLive();
   updateOwnerSheetButton();
@@ -2601,10 +2500,12 @@ function validateJsonInputLive() {
   const parsed = parseJsonInput();
   if (!parsed) {
     renderJsonValidation([]);
+    document.getElementById("preview").style.display = "none";
     return;
   }
   if (parsed.error) {
     renderJsonValidation([t.jsonFixInvalid]);
+    document.getElementById("preview").style.display = "none";
     return;
   }
 
@@ -2612,7 +2513,12 @@ function validateJsonInputLive() {
   let allShifts = [];
 
   // Check if it's an array of periods
-  if (Array.isArray(parsed.data) && parsed.data.length > 0 && parsed.data[0].period && parsed.data[0].shifts) {
+  if (
+    Array.isArray(parsed.data) &&
+    parsed.data.length > 0 &&
+    parsed.data[0].period &&
+    parsed.data[0].shifts
+  ) {
     // Just collect all shifts from all periods
     parsed.data.forEach((periodData) => {
       const shifts = periodData.shifts || [];
@@ -2626,12 +2532,20 @@ function validateJsonInputLive() {
 
   if (!allShifts.length) {
     renderJsonValidation([]);
+    document.getElementById("preview").style.display = "none";
     return;
   }
 
   // Also validate individual shifts
   const shiftIssues = validateShiftData(allShifts);
   renderJsonValidation([...issues, ...shiftIssues]);
+
+  // Show preview automatically if JSON is valid (no errors)
+  if (shiftIssues.length === 0) {
+    renderPreview(allShifts);
+  } else {
+    document.getElementById("preview").style.display = "none";
+  }
 }
 function fixJsonInput() {
   const t = T[lang];
@@ -2649,7 +2563,12 @@ function fixJsonInput() {
 
   // Collect ALL shifts from all periods
   let allShifts = [];
-  if (Array.isArray(parsed.data) && parsed.data.length > 0 && parsed.data[0].period && parsed.data[0].shifts) {
+  if (
+    Array.isArray(parsed.data) &&
+    parsed.data.length > 0 &&
+    parsed.data[0].period &&
+    parsed.data[0].shifts
+  ) {
     // Multiple periods - extract all shifts
     parsed.data.forEach((periodData) => {
       allShifts.push(...(periodData.shifts || []));
@@ -2673,7 +2592,10 @@ function fixJsonInput() {
 
     const calc = calcHoursFromTimes(shift.start, shift.end, shift.date);
     const h = parseFloat((shift.hours ?? "").toString());
-    if (calc && (!Number.isFinite(h) || h < 0 || !hoursMatchesPolicy(h, calc.hours))) {
+    if (
+      calc &&
+      (!Number.isFinite(h) || h < 0 || !hoursMatchesPolicy(h, calc.hours))
+    ) {
       shift.hours = calc.hours.toFixed(2);
     }
   });
@@ -2690,7 +2612,9 @@ function fixJsonInput() {
   });
 
   if (allShifts.length !== uniqueShifts.length) {
-    changes.push(`Removed ${allShifts.length - uniqueShifts.length} duplicate shift${allShifts.length - uniqueShifts.length > 1 ? 's' : ''}`);
+    changes.push(
+      `Removed ${allShifts.length - uniqueShifts.length} duplicate shift${allShifts.length - uniqueShifts.length > 1 ? "s" : ""}`,
+    );
   }
 
   // Sort chronologically
@@ -2713,8 +2637,9 @@ function fixJsonInput() {
   });
 
   // Create periods sorted chronologically
-  const periods = Object.values(byWeek)
-    .sort((a, b) => a.week.start.localeCompare(b.week.start));
+  const periods = Object.values(byWeek).sort((a, b) =>
+    a.week.start.localeCompare(b.week.start),
+  );
 
   const output = periods.map((period) => {
     return {
@@ -2723,7 +2648,9 @@ function fixJsonInput() {
     };
   });
 
-  changes.push(`Organized into ${output.length} period${output.length > 1 ? 's' : ''}`);
+  changes.push(
+    `Organized into ${output.length} period${output.length > 1 ? "s" : ""}`,
+  );
 
   document.getElementById("jsonInput").value = JSON.stringify(output, null, 2);
   validateJsonInputLive();
@@ -2792,7 +2719,7 @@ function getLunchReminderDate(startDt, hoursWorked) {
   return new Date(startDt.getTime() + minsAfterStart * 60000);
 }
 function periodToFilename(p) {
-  return "costco_" + p.trim().replace(/\//g, "-").replace(" - ", "_") + ".ics";
+  return "schedule_" + p.trim().replace(/\//g, "-").replace(" - ", "_") + ".ics";
 }
 function showError(msg) {
   const el = document.getElementById("errorBox");

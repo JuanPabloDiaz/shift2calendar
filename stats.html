@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Costco Work Stats</title>
+    <title>My Work Stats</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -74,7 +74,9 @@
         padding: 25px;
         border-radius: 12px;
         box-shadow: 0 4px 16px var(--shadow);
-        transition: transform 0.2s, background 0.3s ease;
+        transition:
+          transform 0.2s,
+          background 0.3s ease;
       }
 
       .stat-card:hover {
@@ -159,7 +161,9 @@
       .progress-fill {
         height: 100%;
         background: var(--accent);
-        transition: width 0.3s ease, background 0.3s ease;
+        transition:
+          width 0.3s ease,
+          background 0.3s ease;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -257,16 +261,25 @@
             <button class="lang-btn" id="btn-es-auth" onclick="setLang('es')">
               ES
             </button>
-            <button class="lang-btn active" id="btn-en-auth" onclick="setLang('en')">
+            <button
+              class="lang-btn active"
+              id="btn-en-auth"
+              onclick="setLang('en')"
+            >
               EN
             </button>
           </div>
         </div>
-        <h2><i class="fas fa-lock"></i> <span id="txt-auth-title">Sign in to view your stats</span></h2>
-        <p style="margin-bottom: 30px;" id="txt-auth-desc">
+        <h2>
+          <i class="fas fa-lock"></i>
+          <span id="txt-auth-title">Sign in to view your stats</span>
+        </h2>
+        <p style="margin-bottom: 30px" id="txt-auth-desc">
           Sign in with your Google account to access your work statistics
         </p>
-        <button id="authButton" class="btn"><span id="txt-auth-btn">Sign In with Google</span></button>
+        <button id="authButton" class="btn">
+          <span id="txt-auth-btn">Sign In with Google</span>
+        </button>
       </div>
 
       <div id="statsContent" style="display: none">
@@ -282,15 +295,30 @@
               <button class="lang-btn" id="btn-es" onclick="setLang('es')">
                 ES
               </button>
-              <button class="lang-btn active" id="btn-en" onclick="setLang('en')">
+              <button
+                class="lang-btn active"
+                id="btn-en"
+                onclick="setLang('en')"
+              >
                 EN
               </button>
             </div>
           </div>
-          <h1><i class="fas fa-chart-line"></i> <span id="txt-title">Your Work Statistics</span></h1>
-          <p id="txt-subtitle">Historical data and insights from your schedule</p>
-          <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
-            <button id="backToIndexButton" class="btn" onclick="window.location.href='index.html'">
+          <h1>
+            <i class="fas fa-chart-line"></i>
+            <span id="txt-title">Your Work Statistics</span>
+          </h1>
+          <p id="txt-subtitle">
+            Historical data and insights from your schedule
+          </p>
+          <div
+            style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap"
+          >
+            <button
+              id="backToIndexButton"
+              class="btn"
+              onclick="window.location.href = 'index.html'"
+            >
               <i class="fas fa-arrow-left"></i>
               <span id="txt-back">Back to Schedule</span>
             </button>
@@ -307,30 +335,48 @@
           <!-- Summary Stats -->
           <div class="stats-grid">
             <div class="stat-card">
-              <h3><i class="fas fa-clock"></i> <span id="txt-total-hours">Total Hours Worked</span></h3>
+              <h3>
+                <i class="fas fa-clock"></i>
+                <span id="txt-total-hours">Total Hours Worked</span>
+              </h3>
               <div class="value" id="totalHours">0</div>
               <div class="unit" id="txt-hours-unit">hours</div>
             </div>
             <div class="stat-card">
-              <h3><i class="fas fa-dollar-sign"></i> <span id="txt-total-earnings">Total Earnings</span></h3>
+              <h3>
+                <i class="fas fa-dollar-sign"></i>
+                <span id="txt-total-earnings">Total Earnings</span>
+              </h3>
               <div class="value" id="totalPay">$0</div>
             </div>
             <div class="stat-card">
-              <h3><i class="fas fa-calendar-week"></i> <span id="txt-avg-hours">Avg Hours/Week</span></h3>
+              <h3>
+                <i class="fas fa-calendar-week"></i>
+                <span id="txt-avg-hours">Avg Hours/Week</span>
+              </h3>
               <div class="value" id="avgHoursWeek">0</div>
               <div class="unit" id="txt-hrs-wk-unit">hrs/wk</div>
             </div>
             <div class="stat-card">
-              <h3><i class="fas fa-sun"></i> <span id="txt-sunday-premium">Sunday Premium</span></h3>
+              <h3>
+                <i class="fas fa-sun"></i>
+                <span id="txt-sunday-premium">Sunday Premium</span>
+              </h3>
               <div class="value" id="sundayPremium">$0</div>
             </div>
             <div class="stat-card">
-              <h3><i class="fas fa-heartbeat"></i> <span id="txt-sick-time">Sick Time Earned</span></h3>
+              <h3>
+                <i class="fas fa-heartbeat"></i>
+                <span id="txt-sick-time">Sick Time Earned</span>
+              </h3>
               <div class="value" id="sickTime">0</div>
               <div class="unit" id="txt-sick-unit">hours</div>
             </div>
             <div class="stat-card">
-              <h3><i class="fas fa-trophy"></i> <span id="txt-raise-progress">Progress to Raise</span></h3>
+              <h3>
+                <i class="fas fa-trophy"></i>
+                <span id="txt-raise-progress">Progress to Raise</span>
+              </h3>
               <div class="value" id="raiseProgress">0%</div>
               <div class="progress-bar">
                 <div
@@ -346,28 +392,40 @@
 
           <!-- Charts -->
           <div class="chart-container">
-            <h2><i class="fas fa-chart-area"></i> <span id="txt-chart-hours">Hours Worked Over Time</span></h2>
+            <h2>
+              <i class="fas fa-chart-area"></i>
+              <span id="txt-chart-hours">Hours Worked Over Time</span>
+            </h2>
             <div class="chart-wrapper">
               <canvas id="hoursChart"></canvas>
             </div>
           </div>
 
           <div class="chart-container">
-            <h2><i class="fas fa-money-bill-wave"></i> <span id="txt-chart-earnings">Earnings Over Time</span></h2>
+            <h2>
+              <i class="fas fa-money-bill-wave"></i>
+              <span id="txt-chart-earnings">Earnings Over Time</span>
+            </h2>
             <div class="chart-wrapper">
               <canvas id="payChart"></canvas>
             </div>
           </div>
 
           <div class="chart-container">
-            <h2><i class="fas fa-chart-pie"></i> <span id="txt-chart-sunday">Sunday vs Regular Hours</span></h2>
+            <h2>
+              <i class="fas fa-chart-pie"></i>
+              <span id="txt-chart-sunday">Sunday vs Regular Hours</span>
+            </h2>
             <div class="chart-wrapper">
               <canvas id="sundayChart"></canvas>
             </div>
           </div>
 
           <div class="chart-container">
-            <h2><i class="fas fa-chart-bar"></i> <span id="txt-chart-weekly">Weekly Breakdown</span></h2>
+            <h2>
+              <i class="fas fa-chart-bar"></i>
+              <span id="txt-chart-weekly">Weekly Breakdown</span>
+            </h2>
             <div class="chart-wrapper">
               <canvas id="weeklyChart"></canvas>
             </div>
