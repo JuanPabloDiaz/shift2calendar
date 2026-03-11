@@ -800,49 +800,79 @@ async function getSheetValues(sheetName) {
   return res.values || [];
 }
 
-// Check which weeks already exist in Sheets (for preview warnings)
+// Check which weeks already exist in Calendar and/or Sheets (for preview warnings)
 async function checkExistingWeeks(shifts) {
   console.log("🔍 checkExistingWeeks called", { hasToken: !!accessToken, shiftsCount: shifts.length });
   if (!accessToken) {
     console.log("⚠️ No access token, skipping check");
-    return new Set();
+    return new Map();
   }
 
   const weeks = groupShiftsByCalendarWeek(shifts);
-  const existingWeeks = new Set();
+  const existingWeeks = new Map(); // Map<weekPeriod, {inCalendar: bool, inSheets: bool}>
   console.log("📅 Checking weeks:", weeks.map(w => `${w.weekStart} - ${w.weekEnd}`));
 
   try {
-    // Get existing data from Schedule tab
+    // Check Sheets
     const existingValues = await getSheetValues(SHEET_TAB_TITLE);
     console.log("📊 Existing values from Sheets:", existingValues.length, "rows");
 
-    // Extract existing dates (skip header row)
-    const existingDates = new Set();
+    const existingDatesInSheets = new Set();
     existingValues.slice(1).forEach((row) => {
-      if (row[0]) { // Date is in column A
-        existingDates.add(row[0]); // Format: YYYY-MM-DD
+      if (row[0]) {
+        existingDatesInSheets.add(row[0]);
       }
     });
-    console.log("📆 Existing dates in Sheets:", Array.from(existingDates));
+    console.log("📆 Existing dates in Sheets:", Array.from(existingDatesInSheets));
 
-    // Check each week to see if it has any shifts that already exist
-    weeks.forEach((week) => {
+    // Check Calendar for each week
+    for (const week of weeks) {
       const weekPeriod = `${week.weekStart.replace(/-/g, "/")} - ${week.weekEnd.replace(/-/g, "/")}`;
-      const hasExistingShifts = week.shifts.some((shift) => existingDates.has(shift.date));
 
-      if (hasExistingShifts) {
-        existingWeeks.add(weekPeriod);
-        console.log("⚠️ Week has existing shifts:", weekPeriod);
-      } else {
-        console.log("✓ Week is new:", weekPeriod);
+      const inSheets = week.shifts.some((shift) => existingDatesInSheets.has(shift.date));
+
+      // Check Calendar for any shift in this week
+      let inCalendar = false;
+      for (const shift of week.shifts) {
+        try {
+          const dayStart = shift.date + "T00:00:00-05:00";
+          const dayEnd = shift.date + "T23:59:59-05:00";
+          console.log(`🔍 Checking Calendar for ${shift.date}...`);
+          const calResponse = await fetch(
+            `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(dayStart)}&timeMax=${encodeURIComponent(dayEnd)}&q=Costco`,
+            { headers: { Authorization: "Bearer " + accessToken } }
+          );
+
+          if (!calResponse.ok) {
+            console.warn(`⚠️ Calendar API error for ${shift.date}:`, calResponse.status, calResponse.statusText);
+            continue;
+          }
+
+          const calCheck = await calResponse.json();
+          console.log(`📅 Calendar response for ${shift.date}:`, calCheck.items?.length || 0, "events");
+
+          if (calCheck.items && calCheck.items.some((e) => e.summary === "Costco")) {
+            console.log(`✅ Found Costco event in Calendar on ${shift.date}`);
+            inCalendar = true;
+            break;
+          }
+        } catch (err) {
+          console.warn(`❌ Error checking Calendar for ${shift.date}:`, err);
+        }
       }
-    });
+
+      if (inSheets || inCalendar) {
+        existingWeeks.set(weekPeriod, { inCalendar, inSheets });
+        console.log(`⚠️ Week ${weekPeriod}:`, { inCalendar, inSheets });
+      } else {
+        console.log(`✓ Week ${weekPeriod}: New`);
+      }
+    }
   } catch (err) {
     console.warn("❌ Could not check existing weeks:", err);
   }
 
-  console.log("🏁 Final existingWeeks:", Array.from(existingWeeks));
+  console.log("🏁 Final existingWeeks:", Array.from(existingWeeks.entries()));
   return existingWeeks;
 }
 
@@ -1946,7 +1976,7 @@ function generate() {
   resetAfterAction();
 }
 
-function renderPreview(shifts, existingWeeks = new Set()) {
+function renderPreview(shifts, existingWeeks = new Map()) {
   const t = T[lang];
   const DAYS = lang === "es" ? DAYS_ES : DAYS_EN;
   const MONTHS = lang === "es" ? MONTHS_ES : MONTHS_EN;
@@ -1975,15 +2005,28 @@ function renderPreview(shifts, existingWeeks = new Set()) {
       const weekMerged = mergeShifts(week.shifts);
       const weekTotal = weekMerged.reduce((a, s) => a + parseFloat(s.hours), 0);
       const weekPeriod = `${week.weekStart.replace(/-/g, "/")} - ${week.weekEnd.replace(/-/g, "/")}`;
-      const exists = existingWeeks.has(weekPeriod);
+
+      const existInfo = existingWeeks.get(weekPeriod);
+      const exists = !!existInfo;
       const statusIcon = exists ? "⚠️" : "✓";
-      const statusText = exists
-        ? (lang === "es" ? "Ya existe en Sheets" : "Already exists in Sheets")
-        : (lang === "es" ? "Nueva" : "New");
+
+      let statusText = "";
+      if (existInfo) {
+        if (existInfo.inCalendar && existInfo.inSheets) {
+          statusText = lang === "es" ? "Ya existe en Calendar y Sheets" : "Already exists in Calendar and Sheets";
+        } else if (existInfo.inCalendar) {
+          statusText = lang === "es" ? "Ya existe en Calendar" : "Already exists in Calendar";
+        } else if (existInfo.inSheets) {
+          statusText = lang === "es" ? "Ya existe en Sheets" : "Already exists in Sheets";
+        }
+      } else {
+        statusText = lang === "es" ? "Nueva" : "New";
+      }
+
       const weekClass = exists ? "week-header week-warning" : "week-header";
       html += `<div class="${weekClass}">
-        ${statusIcon} ${lang === "es" ? "Semana" : "Week"} ${idx + 1}: ${weekPeriod} (${weekTotal.toFixed(2)} hrs)
-        ${existingWeeks.size > 0 ? `<span class="week-status">${statusText}</span>` : ""}
+        <div>${statusIcon} ${lang === "es" ? "Semana" : "Week"} ${idx + 1}: ${weekPeriod} (${weekTotal.toFixed(2)} hrs)</div>
+        ${existingWeeks.size > 0 ? `<div class="week-status">${statusText}</div>` : ""}
       </div>`;
       html += weekMerged
         .map((s) => {
@@ -1994,16 +2037,48 @@ function renderPreview(shifts, existingWeeks = new Set()) {
     });
     document.getElementById("shiftList").innerHTML = html;
   } else {
-    // Single week - show as before
+    // Single week - also show warning if exists
     const total = merged.reduce((a, s) => a + parseFloat(s.hours), 0);
     document.getElementById("weeklySummary").textContent =
       `${t.weeklyLabel} ${total.toFixed(2)} hrs`;
-    document.getElementById("shiftList").innerHTML = merged
+
+    const week = weeks[0];
+    const weekPeriod = `${week.weekStart.replace(/-/g, "/")} - ${week.weekEnd.replace(/-/g, "/")}`;
+    const existInfo = existingWeeks.get(weekPeriod);
+    const exists = !!existInfo;
+
+    let html = "";
+    // Show warning header if week exists
+    if (existingWeeks.size > 0) {
+      const statusIcon = exists ? "⚠️" : "✓";
+      let statusText = "";
+      if (existInfo) {
+        if (existInfo.inCalendar && existInfo.inSheets) {
+          statusText = lang === "es" ? "Ya existe en Calendar y Sheets" : "Already exists in Calendar and Sheets";
+        } else if (existInfo.inCalendar) {
+          statusText = lang === "es" ? "Ya existe en Calendar" : "Already exists in Calendar";
+        } else if (existInfo.inSheets) {
+          statusText = lang === "es" ? "Ya existe en Sheets" : "Already exists in Sheets";
+        }
+      } else {
+        statusText = lang === "es" ? "Nueva" : "New";
+      }
+
+      const weekClass = exists ? "week-header week-warning" : "week-header";
+      html += `<div class="${weekClass}">
+        <div>${statusIcon} ${weekPeriod} (${total.toFixed(2)} hrs)</div>
+        <div class="week-status">${statusText}</div>
+      </div>`;
+    }
+
+    html += merged
       .map((s) => {
         const d = new Date(s.date + "T00:00:00");
         return `<div class="shift-item"><span class="shift-day">${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</span><span class="shift-time">${fmt(s.startDt)} &ndash; ${fmt(s.endDt)}</span><span class="shift-hrs">${s.hours.toFixed(2)}h</span></div>`;
       })
       .join("");
+
+    document.getElementById("shiftList").innerHTML = html;
   }
 
   document.getElementById("preview").style.display = "block";
