@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terms & Conditions - Costco → Google Calendar | Juan Diaz</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E"
+      type="image/svg+xml"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .terms-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+      }
+
+      .terms-header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .terms-header h1 {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: var(--text);
+      }
+
+      .terms-header p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+      }
+
+      .terms-content {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px var(--shadow);
+        transition: background 0.3s;
+      }
+
+      .terms-section {
+        margin-bottom: 30px;
+      }
+
+      .terms-section h2 {
+        font-size: 1.3rem;
+        margin-bottom: 12px;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .terms-section p,
+      .terms-section li {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+
+      .terms-section ul {
+        margin-left: 20px;
+      }
+
+      .important-box {
+        background: var(--prompt-bg);
+        border-left: 4px solid var(--accent);
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+
+      .important-box p {
+        margin: 0;
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 500;
+        margin-bottom: 20px;
+        transition: opacity 0.2s;
+      }
+
+      .back-link:hover {
+        opacity: 0.7;
+      }
+
+      .lang-toggle-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .terms-container {
+          padding: 15px;
+          margin: 20px auto;
+        }
+
+        .terms-content {
+          padding: 20px;
+        }
+
+        .terms-header h1 {
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="terms-container">
+      <a href="index.html" class="back-link">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        <span id="back-text">Back to app</span>
+      </a>
+
+      <div class="lang-toggle-container">
+        <button
+          class="theme-toggle"
+          id="themeToggle"
+          onclick="toggleTheme()"
+          title="Toggle theme"
+          style="margin-right: 8px;"
+        ></button>
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="es" id="lang-es-btn">
+            ES
+          </button>
+          <button class="lang-btn" data-lang="en" id="lang-en-btn">EN</button>
+        </div>
+      </div>
+
+      <div class="terms-header">
+        <h1 id="page-title">Términos y Condiciones</h1>
+        <p id="page-subtitle">Última actualización: Marzo 2026</p>
+      </div>
+
+      <div class="terms-content">
+        <!-- Purpose Section -->
+        <div class="terms-section">
+          <h2>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="6" />
+              <circle cx="12" cy="12" r="2" />
+            </svg>
+            <span id="section1-title">Propósito de esta aplicación</span>
+          </h2>
+          <p id="section1-p1">
+            Esta es una aplicación web personal que creé para facilitar mi vida.
+            Su única finalidad es ayudarme a convertir mi horario de trabajo en
+            eventos de Google Calendar y llevar un registro de mis horas
+            trabajadas.
+          </p>
+          <p id="section1-p2">
+            Si esto me funciona a mí, no me parece mala idea que mis compañeros
+            de trabajo también puedan usarla. Por eso la hice accesible para
+            cualquiera que la encuentre útil.
+          </p>
+        </div>
+
+        <!-- Important Disclaimer -->
+        <div class="important-box">
+          <p
+            id="disclaimer-text"
+            style="display: flex; align-items: center; gap: 8px"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="flex-shrink: 0"
+            >
+              <path
+                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+              />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span
+              ><strong
+                >Esta aplicación NO está afiliada con ningún empleador.</strong
+              >
+              Es un proyecto personal e independiente.</span
+            >
+          </p>
+        </div>
+
+        <!-- What This App Does -->
+        <div class="terms-section">
+          <h2>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+              />
+            </svg>
+            <span id="section2-title">Qué hace esta aplicación</span>
+          </h2>
+          <ul>
+            <li id="section2-li1">
+              Convierte horarios de trabajo en archivos de calendario (.ics)
+            </li>
+            <li id="section2-li2">
+              Permite crear eventos en Google Calendar (con tu autorización)
+            </li>
+            <li id="section2-li3">
+              Ayuda a llevar registro de horas trabajadas en Google Sheets
+              (opcional)
+            </li>
+            <li id="section2-li4">
+              Proporciona estadísticas sobre horas trabajadas y estimaciones de
+              pago
+            </li>
+          </ul>
+        </div>
+
+        <!-- What This App Does NOT Do -->
+        <div class="terms-section">
+          <h2>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+            </svg>
+            <span id="section3-title">Qué NO hace esta aplicación</span>
+          </h2>
+          <ul>
+            <li id="section3-li1">
+              <strong>NO colecta ni almacena datos personales</strong> - Todo
+              funciona en tu navegador
+            </li>
+            <li id="section3-li2">
+              <strong>NO es spam</strong> - No envía correos ni notificaciones
+              no solicitadas
+            </li>
+            <li id="section3-li3">
+              <strong>NO busca ganar dinero</strong> - Es completamente
+              gratuita, sin anuncios ni pagos
+            </li>
+            <li id="section3-li4">
+              <strong>NO suplanta a ninguna empresa</strong> - Es independiente
+              de cualquier empleador
+            </li>
+            <li id="section3-li5">
+              <strong>NO comparte información</strong> - Tus datos permanecen en
+              tu dispositivo y tu cuenta de Google
+            </li>
+          </ul>
+        </div>
+
+        <!-- Privacy & Data -->
+        <div class="terms-section">
+          <h2>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <span id="section4-title">Privacidad y datos</span>
+          </h2>
+          <p id="section4-p1">
+            Esta aplicación no tiene servidor backend. Todo el procesamiento
+            ocurre en tu navegador. Cuando usas la integración con Google:
+          </p>
+          <ul>
+            <li id="section4-li1">
+              Te pide permiso explícito para acceder a tu Google Calendar y
+              Sheets
+            </li>
+            <li id="section4-li2">
+              Los datos solo se guardan en TU cuenta de Google, bajo tu control
+            </li>
+            <li id="section4-li3">
+              Puedes revocar el acceso en cualquier momento desde tu cuenta de
+              Google
+            </li>
+            <li id="section4-li4">
+              No hay bases de datos, no hay servidores que almacenen tu
+              información
+            </li>
+          </ul>
+        </div>
+
+        <!-- Use at Your Own Risk -->
+        <div class="terms-section">
+          <h2>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            <span id="section5-title">Uso bajo tu propio riesgo</span>
+          </h2>
+          <p id="section5-p1">
+            Esta aplicación se proporciona "tal cual" sin garantías de ningún
+            tipo. Es tu responsabilidad:
+          </p>
+          <ul>
+            <li id="section5-li1">
+              Verificar que los horarios generados sean correctos
+            </li>
+            <li id="section5-li2">
+              Confirmar que los cálculos de horas y pago coincidan con tu
+              situación real
+            </li>
+            <li id="section5-li3">
+              Usar la aplicación de acuerdo con las políticas de tu empleador
+            </li>
+            <li id="section5-li4">
+              Mantener la seguridad de tu cuenta de Google
+            </li>
+          </ul>
+        </div>
+
+        <!-- Open Source -->
+        <div class="terms-section">
+          <h2>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
+            </svg>
+            <span id="section6-title">Transparencia</span>
+          </h2>
+          <p id="section6-p1">
+            Esta aplicación está construida con tecnologías web estándar (HTML,
+            CSS, JavaScript) y no oculta nada. Si tienes conocimientos técnicos,
+            puedes revisar el código fuente directamente en tu navegador.
+          </p>
+          <p id="section6-p2">
+            Este proyecto es de código abierto (open source) bajo la licencia MIT. Puedes ver, usar, modificar y contribuir al código en GitHub:
+          </p>
+          <p style="margin-top: 10px;">
+            <a
+              href="https://github.com/JuanPabloDiaz/shift2calendar"
+              target="_blank"
+              rel="noopener noreferrer"
+              id="section6-link"
+              style="color: var(--accent); text-decoration: underline; font-weight: 500;"
+            >
+              Ver código en GitHub →
+            </a>
+          </p>
+        </div>
+
+        <!-- Contact -->
+        <div class="terms-section">
+          <h2>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+              />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+            <span id="section7-title">Contacto</span>
+          </h2>
+          <p id="section7-p1">
+            Si tienes preguntas, sugerencias, o encuentras algún problema, este
+            es solo un proyecto personal. No hay soporte formal, pero aprecio
+            cualquier feedback que puedas compartir.
+          </p>
+        </div>
+
+        <!-- Final Note -->
+        <div class="important-box">
+          <p
+            id="final-note"
+            style="display: flex; align-items: center; gap: 8px"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="flex-shrink: 0"
+            >
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+              />
+            </svg>
+            <span
+              >Espero que esta herramienta te sea tan útil como lo es para mí.
+              ¡Que tengas un buen día!</span
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Language management
+      let lang = localStorage.getItem("lang") || "es";
+
+      const translations = {
+        es: {
+          backText: "Volver a la app",
+          pageTitle: "Términos y Condiciones",
+          pageSubtitle: "Última actualización: Marzo 2026",
+          section1Title: "Propósito de esta aplicación",
+          section1P1:
+            "Esta es una aplicación web personal que creé para facilitar mi vida. Su única finalidad es ayudarme a convertir mi horario de trabajo en eventos de Google Calendar y llevar un registro de mis horas trabajadas.",
+          section1P2:
+            "Si esto me funciona a mí, no me parece mala idea que mis compañeros de trabajo también puedan usarla. Por eso la hice accesible para cualquiera que la encuentre útil.",
+          disclaimerText:
+            "Esta aplicación NO está afiliada con ningún empleador. Es un proyecto personal e independiente.",
+          section2Title: "Qué hace esta aplicación",
+          section2Li1:
+            "Convierte horarios de trabajo en archivos de calendario (.ics)",
+          section2Li2:
+            "Permite crear eventos en Google Calendar (con tu autorización)",
+          section2Li3:
+            "Ayuda a llevar registro de horas trabajadas en Google Sheets (opcional)",
+          section2Li4:
+            "Proporciona estadísticas sobre horas trabajadas y estimaciones de pago",
+          section3Title: "Qué NO hace esta aplicación",
+          section3Li1:
+            "NO colecta ni almacena datos personales - Todo funciona en tu navegador",
+          section3Li2:
+            "NO es spam - No envía correos ni notificaciones no solicitadas",
+          section3Li3:
+            "NO busca ganar dinero - Es completamente gratuita, sin anuncios ni pagos",
+          section3Li4:
+            "NO suplanta a ninguna empresa - Es independiente de cualquier empleador",
+          section3Li5:
+            "NO comparte información - Tus datos permanecen en tu dispositivo y tu cuenta de Google",
+          section4Title: "Privacidad y datos",
+          section4P1:
+            "Esta aplicación no tiene servidor backend. Todo el procesamiento ocurre en tu navegador. Cuando usas la integración con Google:",
+          section4Li1:
+            "Te pide permiso explícito para acceder a tu Google Calendar y Sheets",
+          section4Li2:
+            "Los datos solo se guardan en TU cuenta de Google, bajo tu control",
+          section4Li3:
+            "Puedes revocar el acceso en cualquier momento desde tu cuenta de Google",
+          section4Li4:
+            "No hay bases de datos, no hay servidores que almacenen tu información",
+          section5Title: "Uso bajo tu propio riesgo",
+          section5P1:
+            'Esta aplicación se proporciona "tal cual" sin garantías de ningún tipo. Es tu responsabilidad:',
+          section5Li1: "Verificar que los horarios generados sean correctos",
+          section5Li2:
+            "Confirmar que los cálculos de horas y pago coincidan con tu situación real",
+          section5Li3:
+            "Usar la aplicación de acuerdo con las políticas de tu empleador",
+          section5Li4: "Mantener la seguridad de tu cuenta de Google",
+          section6Title: "Transparencia",
+          section6P1:
+            "Esta aplicación está construida con tecnologías web estándar (HTML, CSS, JavaScript) y no oculta nada. Si tienes conocimientos técnicos, puedes revisar el código fuente directamente en tu navegador.",
+          section6P2:
+            "Este proyecto es de código abierto (open source) bajo la licencia MIT. Puedes ver, usar, modificar y contribuir al código en GitHub:",
+          section6Link: "Ver código en GitHub",
+          section7Title: "Contacto",
+          section7P1:
+            "Si tienes preguntas, sugerencias, o encuentras algún problema, este es solo un proyecto personal. No hay soporte formal, pero aprecio cualquier feedback que puedas compartir.",
+          finalNote:
+            "Espero que esta herramienta te sea tan útil como lo es para mí. ¡Que tengas un buen día!",
+        },
+        en: {
+          backText: "Back to app",
+          pageTitle: "Terms & Conditions",
+          pageSubtitle: "Last updated: March 2026",
+          section1Title: "Purpose of this application",
+          section1P1:
+            "This is a personal web application I created to make my life easier. Its only purpose is to help me convert my work schedule into Google Calendar events and keep track of my worked hours.",
+          section1P2:
+            "If this works for me, I thought it wouldn't hurt for my coworkers to be able to use it too. That's why I made it accessible to anyone who finds it useful.",
+          disclaimerText:
+            "This application is NOT affiliated with any employer. It's a personal and independent project.",
+          section2Title: "What this app does",
+          section2Li1: "Converts work schedules into calendar files (.ics)",
+          section2Li2:
+            "Allows creating events in Google Calendar (with your authorization)",
+          section2Li3: "Helps track worked hours in Google Sheets (optional)",
+          section2Li4:
+            "Provides statistics about worked hours and pay estimates",
+          section3Title: "What this app does NOT do",
+          section3Li1:
+            "Does NOT collect or store personal data - Everything runs in your browser",
+          section3Li2:
+            "Is NOT spam - Doesn't send unwanted emails or notifications",
+          section3Li3:
+            "Does NOT seek to make money - It's completely free, no ads or payments",
+          section3Li4:
+            "Does NOT impersonate any company - It's independent from any employer",
+          section3Li5:
+            "Does NOT share information - Your data stays on your device and your Google account",
+          section4Title: "Privacy and data",
+          section4P1:
+            "This application has no backend server. All processing happens in your browser. When you use Google integration:",
+          section4Li1:
+            "It asks for explicit permission to access your Google Calendar and Sheets",
+          section4Li2:
+            "Data is only saved in YOUR Google account, under your control",
+          section4Li3:
+            "You can revoke access at any time from your Google account",
+          section4Li4:
+            "There are no databases, no servers storing your information",
+          section5Title: "Use at your own risk",
+          section5P1:
+            'This application is provided "as is" without warranties of any kind. It\'s your responsibility to:',
+          section5Li1: "Verify that generated schedules are correct",
+          section5Li2:
+            "Confirm that hours and pay calculations match your real situation",
+          section5Li3:
+            "Use the application in accordance with your employer's policies",
+          section5Li4: "Maintain the security of your Google account",
+          section6Title: "Transparency",
+          section6P1:
+            "This application is built with standard web technologies (HTML, CSS, JavaScript) and hides nothing. If you have technical knowledge, you can review the source code directly in your browser.",
+          section6P2:
+            "This project is open source under the MIT License. You can view, use, modify, and contribute to the code on GitHub:",
+          section6Link: "View code on GitHub",
+          section7Title: "Contact",
+          section7P1:
+            "If you have questions, suggestions, or find any issues, this is just a personal project. There's no formal support, but I appreciate any feedback you can share.",
+          finalNote:
+            "I hope this tool is as useful to you as it is to me. Have a great day!",
+        },
+      };
+
+      function applyTranslations() {
+        const t = translations[lang];
+        document.getElementById("back-text").textContent = t.backText;
+        document.getElementById("page-title").textContent = t.pageTitle;
+        document.getElementById("page-subtitle").textContent = t.pageSubtitle;
+        document.getElementById("section1-title").textContent = t.section1Title;
+        document.getElementById("section1-p1").textContent = t.section1P1;
+        document.getElementById("section1-p2").textContent = t.section1P2;
+        const disclaimerEl = document.getElementById("disclaimer-text");
+        const disclaimerSpan = disclaimerEl.querySelector("span");
+        disclaimerSpan.innerHTML = `<strong>${t.disclaimerText}</strong>`;
+        document.getElementById("section2-title").textContent = t.section2Title;
+        document.getElementById("section2-li1").textContent = t.section2Li1;
+        document.getElementById("section2-li2").textContent = t.section2Li2;
+        document.getElementById("section2-li3").textContent = t.section2Li3;
+        document.getElementById("section2-li4").textContent = t.section2Li4;
+        document.getElementById("section3-title").textContent = t.section3Title;
+        document.getElementById("section3-li1").innerHTML =
+          `<strong>${t.section3Li1.split(" - ")[0]}</strong> - ${t.section3Li1.split(" - ")[1]}`;
+        document.getElementById("section3-li2").innerHTML =
+          `<strong>${t.section3Li2.split(" - ")[0]}</strong> - ${t.section3Li2.split(" - ")[1]}`;
+        document.getElementById("section3-li3").innerHTML =
+          `<strong>${t.section3Li3.split(" - ")[0]}</strong> - ${t.section3Li3.split(" - ")[1]}`;
+        document.getElementById("section3-li4").innerHTML =
+          `<strong>${t.section3Li4.split(" - ")[0]}</strong> - ${t.section3Li4.split(" - ")[1]}`;
+        document.getElementById("section3-li5").innerHTML =
+          `<strong>${t.section3Li5.split(" - ")[0]}</strong> - ${t.section3Li5.split(" - ")[1]}`;
+        document.getElementById("section4-title").textContent = t.section4Title;
+        document.getElementById("section4-p1").textContent = t.section4P1;
+        document.getElementById("section4-li1").textContent = t.section4Li1;
+        document.getElementById("section4-li2").textContent = t.section4Li2;
+        document.getElementById("section4-li3").textContent = t.section4Li3;
+        document.getElementById("section4-li4").textContent = t.section4Li4;
+        document.getElementById("section5-title").textContent = t.section5Title;
+        document.getElementById("section5-p1").textContent = t.section5P1;
+        document.getElementById("section5-li1").textContent = t.section5Li1;
+        document.getElementById("section5-li2").textContent = t.section5Li2;
+        document.getElementById("section5-li3").textContent = t.section5Li3;
+        document.getElementById("section5-li4").textContent = t.section5Li4;
+        document.getElementById("section6-title").textContent = t.section6Title;
+        document.getElementById("section6-p1").textContent = t.section6P1;
+        document.getElementById("section6-p2").textContent = t.section6P2;
+        document.getElementById("section6-link").textContent = t.section6Link + " →";
+        document.getElementById("section7-title").textContent = t.section7Title;
+        document.getElementById("section7-p1").textContent = t.section7P1;
+        const finalNoteEl = document.getElementById("final-note");
+        const finalNoteSpan = finalNoteEl.querySelector("span");
+        finalNoteSpan.textContent = t.finalNote;
+
+        // Update active language button
+        document.querySelectorAll(".lang-btn").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.lang === lang);
+        });
+      }
+
+      // Theme management
+      let theme = localStorage.getItem("theme") || "light";
+
+      function toggleTheme() {
+        theme = theme === "light" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        updateThemeIcon();
+      }
+
+      function updateThemeIcon() {
+        document.getElementById("themeToggle").innerHTML =
+          theme === "light"
+            ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+            : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+      }
+
+      // Language toggle handlers
+      document.querySelectorAll(".lang-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          lang = btn.dataset.lang;
+          localStorage.setItem("lang", lang);
+          applyTranslations();
+        });
+      });
+
+      // Initialize
+      document.documentElement.setAttribute("data-theme", theme);
+      updateThemeIcon();
+      applyTranslations();
+    </script>
+  </body>
+</html>
